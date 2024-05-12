@@ -1,0 +1,43 @@
+main(): i64 {
+    let a: bool = false;
+    let b = true;
+    
+    // bodied if-elif-else
+    if (a) {
+        ret 1;
+    } elif (b) {
+        ret 2;
+    } else {
+        ret 3;
+    }
+
+    // single-statement if-elif-else (note the difference in the arrow syntax: -> instead of =>)
+    // -> indicates that a statement follows, => demands that an expression follows
+    if (a) -> ret 1;
+    elif (b) -> ret 2;
+    else -> ret 3;
+
+    // combined (ugly but up to you)
+    if (a) {
+        ret 1;
+    } elif (b) {
+        ret 2;
+    } else -> ret 3;
+
+    // bodied while loop
+    i: i64 = 0;
+    while (i < 10) {
+        i = i + 1;
+    }
+
+    // single-statement while loop
+    while (i < 20) -> i = i + 1;
+
+    // bodied for-loop
+    for (0 <= i <= 100; i = i + 1) {
+        i = i * 2;
+    }
+
+    // single-statement for loop
+    for (0 <= i <= 100; i = i + 1) -> i = i * 2;
+}
