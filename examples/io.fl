@@ -1,0 +1,5 @@
+using std::stdout;
+
+main(): i64 {
+    stdout("Hello, World!\n");
+}

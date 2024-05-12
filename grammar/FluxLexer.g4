@@ -19,7 +19,6 @@ KwFloat32: 'f32';
 KwBool: 'bool';
 KwString: 'str';
 
-
 Init: ':=';
 Assign: '=';
 

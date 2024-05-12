@@ -1,0 +1,19 @@
+class Point { x: i64; y: i64; }
+
+class Rectangle {
+    topleft: Point;
+    bottomright: Point;
+
+    height() : i64 {
+        ret bottomright.y - topleft.y;
+    }
+
+    width() : i64 => bottomright.x - topleft.x;
+
+    area() => height() * width();
+
+    contains(p: Point): bool {
+        ret p.x >= topleft.x && p.x <= bottomright.x &&
+            p.y >= topleft.y && p.y <= bottomright.y;
+    }
+}
