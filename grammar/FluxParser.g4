@@ -4,68 +4,64 @@ options {
 	tokenVocab = FluxLexer;
 }
 
-program:
-	KwModule ':' Identifier ';' (
-		functionDefinition
-		| functionDeclaration
-	)* mainBlock? EOF;
+module: classDefinition* functionDefinition*;
 
-functionSignature: Identifier '(' parameterList? ')' '->' type;
+classDefinition:
+	KwClass Identifier '{' fieldDeclaration+ functionDefinition* '}';
 
-functionDeclaration:
-	KwExtern functionSignature
-	| KwUsing Identifier '::' functionSignature;
+fieldDeclaration: Identifier ':' type ';';
 
 functionDefinition:
-	functionSignature statementBlock
-	| functionSignature ':' expression ';';
+	Identifier '(' parameterList? ')' ':' type block					# BlockFunction
+	| Identifier '(' parameterList? ')' (':' type)? '=>' expression ';'	# LambdaFunction;
 
 parameterList: parameter (',' parameter)*;
 
+block: '{' statement* '}';
+
 parameter: Identifier ':' type;
-mainBlock: KwMain ':' statementBlock;
 
 statement:
 	expressionStatement
-	| returnStatement
 	| variableDeclaration
-	| loop
-	| ifStatement;
+	| returnStatement
+	| ifStatement
+	| loop;
 
 expressionStatement: expression ';';
 
+variableDeclaration:
+	KwLet Identifier (':' type)? '=' expression ';';
+
 returnStatement: KwReturn expression? ';';
 
-loop: KwWhile expression? ':' statementBlock;
+loop:
+	KwWhile '(' expression ')' (block | '->' statement) # WhileLoop
+	| KwFor '(' Identifier KwIn interval (';' statement)? ')' (
+		block
+		| '->' statement
+	) # ForLoop;
+
+interval: ('[' | ')') expression ',' expression (']' | ')');
 
 ifStatement:
-	KwIf expression ':' statementBlock elseIfStatement* elseStatement?;
+	KwIf '(' expression ')' (block | '->' statement) elseStatement* elseStatement?;
 
-elseIfStatement: KwElseif expression ':' statementBlock;
+elseIfStatement:
+	KwElseif '(' expression ')' (block | '->' statement);
 
-elseStatement: KwElse ':' statementBlock;
-
-statementBlock: '{' statement* '}';
-
-// TODO: either a: i32 = 2; or a := 2;
-variableDeclaration: Identifier ':' type '=' expression ';';
+elseStatement: KwElse (block | '->' statement);
 
 expression:
 	'(' expression ')'												# ParenExpr
 	| literal														# LiteralExpr
 	| Identifier													# IdentifierExpr
-	| expression '[' expression ']'									# IndexExpr
 	| functionCall													# CallExpr
-	| ('-' | '!' | '++' | '--') expression							# PrefixUnaryExpr
-	| expression ('++' | '--')										# PostfixUnaryExpr
+	| ('-' | '!') expression										# PrefixUnaryExpr
 	| expression ('*' | '/' | '%') expression						# BinaryExpr
 	| expression ('+' | '-') expression								# BinaryExpr
-	| expression '&' expression										# BinaryExpr
-	| expression '^' expression										# BinaryExpr
-	| expression '|' expression										# BinaryExpr
 	| expression ('<' | '<=' | '==' | '!=' | '>' | '>=') expression	# BinaryExpr
 	| expression '&&' expression									# BinaryExpr
-	| expression '^^' expression									# BinaryExpr
 	| expression '||' expression									# BinaryExpr
 	| expression '?' expression ':' expression						# TernaryExpr
 	| Identifier '=' expression										# AssignmentExpr;
@@ -74,8 +70,7 @@ functionCall: Identifier '(' expressionList? ')';
 
 expressionList: expression (',' expression)*;
 
-// TODO: custom types
-type: builtinType | builtinType '[' IntLiteral ']';
+type: builtinType | Identifier;
 
 builtinType:
 	KwInt64

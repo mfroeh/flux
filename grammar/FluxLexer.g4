@@ -1,17 +1,14 @@
 lexer grammar FluxLexer;
 
-// keywords
-KwModule: 'mod';
-KwFunctions: 'functions';
-KwMain: 'main';
-KwReturn: 'ret';
-KwExtern: 'ext';
-KwUsing: 'using';
+// control flow
 KwIf: 'if';
-KwElse: 'else';
 KwElseif: 'elif';
+KwElse: 'else';
 KwWhile: 'while';
+KwFor: 'for';
+KwIn: 'in';
 
+// builtin types
 KwInt64: 'i64';
 KwInt32: 'i32';
 KwFloat64: 'f64';
@@ -19,8 +16,11 @@ KwFloat32: 'f32';
 KwBool: 'bool';
 KwString: 'str';
 
-Init: ':=';
-Assign: '=';
+// other keywords
+KwClass: 'class';
+KwReturn: 'ret';
+KwUsing: 'using';
+KwLet: 'let';
 
 // comparison
 Eq: '==';
@@ -38,19 +38,18 @@ Div: '/';
 Modolu: '%';
 
 // increment/decrement
-PlusPlus: '++';
-MinusMinus: '--';
+// PlusPlus: '++';
+// MinusMinus: '--';
 
 // bitwise logic
-BitwiseAnd: '&';
-BitwiseXor: '^';
-BitwiseOr: '|';
+// BitwiseAnd: '&';
+// BitwiseXor: '^';
+// BitwiseOr: '|';
 
 // logic
 Not: '!';
 LogicalAnd: '&&';
 LogicalOr: '||';
-LogicalXor: '^^';
 
 // surrounding
 LeftParen: '(';
@@ -61,10 +60,12 @@ LeftBracket: '[';
 RightBracket: ']';
 
 // others
+Assign: '=';
 Colon: ':';
 Semicolon: ';';
 Comma: ',';
 RightArrow: '->';
+RIGHTArrow: '=>';
 ModuleSeperator: '::';
 TernaryOp: '?';
 
@@ -73,7 +74,7 @@ IntLiteral: '0' | [1-9][0-9]*;
 FloatLiteral: IntLiteral '.' [0-9]* | '.' [0-9]+;
 StringLiteral: '"' ~["\r\n]* '"';
 
-Identifier: [a-zA-Z_][a-zA-Z0-9_]*;
+Identifier: [a-zA-Z][a-zA-Z0-9]*[_]?;
 
 // hidden
 Comment: '//' ~[\r\n]* -> channel(HIDDEN);
