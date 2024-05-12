@@ -6,4 +6,6 @@ Developing
 
 Packaging
 1. Build package: `nix build`
-2. Run flux binary: `./result/bin/flux`
+
+Running:
+1. Build and run: `nix run` or `nix build && ./result/bin/flux`

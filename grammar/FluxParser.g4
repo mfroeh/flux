@@ -64,6 +64,7 @@ expression:
 	| expression '&&' expression									# BinaryExpr
 	| expression '||' expression									# BinaryExpr
 	| expression '?' expression ':' expression						# TernaryExpr
+	| expression KwIn interval										# InIntervalExpr
 	| Identifier '=' expression										# AssignmentExpr;
 
 functionCall: Identifier '(' expressionList? ')';
