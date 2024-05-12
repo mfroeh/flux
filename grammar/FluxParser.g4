@@ -31,7 +31,8 @@ statement:
 expressionStatement: expression ';';
 
 variableDeclaration:
-	KwLet Identifier (':' type)? '=' expression ';';
+	KwLet Identifier (':' type)? '=' expression ';'
+	| KwLet Identifier ':' type ';';
 
 returnStatement: KwReturn expression? ';';
 
@@ -65,6 +66,7 @@ expression:
 	| expression '||' expression									# BinaryExpr
 	| expression '?' expression ':' expression						# TernaryExpr
 	| expression KwIn interval										# InIntervalExpr
+	| expression '[' expression ']'									# ArrayRefExpr
 	| Identifier '=' expression										# AssignmentExpr
 	| Identifier ('+' | '-' | '*' | '/' | '%') '=' expression		# CompoundAssignmentExpr;
 
@@ -72,7 +74,9 @@ functionCall: Identifier '(' expressionList? ')';
 
 expressionList: expression (',' expression)*;
 
-type: builtinType | Identifier;
+type: builtinType | arrayType | Identifier;
+
+arrayType: builtinType '[' expression ']';
 
 builtinType:
 	KwInt64
