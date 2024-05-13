@@ -48,7 +48,14 @@ antlr4_generate(
 
 set(parser "")
 
-set(ast "")
+set(ast
+    src/ast/ast_creator.cc
+    src/ast/ast.cc
+    src/ast/expr.cc
+    src/ast/function.cc
+    src/ast/module.cc
+    src/ast/stmt.cc
+    src/ast/sugar.cc)
 
 set(analysis "")
 
@@ -87,7 +94,8 @@ llvm_map_components_to_libnames(
   ${INTERPRETER_LIBS}
   ${LLVM_TARGETS_TO_BUILD})
 
-target_link_libraries(flux PRIVATE argparse::argparse Boost::system magic_enum::magic_enum
-                                    FFI::ffi antlr4-runtime ${llvm_libs})
+target_link_libraries(
+  flux PRIVATE argparse::argparse Boost::system magic_enum::magic_enum FFI::ffi
+               antlr4-runtime ${llvm_libs})
 
 install(TARGETS flux DESTINATION bin)

@@ -4,7 +4,8 @@ options {
 	tokenVocab = FluxLexer;
 }
 
-module: classDefinition* functionDefinition*;
+// module: classDefinition* functionDefinition*;
+module: functionDefinition*;
 
 classDefinition:
 	KwClass Identifier '{' fieldDeclaration+ functionDefinition* '}';
@@ -38,7 +39,7 @@ returnStatement: KwReturn expression? ';';
 
 loop:
 	KwWhile '(' expression ')' (block | '->' statement) # WhileLoop
-	| KwFor '(' Identifier KwIn interval (';' statement)? ')' (
+	| KwFor '(' statement ';' expression ';' statement ')' (
 		block
 		| '->' statement
 	) # ForLoop;
@@ -57,7 +58,8 @@ expression:
 	'(' expression ')'												# ParenExpr
 	| literal														# LiteralExpr
 	| Identifier													# IdentifierExpr
-	| functionCall													# CallExpr
+	| expression '[' expression ']'									# ArrayRefExpr
+	| Identifier '(' expressionList? ')'							# CallExpr
 	| ('-' | '!') expression										# PrefixUnaryExpr
 	| expression ('*' | '/' | '%') expression						# BinaryExpr
 	| expression ('+' | '-') expression								# BinaryExpr
@@ -66,15 +68,14 @@ expression:
 	| expression '||' expression									# BinaryExpr
 	| expression '?' expression ':' expression						# TernaryExpr
 	| expression KwIn interval										# InIntervalExpr
-	| expression '[' expression ']'									# ArrayRefExpr
-	| Identifier '=' expression										# AssignmentExpr
-	| Identifier ('+' | '-' | '*' | '/' | '%') '=' expression		# CompoundAssignmentExpr;
-
-functionCall: Identifier '(' expressionList? ')';
+	// must be IdentifierExpr or ArrayRefExpr
+	| expression '=' expression									# AssignmentExpr
+	| expression ('+' | '-' | '*' | '/' | '%') '=' expression	# CompoundAssignmentExpr;
 
 expressionList: expression (',' expression)*;
 
-type: builtinType | arrayType | Identifier;
+type: builtinType | arrayType;
+// type: builtinType | arrayType | Identifier;
 
 arrayType: builtinType '[' expression ']';
 
@@ -86,6 +87,7 @@ builtinType:
 	| KwBool
 	| KwString;
 
+// todo: array literal
 literal:
 	IntLiteral
 	| FloatLiteral

@@ -34,10 +34,10 @@ main(): i64 {
     while (i < 20) -> i += 1;
 
     // bodied for-loop
-    for (i in [0, 100]; i += 1) {
+    for (let i = 0; i in [0, 100]; i += 1) {
         i *= 2;
     }
 
     // single-statement for loop
-    for (i in [0, 100]; i += 1) -> i *= 2;
+    for (let i = 0; i in [0, 100]; i += 1) -> i *= 2;
 }
