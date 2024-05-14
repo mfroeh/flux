@@ -16,6 +16,7 @@ stdenv.mkDerivation {
   name = "flux";
 
   src = lib.sourceByRegex ./. [
+    "^include.*"
     "^src.*"
     "^grammar.*"
     "CMakeLists.txt"
