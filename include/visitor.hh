@@ -2,15 +2,17 @@
 
 #include "ast/expr.hh"
 #include "ast/sugar.hh"
+#include "module_context.hh"
 #include <any>
 #include <memory>
 
 using std::any;
-using std::unique_ptr;
+using std::shared_ptr;
 
-class AstVisitor {
+class AbstractAstVisitor {
 public:
-  virtual ~AstVisitor() = default;
+  AbstractAstVisitor(ModuleContext &context) : context(context) {}
+  virtual ~AbstractAstVisitor() = default;
 
   // module
   virtual any visit(struct Module &module) = 0;
@@ -23,7 +25,7 @@ public:
   virtual any visit(struct Block &block) = 0;
   virtual any visit(struct Return &ret) = 0;
   virtual any visit(struct IfElse &ifElse) = 0;
-  virtual any visit(struct WhileStatement &whileStmt) = 0;
+  virtual any visit(struct While &whileStmt) = 0;
   virtual any visit(struct ExpressionStatement &exprStmt) = 0;
   virtual any visit(struct VariableDeclaration &varDecl) = 0;
 
@@ -34,7 +36,7 @@ public:
   virtual any visit(struct BoolLiteral &boolLit) = 0;
   virtual any visit(struct StringLiteral &stringLit) = 0;
   virtual any visit(struct VariableReference &var) = 0;
-  virtual any visit(struct ArrayReference &arrayRef) = 0;
+  virtual any visit(struct ArrayReference &arr) = 0;
   virtual any visit(struct FunctionCall &funcCall) = 0;
   virtual any visit(struct UnaryPrefixOp &unaryOp) = 0;
   virtual any visit(struct BinaryArithmetic &binaryOp) = 0;
@@ -42,11 +44,57 @@ public:
   virtual any visit(struct BinaryLogical &binaryOp) = 0;
   virtual any visit(struct TernaryExpr &ternaryOp) = 0;
   virtual any visit(struct Assignment &assignment) = 0;
-  virtual any visit(struct ArrayAssignment &arrayAssignment) = 0;
 
   // sugar
   virtual any visit(struct sugar::ElifStatement &elifStmt) = 0;
   virtual any visit(struct sugar::IfElifElseStatement &elifElseStmt) = 0;
-  virtual any visit(struct sugar::ForStatement &forStmt) = 0;
+  virtual any visit(struct sugar::ForLoop &forStmt) = 0;
   virtual any visit(struct sugar::InIntervalExpr &inIntervalExpr) = 0;
+  virtual any visit(struct sugar::CompoundAssignment &compoundAssignment) = 0;
+
+protected:
+  ModuleContext &context;
+};
+
+class AstVisitor : public AbstractAstVisitor {
+public:
+  AstVisitor(ModuleContext &context) : AbstractAstVisitor(context) {}
+
+  // module
+  any visit(struct Module &module) override;
+
+  // functions
+  any visit(struct FunctionDefinition &function) override;
+  any visit(struct Parameter &parameter) override;
+
+  // statements
+  any visit(struct Block &block) override;
+  any visit(struct Return &ret) override;
+  any visit(struct IfElse &ifElse) override;
+  any visit(struct While &whileStmt) override;
+  any visit(struct ExpressionStatement &exprStmt) override;
+  any visit(struct VariableDeclaration &varDecl) override;
+
+  // expressions
+  any visit(struct Cast &cast) override;
+  any visit(struct IntLiteral &intLit) override;
+  any visit(struct FloatLiteral &floatLit) override;
+  any visit(struct BoolLiteral &boolLit) override;
+  any visit(struct StringLiteral &stringLit) override;
+  any visit(struct VariableReference &var) override;
+  any visit(struct ArrayReference &arr) override;
+  any visit(struct FunctionCall &funcCall) override;
+  any visit(struct UnaryPrefixOp &unaryOp) override;
+  any visit(struct BinaryArithmetic &binaryOp) override;
+  any visit(struct BinaryComparison &binaryOp) override;
+  any visit(struct BinaryLogical &binaryOp) override;
+  any visit(struct TernaryExpr &ternaryOp) override;
+  any visit(struct Assignment &assignment) override;
+
+  // sugar
+  any visit(struct sugar::ElifStatement &elifStmt) override;
+  any visit(struct sugar::IfElifElseStatement &elifElseStmt) override;
+  any visit(struct sugar::ForLoop &forStmt) override;
+  any visit(struct sugar::InIntervalExpr &inIntervalExpr) override;
+  any visit(struct sugar::CompoundAssignment &compoundAssignment) override;
 };

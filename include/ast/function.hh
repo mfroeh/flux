@@ -5,29 +5,29 @@
 #include "ast/type.hh"
 #include <memory>
 
+using std::shared_ptr;
 using std::string;
-using std::unique_ptr;
 using std::vector;
 
 struct Parameter : public Node {
   string name;
-  unique_ptr<Type> type;
+  shared_ptr<Type> type;
 
-  Parameter(Tokens tokens, string name, unique_ptr<Type> type);
+  Parameter(Tokens tokens, string name, shared_ptr<Type> type);
 
-  any accept(AstVisitor &visitor) override;
+  any accept(AbstractAstVisitor &visitor) override;
 };
 
 struct FunctionDefinition : public Node {
   string name;
   vector<Parameter> parameters;
-  unique_ptr<Type> returnType;
-  unique_ptr<Block> body;
+  shared_ptr<Type> returnType;
+  Block body;
 
   FunctionDefinition(Tokens tokens, string name, vector<Parameter> parameters,
-                     unique_ptr<Type> returnType, unique_ptr<Block> body);
+                     shared_ptr<Type> returnType, Block body);
 
-  any accept(AstVisitor &visitor) override;
+  any accept(AbstractAstVisitor &visitor) override;
 
   llvm::Function *codegen(IRVisitor &visitor);
 };

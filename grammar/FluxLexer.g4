@@ -53,7 +53,7 @@ LogicalOr: '||';
 
 // surrounding
 LeftParen: '(';
-RightParent: ')';
+RightParen: ')';
 LeftBrace: '{';
 RightBrace: '}';
 LeftBracket: '[';

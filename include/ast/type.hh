@@ -1,11 +1,10 @@
 #pragma once
 
-#include "ast/ast.hh"
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Type.h>
 
+using std::shared_ptr;
 using std::string;
-using std::unique_ptr;
 
 struct Type {
   enum Kind {
@@ -37,10 +36,10 @@ struct InferType : public Type {
 };
 
 struct ArrayType : public Type {
-  unique_ptr<Type> elementType;
+  shared_ptr<Type> elementType;
   long size;
 
-  ArrayType(unique_ptr<Type> elementType, long size);
+  ArrayType(shared_ptr<Type> elementType, long size);
 
   llvm::Type *codegen(class IRVisitor &visitor) override;
 };

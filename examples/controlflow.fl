@@ -25,7 +25,7 @@ main(): i64 {
     } else -> ret 3;
 
     // bodied while loop
-    i: i64 = 0;
+    let i: i64 = 0;
     while (i < 10) {
         i += 1;
     }
@@ -34,10 +34,10 @@ main(): i64 {
     while (i < 20) -> i += 1;
 
     // bodied for-loop
-    for (let i = 0; i in [0, 100]; i += 1) {
+    for (let i = 0; i in [0, 100]; i += 1;) {
         i *= 2;
     }
 
     // single-statement for loop
-    for (let i = 0; i in [0, 100]; i += 1) -> i *= 2;
+    for (let i = 0; i in [0, 100]; i += 1;) -> i *= 2;
 }

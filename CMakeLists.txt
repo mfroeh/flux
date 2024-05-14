@@ -5,7 +5,7 @@ project(
   VERSION 1.0.0
   LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS
@@ -55,9 +55,11 @@ set(ast
     src/ast/function.cc
     src/ast/module.cc
     src/ast/stmt.cc
-    src/ast/sugar.cc)
+    src/ast/sugar.cc
+    src/ast/type.cc
+    )
 
-set(analysis "")
+set(analysis src/analysis/desugar.cc src/analysis/scope.cc src/analysis/variable_resolver.cc)
 
 set(codegen "")
 
@@ -66,6 +68,7 @@ set(toplevel "")
 add_executable(
   flux
   src/main.cc
+  src/visitor.cc
   ${toplevel}
   ${parser}
   ${ast}

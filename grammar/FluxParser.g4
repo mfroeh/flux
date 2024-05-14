@@ -13,8 +13,8 @@ classDefinition:
 fieldDeclaration: Identifier ':' type ';';
 
 functionDefinition:
-	Identifier '(' parameterList? ')' ':' type block					# BlockFunction
-	| Identifier '(' parameterList? ')' (':' type)? '=>' expression ';'	# LambdaFunction;
+	Identifier '(' parameterList? ')' ':' type block
+	| Identifier '(' parameterList? ')' (':' type)? '=>' expression ';';
 
 parameterList: parameter (',' parameter)*;
 
@@ -27,7 +27,8 @@ statement:
 	| variableDeclaration
 	| returnStatement
 	| ifStatement
-	| loop;
+	| whileLoop
+	| forLoop;
 
 expressionStatement: expression ';';
 
@@ -37,22 +38,23 @@ variableDeclaration:
 
 returnStatement: KwReturn expression? ';';
 
-loop:
-	KwWhile '(' expression ')' (block | '->' statement) # WhileLoop
-	| KwFor '(' statement ';' expression ';' statement ')' (
+whileLoop: KwWhile '(' expression ')' (block | '->' statement);
+
+forLoop:
+	KwFor '(' statement expressionStatement statement ')' (
 		block
 		| '->' statement
-	) # ForLoop;
+	);
 
-interval: ('[' | ')') expression ',' expression (']' | ')');
+interval: ('[' | '(') expression ',' expression (']' | ')');
 
 ifStatement:
-	KwIf '(' expression ')' (block | '->' statement) elseStatement* elseStatement?;
+	KwIf '(' expression ')' (block | '->' statement) elseIfStatement* elseBlock?;
 
 elseIfStatement:
 	KwElseif '(' expression ')' (block | '->' statement);
 
-elseStatement: KwElse (block | '->' statement);
+elseBlock: KwElse (block | '->' statement);
 
 expression:
 	'(' expression ')'												# ParenExpr
@@ -61,11 +63,11 @@ expression:
 	| expression '[' expression ']'									# ArrayRefExpr
 	| Identifier '(' expressionList? ')'							# CallExpr
 	| ('-' | '!') expression										# PrefixUnaryExpr
-	| expression ('*' | '/' | '%') expression						# BinaryExpr
-	| expression ('+' | '-') expression								# BinaryExpr
-	| expression ('<' | '<=' | '==' | '!=' | '>' | '>=') expression	# BinaryExpr
-	| expression '&&' expression									# BinaryExpr
-	| expression '||' expression									# BinaryExpr
+	| expression ('*' | '/' | '%') expression						# BinaryArithmeticExpr
+	| expression ('+' | '-') expression								# BinaryArithmeticExpr
+	| expression ('<' | '<=' | '==' | '!=' | '>' | '>=') expression	# BinaryCompExpr
+	| expression '&&' expression									# BinaryLogicalExpr
+	| expression '||' expression									# BinaryLogicalExpr
 	| expression '?' expression ':' expression						# TernaryExpr
 	| expression KwIn interval										# InIntervalExpr
 	// must be IdentifierExpr or ArrayRefExpr
@@ -77,7 +79,7 @@ expressionList: expression (',' expression)*;
 type: builtinType | arrayType;
 // type: builtinType | arrayType | Identifier;
 
-arrayType: builtinType '[' expression ']';
+arrayType: builtinType '[' IntLiteral ']';
 
 builtinType:
 	KwInt64

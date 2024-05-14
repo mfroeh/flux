@@ -7,7 +7,7 @@ InferType::InferType() : Type(INFER) {}
 
 llvm::Type *InferType::codegen(IRVisitor &visitor) { return nullptr; }
 
-ArrayType::ArrayType(unique_ptr<Type> elementType, long size)
+ArrayType::ArrayType(shared_ptr<Type> elementType, long size)
     : Type(ARRAY), elementType(std::move(elementType)), size(size) {}
 
 llvm::Type *ArrayType::codegen(IRVisitor &visitor) {
@@ -36,4 +36,5 @@ StringType::StringType() : Type(STRING) {}
 
 llvm::Type *StringType::codegen(IRVisitor &visitor) {
   // return llvm::Type::getInt8PtrTy(visitor.context);
+  throw std::runtime_error("String type not implemented");
 }

@@ -8,43 +8,63 @@
 namespace sugar {
 
 struct ElifStatement : public Statement {
-  unique_ptr<Expr> condition;
-  unique_ptr<Block> thenBlock;
+  shared_ptr<Expr> condition;
+  Block thenBlock;
 
-  ElifStatement(Tokens tokens, unique_ptr<Expr> condition,
-                unique_ptr<Block> thenBlock);
+  ElifStatement(Tokens tokens, shared_ptr<Expr> condition, Block thenBlock);
+
+  any accept(class AbstractAstVisitor &visitor) override;
 };
 
 struct IfElifElseStatement : public Statement {
-  unique_ptr<Expr> condition;
-  unique_ptr<Block> thenBlock;
-  vector<unique_ptr<ElifStatement>> elseIfs;
-  unique_ptr<Block> elseBlock;
+  shared_ptr<Expr> condition;
+  Block thenBlock;
+  vector<shared_ptr<ElifStatement>> elseIfs;
+  Block elseBlock;
 
-  IfElifElseStatement(Tokens tokens, unique_ptr<Expr> condition,
-                      unique_ptr<Block> thenBlock,
-                      vector<unique_ptr<ElifStatement>> elifs,
-                      unique_ptr<Block> elseBlock);
+  IfElifElseStatement(Tokens tokens, shared_ptr<Expr> condition,
+                      Block thenBlock, vector<shared_ptr<ElifStatement>> elifs,
+                      Block elseBlock);
+
+  any accept(class AbstractAstVisitor &visitor) override;
 };
 
-struct ForStatement : public Statement {
-  unique_ptr<Statement> initializer;
-  unique_ptr<Expr> condition;
-  unique_ptr<Statement> update;
-  unique_ptr<Block> body;
+struct ForLoop : public Statement {
+  shared_ptr<Statement> initializer;
+  shared_ptr<Expr> condition;
+  shared_ptr<Statement> update;
+  Block body;
 
-  ForStatement(Tokens tokens, unique_ptr<Statement> initializer,
-               unique_ptr<Expr> condition, unique_ptr<Statement> update,
-               unique_ptr<Block> body);
+  ForLoop(Tokens tokens, shared_ptr<Statement> initializer,
+          shared_ptr<Expr> condition, shared_ptr<Statement> update, Block body);
+
+  any accept(class AbstractAstVisitor &visitor) override;
 };
 
 struct InIntervalExpr : public Expr {
-  unique_ptr<Expr> value;
-  unique_ptr<Expr> lower;
-  unique_ptr<Expr> upper;
+  enum IntervalKind { Open, Closed, OpenClosed, ClosedOpen } kind;
+  shared_ptr<Expr> value;
+  shared_ptr<Expr> lower;
+  shared_ptr<Expr> upper;
 
-  InIntervalExpr(Tokens tokens, unique_ptr<Expr> value, unique_ptr<Expr> lower,
-                 unique_ptr<Expr> upper);
+  InIntervalExpr(Tokens tokens, shared_ptr<Expr> value, shared_ptr<Expr> lower,
+                 shared_ptr<Expr> upper, IntervalKind intervalKind);
+
+  any accept(class AbstractAstVisitor &visitor) override;
+  llvm::Value *codegen(IRVisitor &visitor) override;
+};
+
+struct CompoundAssignment : public Expr {
+  // variable reference or array reference
+  shared_ptr<Expr> target;
+  BinaryArithmetic::Operator op;
+  shared_ptr<Expr> value;
+
+  CompoundAssignment(Tokens tokens, shared_ptr<Expr> target,
+                     BinaryArithmetic::Operator op, shared_ptr<Expr> value);
+
+  any accept(class AbstractAstVisitor &visitor) override;
+  llvm::Value *codegen(IRVisitor &visitor) override;
 };
 
 } // namespace sugar

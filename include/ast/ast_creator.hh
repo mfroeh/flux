@@ -1,56 +1,87 @@
 #pragma once
 
-#include "FluxParserVisitor.h"
+#include "FluxParser.h"
+#include "ast/ast.hh"
+#include "ast/expr.hh"
+#include "ast/function.hh"
+#include "ast/module.hh"
+#include "ast/stmt.hh"
+#include "ast/sugar.hh"
+#include "ast/type.hh"
+#include <vector>
 
 using std::any;
+using std::shared_ptr;
 
-class AstCreator : public FluxParserVisitor {
+struct Interval {
+  shared_ptr<Expr> lower;
+  shared_ptr<Expr> upper;
+  sugar::InIntervalExpr::IntervalKind kind;
+};
+
+class AstCreator {
+  using FP = FluxParser;
+
+public:
   // module
-  any visitModule(FluxParser::ModuleContext *ctx) override;
-
-  // classes
-  any visitClassDefinition(FluxParser::ClassDefinitionContext *ctx) override;
-  any visitFieldDeclaration(FluxParser::FieldDeclarationContext *ctx) override;
+  Module visitModule(FP::ModuleContext *ctx);
 
   // functions
-  any visitBlockFunction(FluxParser::BlockFunctionContext *ctx) override;
-  any visitLambdaFunction(FluxParser::LambdaFunctionContext *ctx) override;
-  any visitParameterList(FluxParser::ParameterListContext *ctx) override;
-  any visitParameter(FluxParser::ParameterContext *ctx) override;
+  FunctionDefinition
+  visitFunctionDefinition(FP::FunctionDefinitionContext *ctx);
+  vector<Parameter> visitParameterList(FP::ParameterListContext *ctx);
+  Parameter visitParameter(FP::ParameterContext *ctx);
 
   // statements
-  any visitBlock(FluxParser::BlockContext *ctx) override;
-  any visitStatement(FluxParser::StatementContext *ctx) override;
-  any visitExpressionStatement(
-      FluxParser::ExpressionStatementContext *ctx) override;
-  any visitVariableDeclaration(
-      FluxParser::VariableDeclarationContext *ctx) override;
-  any visitReturnStatement(FluxParser::ReturnStatementContext *ctx) override;
-  any visitWhileLoop(FluxParser::WhileLoopContext *ctx) override;
-  any visitForLoop(FluxParser::ForLoopContext *ctx) override;
-  any visitIfStatement(FluxParser::IfStatementContext *ctx) override;
-  any visitElseIfStatement(FluxParser::ElseIfStatementContext *ctx) override;
-  any visitElseStatement(FluxParser::ElseStatementContext *ctx) override;
+  Block visitBlock(FP::BlockContext *ctx);
+  Block visitSingleLineBody(FP::StatementContext *ctx);
+  shared_ptr<Statement> visitStatement(FP::StatementContext *ctx);
+  shared_ptr<ExpressionStatement>
+  visitExpressionStatement(FP::ExpressionStatementContext *ctx);
+  shared_ptr<VariableDeclaration>
+  visitVariableDeclaration(FP::VariableDeclarationContext *ctx);
+  shared_ptr<Return> visitReturnStatement(FP::ReturnStatementContext *ctx);
+  shared_ptr<While> visitWhileLoop(FP::WhileLoopContext *ctx);
+  shared_ptr<sugar::ForLoop> visitForLoop(FP::ForLoopContext *ctx);
+  shared_ptr<sugar::IfElifElseStatement>
+  visitIfStatement(FP::IfStatementContext *ctx);
+  shared_ptr<sugar::ElifStatement>
+  visitElseIfStatement(FP::ElseIfStatementContext *ctx);
+  Block visitElseBlock(FP::ElseBlockContext *ctx);
 
   // expressions
-  any visitPrefixUnaryExpr(FluxParser::PrefixUnaryExprContext *ctx) override;
-  any visitInIntervalExpr(FluxParser::InIntervalExprContext *ctx) override;
-  any visitArrayRefExpr(FluxParser::ArrayRefExprContext *ctx) override;
-  any visitIdentifierExpr(FluxParser::IdentifierExprContext *ctx) override;
-  any visitBinaryExpr(FluxParser::BinaryExprContext *ctx) override;
-  any visitCompoundAssignmentExpr(
-      FluxParser::CompoundAssignmentExprContext *ctx) override;
-  any visitLiteralExpr(FluxParser::LiteralExprContext *ctx) override;
-  any visitCallExpr(FluxParser::CallExprContext *ctx) override;
-  any visitAssignmentExpr(FluxParser::AssignmentExprContext *ctx) override;
-  any visitParenExpr(FluxParser::ParenExprContext *ctx) override;
-  any visitTernaryExpr(FluxParser::TernaryExprContext *ctx) override;
-  any visitLiteral(FluxParser::LiteralContext *ctx) override;
+  shared_ptr<Expr> visitExpression(FP::ExpressionContext *ctx);
+  shared_ptr<UnaryPrefixOp>
+  visitPrefixUnaryExpr(FP::PrefixUnaryExprContext *ctx);
+  shared_ptr<sugar::InIntervalExpr>
+  visitInIntervalExpr(FP::InIntervalExprContext *ctx);
+  shared_ptr<ArrayReference> visitArrayRefExpr(FP::ArrayRefExprContext *ctx);
+  shared_ptr<VariableReference>
+  visitIdentifierExpr(FP::IdentifierExprContext *ctx);
+  shared_ptr<BinaryComparison>
+  visitBinaryCompExpr(FP::BinaryCompExprContext *ctx);
+  shared_ptr<BinaryLogical>
+  visitBinaryLogicalExpr(FP::BinaryLogicalExprContext *ctx);
+  shared_ptr<BinaryArithmetic>
+  visitBinaryArithmeticExpr(FP::BinaryArithmeticExprContext *ctx);
+  shared_ptr<sugar::CompoundAssignment>
+  visitCompoundAssignmentExpr(FP::CompoundAssignmentExprContext *ctx);
+  shared_ptr<Expr> visitLiteralExpr(FP::LiteralExprContext *ctx);
+  shared_ptr<FunctionCall> visitCallExpr(FP::CallExprContext *ctx);
+  shared_ptr<Assignment> visitAssignmentExpr(FP::AssignmentExprContext *ctx);
+  shared_ptr<Expr> visitParenExpr(FP::ParenExprContext *ctx);
+  shared_ptr<TernaryExpr> visitTernaryExpr(FP::TernaryExprContext *ctx);
+  shared_ptr<Expr> visitLiteral(FP::LiteralContext *ctx);
 
   // misc
-  any visitExpressionList(FluxParser::ExpressionListContext *ctx) override;
-  any visitType(FluxParser::TypeContext *ctx) override;
-  any visitArrayType(FluxParser::ArrayTypeContext *ctx) override;
-  any visitBuiltinType(FluxParser::BuiltinTypeContext *ctx) override;
-  any visitInterval(FluxParser::IntervalContext *ctx) override;
+  vector<shared_ptr<Expr>> visitExpressionList(FP::ExpressionListContext *ctx);
+  shared_ptr<Type> visitType(FP::TypeContext *ctx);
+  shared_ptr<ArrayType> visitArrayType(FP::ArrayTypeContext *ctx);
+  shared_ptr<Type> visitBuiltinType(FP::BuiltinTypeContext *ctx);
+
+  Interval visitInterval(FP::IntervalContext *ctx);
+
+  // classes
+  any visitClassDefinition(FP::ClassDefinitionContext *ctx);
+  any visitFieldDeclaration(FP::FieldDeclarationContext *ctx);
 };

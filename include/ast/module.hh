@@ -4,13 +4,13 @@
 #include "function.hh"
 #include "visitor.hh"
 
-using std::unique_ptr;
+using std::shared_ptr;
 using std::vector;
 
 struct Module : public Node {
-  vector<unique_ptr<FunctionDefinition>> functions;
+  vector<FunctionDefinition> functions;
 
-  Module(Tokens tokens, vector<unique_ptr<FunctionDefinition>> functions);
+  Module(Tokens tokens, vector<FunctionDefinition> functions);
 
-  any accept(AstVisitor &visitor) override;
+  any accept(AbstractAstVisitor &visitor) override;
 };

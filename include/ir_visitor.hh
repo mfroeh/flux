@@ -18,7 +18,7 @@ public:
   virtual void visit(struct Block &block) = 0;
   virtual void visit(struct Return &ret) = 0;
   virtual void visit(struct IfElse &ifElse) = 0;
-  virtual void visit(struct WhileStatement &whileStmt) = 0;
+  virtual void visit(struct While &whileStmt) = 0;
   virtual void visit(struct ExpressionStatement &exprStmt) = 0;
   virtual void visit(struct VariableDeclaration &varDecl) = 0;
 
@@ -29,8 +29,8 @@ public:
   virtual llvm::Value *visit(struct BoolLiteral &literal) = 0;
   virtual llvm::Value *visit(struct StringLiteral &literal) = 0;
 
-  virtual llvm::Value *visit(struct VariableReference &reference) = 0;
-  virtual llvm::Value *visit(struct ArrayReference &reference) = 0;
+  virtual llvm::Value *visit(struct VariableReference &var) = 0;
+  virtual llvm::Value *visit(struct ArrayReference &array) = 0;
   virtual llvm::Value *visit(struct FunctionCall &call) = 0;
   virtual llvm::Value *visit(struct UnaryPrefixOp &operation) = 0;
   virtual llvm::Value *visit(struct BinaryArithmetic &operation) = 0;

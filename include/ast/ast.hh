@@ -1,6 +1,6 @@
 #pragma once
 
-#include "scope.hh"
+#include "ParserRuleContext.h"
 #include <any>
 #include <memory>
 #include <string>
@@ -10,7 +10,6 @@ using std::any;
 using std::ostream;
 using std::shared_ptr;
 using std::string;
-using std::unique_ptr;
 using std::vector;
 
 struct Position {
@@ -30,6 +29,8 @@ struct Token {
 struct Tokens {
   vector<Token> tokens;
 
+  Tokens() = default;
+  Tokens(antlr4::ParserRuleContext *ctx);
   Tokens(vector<Token> tokens);
 
   Position getStart() const;
@@ -38,16 +39,13 @@ struct Tokens {
 
 struct Node {
   Tokens tokens;
-  shared_ptr<Scope> scope;
 
   Node(Tokens tokens);
   virtual ~Node() = default;
 
-  void setScope(shared_ptr<Scope> scope);
+  virtual any accept(class AbstractAstVisitor &visitor) = 0;
 
-  virtual any accept(class AstVisitor &visitor) = 0;
-
-  virtual ostream &print(ostream &out) const = 0;
+  virtual ostream &print(ostream &out) const;
 };
 
 ostream &operator<<(ostream &out, const Node &node);
