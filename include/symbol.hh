@@ -34,10 +34,11 @@ struct FunctionSymbol : public Symbol {
                                   const FunctionSymbol &symbol) {
     os << "FunctionSymbol(" << symbol.name << ", " << symbol.mangledName << ", "
        << *symbol.returnType << ", [";
-    for (auto &type : symbol.parameters) {
-      os << type << ", ";
+    for (auto &param : symbol.parameters) {
+      os << param.name << ": " << *param.type << ", ";
     }
-    os << "])";
+    os << "], "
+       << "-> " << *symbol.returnType << ")";
     return os;
   }
 };

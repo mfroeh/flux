@@ -40,9 +40,8 @@ any ForLoop::accept(AbstractAstVisitor &visitor) {
 InIntervalExpr::InIntervalExpr(Tokens tokens, shared_ptr<Expr> value,
                                shared_ptr<Expr> lower, shared_ptr<Expr> upper,
                                IntervalKind intervalKind)
-    : Expr(std::move(tokens), make_shared<InferType>()),
-      value(std::move(value)), lower(std::move(lower)), upper(std::move(upper)),
-      kind(intervalKind) {}
+    : Expr(std::move(tokens), InferType::get()), value(std::move(value)),
+      lower(std::move(lower)), upper(std::move(upper)), kind(intervalKind) {}
 
 any InIntervalExpr::accept(AbstractAstVisitor &visitor) {
   return visitor.visit(*this);
@@ -55,7 +54,7 @@ llvm::Value *InIntervalExpr::codegen(IRVisitor &visitor) {
 CompoundAssignment::CompoundAssignment(Tokens tokens, shared_ptr<Expr> lhs,
                                        BinaryArithmetic::Operator op,
                                        shared_ptr<Expr> rhs)
-    : Expr(std::move(tokens), make_shared<InferType>()), target(std::move(lhs)),
+    : Expr(std::move(tokens), InferType::get()), target(std::move(lhs)),
       value(std::move(rhs)), op(op) {}
 
 any CompoundAssignment::accept(AbstractAstVisitor &visitor) {

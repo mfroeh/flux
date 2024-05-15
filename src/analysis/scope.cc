@@ -7,16 +7,21 @@
 
 using namespace std;
 
+int Scope::uniqueCounter = 0;
+
 Scope::Scope(shared_ptr<Scope> parent) : parent(std::move(parent)) {
-  if (this->parent)
+  if (this->parent) {
     depth = this->parent->depth + 1;
+  }
+  counter = uniqueCounter++;
 }
 
 void Scope::addVariable(string name, shared_ptr<Type> type) {
   int count = variableCounts[name]++;
 
   VariableSymbol variable;
-  variable.mangledName = std::format("#{}?{}:{}", depth, count, name);
+  variable.mangledName =
+      std::format("#d={}n={}misc={}:{}", depth, count, counter, name);
   variable.name = name;
   variable.type = type;
   cout << "inserting " << variable << endl;
@@ -28,7 +33,8 @@ void Scope::addFunction(string name, shared_ptr<Type> returnType,
   int count = functionCounts[name]++;
 
   FunctionSymbol function;
-  function.mangledName = std::format("@{}?{}:{}", depth, count, name);
+  function.mangledName =
+      std::format("#d={}n={}misc={}:{}", depth, count, counter, name);
   function.name = name;
   function.returnType = returnType;
   function.parameters = parameters;
@@ -38,7 +44,6 @@ void Scope::addFunction(string name, shared_ptr<Type> returnType,
 
 shared_ptr<VariableSymbol> Scope::getVariable(string name) {
   Scope *scope = this;
-  cout << "ok" << endl;
   do {
     for (auto &variable : ranges::views::reverse(scope->variables)) {
       if (variable->name == name)
@@ -59,4 +64,17 @@ shared_ptr<FunctionSymbol> Scope::getFunction(string name) {
     scope = scope->parent.get();
   } while (scope);
   return nullptr;
+}
+
+vector<shared_ptr<FunctionSymbol>> Scope::getAllFunctionsWithName(string name) {
+  vector<shared_ptr<FunctionSymbol>> result;
+  Scope *scope = this;
+  do {
+    for (auto &function : ranges::views::reverse(scope->functions)) {
+      if (function->name == name)
+        result.push_back(function);
+    }
+    scope = scope->parent.get();
+  } while (scope);
+  return result;
 }

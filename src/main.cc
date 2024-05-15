@@ -3,9 +3,11 @@
 #include "FluxLexer.h"
 #include "FluxParser.h"
 #include "analysis/desugar.hh"
+#include "analysis/typecheck.hh"
 #include "analysis/variable_resolver.hh"
 #include "ast/ast_creator.hh"
 #include "module_context.hh"
+#include "symbol_table.hh"
 #include "visitor.hh"
 #include <argparse/argparse.hpp>
 #include <cassert>
@@ -66,13 +68,19 @@ int main(int argc, char *argv[]) {
     auto astCreator = make_shared<AstCreator>();
     Module module = astCreator->visitModule(parseTreeRoot);
 
+    SymbolTable symTab;
+
     cout << "Desugaring " << file << endl;
     auto desugarer = make_shared<Desugarer>(moduleContext);
     desugarer->visit(module);
 
     cout << "Resolving variable references " << file << endl;
-    auto resolver = make_shared<VariableResolver>(moduleContext);
+    auto resolver = make_shared<VariableResolver>(moduleContext, symTab);
     static_pointer_cast<AstVisitor>(resolver)->visit(module);
+
+    cout << "Type checking and resolving function calls" << file << endl;
+    auto typeChecker = make_shared<TypeChecker>(moduleContext, symTab);
+    static_pointer_cast<AstVisitor>(typeChecker)->visit(module);
   }
   return 0;
 }

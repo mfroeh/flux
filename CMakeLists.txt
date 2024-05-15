@@ -59,7 +59,7 @@ set(ast
     src/ast/type.cc
     )
 
-set(analysis src/analysis/desugar.cc src/analysis/scope.cc src/analysis/variable_resolver.cc)
+set(analysis src/analysis/desugar.cc src/analysis/scope.cc src/analysis/variable_resolver.cc src/analysis/typecheck.cc)
 
 set(codegen "")
 
@@ -69,6 +69,7 @@ add_executable(
   flux
   src/main.cc
   src/visitor.cc
+  src/symbol_table.cc
   ${toplevel}
   ${parser}
   ${ast}

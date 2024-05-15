@@ -13,6 +13,8 @@ using std::vector;
 struct Scope {
   Scope(shared_ptr<Scope> parent);
 
+  static int uniqueCounter;
+
   vector<shared_ptr<VariableSymbol>> variables;
   vector<shared_ptr<FunctionSymbol>> functions;
 
@@ -22,6 +24,7 @@ struct Scope {
 
   shared_ptr<VariableSymbol> getVariable(string name);
   shared_ptr<FunctionSymbol> getFunction(string name);
+  vector<shared_ptr<FunctionSymbol>> getAllFunctionsWithName(string name);
 
   // todo
 public:
@@ -30,4 +33,5 @@ public:
   unordered_map<string, int> variableCounts;
   unordered_map<string, int> functionCounts;
   int depth = 0;
+  int counter = 0;
 };

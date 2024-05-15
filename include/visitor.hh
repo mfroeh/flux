@@ -4,6 +4,7 @@
 #include "ast/stmt.hh"
 #include "ast/sugar.hh"
 #include "module_context.hh"
+#include "symbol_table.hh"
 #include <any>
 #include <memory>
 
@@ -60,7 +61,8 @@ protected:
 
 class AstVisitor : public AbstractAstVisitor {
 public:
-  AstVisitor(ModuleContext &context) : AbstractAstVisitor(context) {}
+  AstVisitor(ModuleContext &context, SymbolTable &symTab)
+      : AbstractAstVisitor(context), symTab(symTab) {}
 
   // module
   any visit(struct Module &module) override;
@@ -100,4 +102,7 @@ public:
   any visit(struct sugar::ForLoop &forStmt) override;
   any visit(struct sugar::InIntervalExpr &inIntervalExpr) override;
   any visit(struct sugar::CompoundAssignment &compoundAssignment) override;
+
+protected:
+  SymbolTable &symTab;
 };

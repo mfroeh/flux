@@ -44,6 +44,9 @@ struct VariableDeclaration : public Statement {
   shared_ptr<Type> type;
   shared_ptr<Expr> initializer;
 
+  // set during name resolution
+  string mangledName;
+
   VariableDeclaration(Tokens tokens, string name, shared_ptr<Type> type,
                       shared_ptr<Expr> initializer);
 

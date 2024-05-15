@@ -20,6 +20,7 @@ struct Cast : public Expr {
   shared_ptr<Expr> expr;
 
   Cast(Tokens tokens, shared_ptr<Expr> expr, shared_ptr<Type> type);
+  Cast(shared_ptr<Expr> expr, shared_ptr<Type> type);
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
@@ -84,6 +85,12 @@ struct ArrayReference : public Expr {
 struct FunctionCall : public Expr {
   string callee;
   vector<shared_ptr<Expr>> arguments;
+
+  // set during variable resolution, used for call resolution (mangledNames)
+  vector<string> callCandidates;
+
+  // set during TODO
+  string mangledName;
 
   FunctionCall(Tokens tokens, string callee,
                vector<shared_ptr<Expr>> arguments);

@@ -385,6 +385,8 @@ shared_ptr<Expr> AstCreator::visitLiteral(FluxParser::LiteralContext *ctx) {
 vector<shared_ptr<Expr>>
 AstCreator::visitExpressionList(FluxParser::ExpressionListContext *ctx) {
   vector<shared_ptr<Expr>> expressions;
+  if (!ctx)
+    return expressions;
   ranges::copy(ctx->expression() | views::transform([this](auto &expr) {
                  return visitExpression(expr);
                }),
@@ -394,7 +396,7 @@ AstCreator::visitExpressionList(FluxParser::ExpressionListContext *ctx) {
 
 shared_ptr<Type> AstCreator::visitType(FluxParser::TypeContext *ctx) {
   if (!ctx)
-    return make_shared<InferType>();
+    return InferType::get();
 
   if (auto arrayType = ctx->arrayType())
     return visitArrayType(arrayType);
@@ -408,19 +410,19 @@ shared_ptr<ArrayType>
 AstCreator::visitArrayType(FluxParser::ArrayTypeContext *ctx) {
   auto elementType = visitBuiltinType(ctx->builtinType());
   long size = stol(ctx->IntLiteral()->getText());
-  return make_shared<ArrayType>(elementType, size);
+  return ArrayType::get(elementType, size);
 }
 
 shared_ptr<Type>
 AstCreator::visitBuiltinType(FluxParser::BuiltinTypeContext *ctx) {
   if (ctx->KwInt32() || ctx->KwInt64())
-    return make_shared<IntType>();
+    return IntType::get();
   else if (ctx->KwFloat32() || ctx->KwFloat64())
-    return make_shared<FloatType>();
+    return FloatType::get();
   else if (ctx->KwBool())
-    return make_shared<BoolType>();
+    return BoolType::get();
   else if (ctx->KwString())
-    return make_shared<StringType>();
+    return StringType::get();
   else
     throw runtime_error("Unknown builtin type");
 }

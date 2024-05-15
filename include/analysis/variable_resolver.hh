@@ -4,13 +4,14 @@
 #include "ast/function.hh"
 #include "ast/stmt.hh"
 #include "scope.hh"
+#include "symbol_table.hh"
 #include "visitor.hh"
 
 using std::shared_ptr;
 
 class VariableResolver : public AstVisitor {
 public:
-  VariableResolver(ModuleContext &context);
+  VariableResolver(ModuleContext &context, SymbolTable &symTab);
 
   // opens new scope
   any visit(struct FunctionDefinition &functionDefinition) override;
@@ -25,6 +26,9 @@ public:
   // resolves variable references
   any visit(struct VariableReference &var) override;
   any visit(struct ArrayReference &arr) override;
+
+  // finds function call candidates
+  any visit(struct FunctionCall &funcCall) override;
 
 private:
   shared_ptr<Scope> currentScope;
