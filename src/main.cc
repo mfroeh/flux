@@ -3,8 +3,10 @@
 #include "FluxLexer.h"
 #include "FluxParser.h"
 #include "analysis/desugar.hh"
+#include "analysis/variable_resolver.hh"
 #include "ast/ast_creator.hh"
 #include "module_context.hh"
+#include "visitor.hh"
 #include <argparse/argparse.hpp>
 #include <cassert>
 #include <filesystem>
@@ -61,12 +63,16 @@ int main(int argc, char *argv[]) {
     auto parseTreeRoot = parser.module();
 
     cout << "Creating AST " << file << endl;
-    AstCreator astCreator;
-    Module module = astCreator.visitModule(parseTreeRoot);
+    auto astCreator = make_shared<AstCreator>();
+    Module module = astCreator->visitModule(parseTreeRoot);
 
     cout << "Desugaring " << file << endl;
-    auto desugarer = Desugarer(moduleContext);
-    desugarer.visit(module);
+    auto desugarer = make_shared<Desugarer>(moduleContext);
+    desugarer->visit(module);
+
+    cout << "Resolving variable references " << file << endl;
+    auto resolver = make_shared<VariableResolver>(moduleContext);
+    static_pointer_cast<AstVisitor>(resolver)->visit(module);
   }
   return 0;
 }

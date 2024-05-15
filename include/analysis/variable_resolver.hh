@@ -16,7 +16,7 @@ public:
   any visit(struct FunctionDefinition &functionDefinition) override;
   any visit(struct IfElse &ifElse) override;
   any visit(struct While &whileLoop) override;
-  any visit(struct Block &block) override;
+  any visit(struct StandaloneBlock &forLoop) override;
 
   // creates variable in current scope
   any visit(struct Parameter &parameter) override;

@@ -96,6 +96,8 @@ AstCreator::visitStatement(FluxParser::StatementContext *ctx) {
     return visitForLoop(forLoop);
   else if (auto ifStmt = ctx->ifStatement())
     return visitIfStatement(ifStmt);
+  else if (auto standaloneBlock = ctx->standaloneBlock())
+    return visitStandaloneBlock(standaloneBlock);
   else
     throw runtime_error("Unknown statement type");
 }
@@ -130,12 +132,17 @@ AstCreator::visitWhileLoop(FluxParser::WhileLoopContext *ctx) {
   return make_shared<While>(Tokens(ctx), condition, body);
 }
 
+shared_ptr<StandaloneBlock>
+AstCreator::visitStandaloneBlock(FluxParser::StandaloneBlockContext *ctx) {
+  return make_shared<StandaloneBlock>(Tokens(ctx), visitBlock(ctx->block()));
+}
+
 shared_ptr<sugar::ForLoop>
 AstCreator::visitForLoop(FluxParser::ForLoopContext *ctx) {
   auto init = visitStatement(ctx->statement(0)); // let i = 0;
   auto conditionStatement =
       visitExpressionStatement(ctx->expressionStatement()); // i < N;
-  auto condition = conditionStatement->expression;
+  auto condition = conditionStatement->expr;
   auto post = visitStatement(ctx->statement(1)); // i += 1;
 
   auto body = ctx->block() ? visitBlock(ctx->block())

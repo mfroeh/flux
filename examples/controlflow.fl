@@ -28,16 +28,24 @@ main(): i64 {
     let i: i64 = 0;
     while (i < 10) {
         i += 1;
+    } 
+    
+    {
+        let j: i64 = 0;
+        while (j < 10) {
+            j += 1;
+            i += j;
+        }
     }
 
     // single-statement while loop
-    while (i < 20) -> i += 1;
+    // while (i < 20) -> i += 1;
 
     // bodied for-loop
-    for (let i = 0; i in [0, 100]; i += 1;) {
+    for (let i: f64 = 0; i in [0, 100]; i = 1;) {
         i *= 2;
     }
 
     // single-statement for loop
-    for (let i = 0; i in [0, 100]; i += 1;) -> i *= 2;
+    for (let i: i64 = 0; i in [0, 100]; i += 1;) -> i *= 2;
 }

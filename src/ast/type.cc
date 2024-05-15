@@ -1,7 +1,35 @@
 #include "ast/type.hh"
 #include "ir_visitor.hh"
+#include <ostream>
+
+using namespace std;
 
 Type::Type(Kind kind) : kind(std::move(kind)) {}
+
+ostream &operator<<(ostream &os, const Type &type) {
+  switch (type.kind) {
+  case Type::INFER:
+    os << "Infer";
+    break;
+  case Type::ARRAY:
+    os << "Array(" << *static_cast<const ArrayType &>(type).elementType << ", "
+       << static_cast<const ArrayType &>(type).size << ")";
+    break;
+  case Type::INT:
+    os << "Int";
+    break;
+  case Type::FLOAT:
+    os << "Float";
+    break;
+  case Type::BOOL:
+    os << "Bool";
+    break;
+  case Type::STRING:
+    os << "String";
+    break;
+  }
+  return os;
+}
 
 InferType::InferType() : Type(INFER) {}
 

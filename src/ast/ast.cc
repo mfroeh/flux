@@ -10,10 +10,13 @@ Token::Token(int line, int column, string text)
     : position(line, column), text(std::move(text)) {}
 
 Tokens::Tokens(antlr4::ParserRuleContext *ctx) {
-  for (auto &term : ctx->getTokens(999)) {
-    auto symbol = term->getSymbol();
-    tokens.emplace_back(symbol->getLine(), symbol->getCharPositionInLine() + 1,
-                        symbol->getText());
+  for (auto &term : ctx->children) {
+    if (auto terminal = dynamic_cast<antlr4::tree::TerminalNode *>(term)) {
+      auto symbol = terminal->getSymbol();
+      tokens.emplace_back(symbol->getLine(),
+                          symbol->getCharPositionInLine() + 1,
+                          symbol->getText());
+    }
   }
 }
 

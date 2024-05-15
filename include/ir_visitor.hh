@@ -17,7 +17,7 @@ public:
   // statements
   virtual void visit(struct Block &block) = 0;
   virtual void visit(struct Return &ret) = 0;
-  virtual void visit(struct IfElse &ifElse) = 0;
+  virtual void visit(struct ElseIf &ifElse) = 0;
   virtual void visit(struct While &whileStmt) = 0;
   virtual void visit(struct ExpressionStatement &exprStmt) = 0;
   virtual void visit(struct VariableDeclaration &varDecl) = 0;

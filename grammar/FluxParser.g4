@@ -28,7 +28,10 @@ statement:
 	| returnStatement
 	| ifStatement
 	| whileLoop
-	| forLoop;
+	| forLoop
+	| standaloneBlock;
+
+standaloneBlock: block;
 
 expressionStatement: expression ';';
 

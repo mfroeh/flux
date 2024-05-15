@@ -2,6 +2,7 @@
 
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Type.h>
+#include <ostream>
 
 using std::shared_ptr;
 using std::string;
@@ -28,6 +29,8 @@ struct Type {
 
   virtual llvm::Type *codegen(class IRVisitor &visitor) = 0;
 };
+
+std::ostream &operator<<(std::ostream &os, const Type &type);
 
 struct InferType : public Type {
   InferType();

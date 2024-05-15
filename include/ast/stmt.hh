@@ -32,7 +32,7 @@ struct Block : public Node {
 };
 
 struct ExpressionStatement : public Statement {
-  shared_ptr<Expr> expression;
+  shared_ptr<Expr> expr;
 
   ExpressionStatement(Tokens tokens, shared_ptr<Expr> expression);
 
@@ -74,6 +74,14 @@ struct While : public Statement {
   Block body;
 
   While(Tokens tokens, shared_ptr<Expr> condition, Block body);
+
+  any accept(AbstractAstVisitor &visitor) override;
+};
+
+struct StandaloneBlock : public Statement {
+  Block block;
+
+  StandaloneBlock(Tokens tokens, Block block);
 
   any accept(AbstractAstVisitor &visitor) override;
 };

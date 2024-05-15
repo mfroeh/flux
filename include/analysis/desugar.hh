@@ -24,6 +24,7 @@ public:
   any visit(struct While &whileStmt) override;
   any visit(struct ExpressionStatement &exprStmt) override;
   any visit(struct VariableDeclaration &varDecl) override;
+  any visit(struct StandaloneBlock &standaloneBlock) override;
 
   // expressions
   any visit(struct Cast &cast) override;

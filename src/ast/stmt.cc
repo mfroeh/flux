@@ -14,7 +14,7 @@ any Block::accept(AbstractAstVisitor &visitor) { return visitor.visit(*this); }
 
 ExpressionStatement::ExpressionStatement(Tokens tokens,
                                          shared_ptr<Expr> expression)
-    : Statement(tokens), expression(expression) {}
+    : Statement(tokens), expr(expression) {}
 
 any ExpressionStatement::accept(AbstractAstVisitor &visitor) {
   return visitor.visit(*this);
@@ -45,3 +45,10 @@ While::While(Tokens tokens, shared_ptr<Expr> condition, Block body)
     : Statement(tokens), condition(condition), body(body) {}
 
 any While::accept(AbstractAstVisitor &visitor) { return visitor.visit(*this); }
+
+StandaloneBlock::StandaloneBlock(Tokens tokens, Block block)
+    : Statement(tokens), block(block) {}
+
+any StandaloneBlock::accept(AbstractAstVisitor &visitor) {
+  return visitor.visit(*this);
+}

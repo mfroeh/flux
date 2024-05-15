@@ -42,6 +42,8 @@ public:
   visitVariableDeclaration(FP::VariableDeclarationContext *ctx);
   shared_ptr<Return> visitReturnStatement(FP::ReturnStatementContext *ctx);
   shared_ptr<While> visitWhileLoop(FP::WhileLoopContext *ctx);
+  shared_ptr<StandaloneBlock>
+  visitStandaloneBlock(FP::StandaloneBlockContext *ctx);
   shared_ptr<sugar::ForLoop> visitForLoop(FP::ForLoopContext *ctx);
   shared_ptr<sugar::IfElifElseStatement>
   visitIfStatement(FP::IfStatementContext *ctx);

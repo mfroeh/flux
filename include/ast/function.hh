@@ -4,6 +4,7 @@
 #include "ast/stmt.hh"
 #include "ast/type.hh"
 #include <memory>
+#include <ostream>
 
 using std::shared_ptr;
 using std::string;

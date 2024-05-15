@@ -1,15 +1,21 @@
 #include "analysis/variable_resolver.hh"
 #include "ast/expr.hh"
+#include "ast/stmt.hh"
 #include "visitor.hh"
 
 using namespace std;
 
 VariableResolver::VariableResolver(ModuleContext &context)
     : AstVisitor(context) {
-  currentScope = make_shared<Scope>();
+  currentScope = make_shared<Scope>(nullptr);
 }
 
 any VariableResolver::visit(FunctionDefinition &functionDefinition) {
+  // add function to current scope
+  currentScope->addFunction(functionDefinition.name,
+                            functionDefinition.returnType,
+                            functionDefinition.parameters);
+
   auto previousScope = currentScope;
   currentScope = make_shared<Scope>(previousScope);
 
@@ -39,15 +45,15 @@ any VariableResolver::visit(While &whileLoop) {
   return {};
 }
 
-any VariableResolver::visit(Block &block) {
+any VariableResolver::visit(StandaloneBlock &block) {
   auto previousScope = currentScope;
-  if (block.isStandalone)
-    currentScope = make_shared<Scope>(previousScope);
+  currentScope = make_shared<Scope>(previousScope);
 
+  cout << "Visiting standalone block" << endl;
   AstVisitor::visit(block);
+  cout << "Leaving standalone block" << endl;
 
-  if (block.isStandalone)
-    currentScope = previousScope;
+  currentScope = previousScope;
   return {};
 }
 
@@ -65,6 +71,7 @@ any VariableResolver::visit(VariableDeclaration &variableDeclaration) {
 }
 
 any VariableResolver::visit(VariableReference &var) {
+  cout << "Visiting " << var.name << " " << &var << endl;
   auto variable = currentScope->getVariable(var.name);
   if (!variable)
     throw runtime_error("Variable " + var.name + " not found");

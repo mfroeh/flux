@@ -3,6 +3,8 @@
 #include "visitor.hh"
 #include <llvm/IR/Value.h>
 
+using namespace std;
+
 Parameter::Parameter(Tokens tokens, string name, shared_ptr<Type> type)
     : Node(std::move(tokens)), name(std::move(name)), type(std::move(type)) {}
 

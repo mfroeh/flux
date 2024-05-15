@@ -7,8 +7,10 @@
 #include "ast/sugar.hh"
 #include "ast/type.hh"
 
+using namespace std;
+
 // module
-any AstVisitor::visit(struct Module &module) {
+any AstVisitor::visit(Module &module) {
   for (auto &function : module.functions) {
     function.accept(*this);
   }
@@ -16,7 +18,7 @@ any AstVisitor::visit(struct Module &module) {
 }
 
 // functions
-any AstVisitor::visit(struct FunctionDefinition &function) {
+any AstVisitor::visit(FunctionDefinition &function) {
   for (auto &parameter : function.parameters) {
     parameter.accept(*this);
   }
@@ -24,22 +26,23 @@ any AstVisitor::visit(struct FunctionDefinition &function) {
   return {};
 }
 
-any AstVisitor::visit(struct Parameter &parameter) { return {}; }
+any AstVisitor::visit(Parameter &parameter) { return {}; }
 
 // statements
-any AstVisitor::visit(struct Block &block) {
+any AstVisitor::visit(Block &block) {
   for (auto &stmt : block.statements) {
+    cout << *stmt << endl;
     stmt->accept(*this);
   }
   return {};
 }
 
-any AstVisitor::visit(struct Return &ret) {
+any AstVisitor::visit(Return &ret) {
   ret.expression->accept(*this);
   return {};
 }
 
-any AstVisitor::visit(struct IfElse &ifElse) {
+any AstVisitor::visit(IfElse &ifElse) {
   ifElse.condition->accept(*this);
   ifElse.thenBlock.accept(*this);
   if (!ifElse.elseBlock.isEmpty())
@@ -47,104 +50,109 @@ any AstVisitor::visit(struct IfElse &ifElse) {
   return {};
 }
 
-any AstVisitor::visit(struct While &whileStmt) {
+any AstVisitor::visit(While &whileStmt) {
   whileStmt.condition->accept(*this);
   whileStmt.body.accept(*this);
   return {};
 }
 
-any AstVisitor::visit(struct ExpressionStatement &exprStmt) {
-  exprStmt.expression->accept(*this);
+any AstVisitor::visit(ExpressionStatement &exprStmt) {
+  exprStmt.expr->accept(*this);
   return {};
 }
 
-any AstVisitor::visit(struct VariableDeclaration &varDecl) {
+any AstVisitor::visit(VariableDeclaration &varDecl) {
   if (varDecl.initializer)
     varDecl.initializer->accept(*this);
   return {};
 }
 
+any AstVisitor::visit(StandaloneBlock &standaloneBlock) {
+  standaloneBlock.block.accept(*this);
+  return {};
+}
+
 // expressions
-any AstVisitor::visit(struct Cast &cast) {
+any AstVisitor::visit(Cast &cast) {
   cast.expr->accept(*this);
   return {};
 }
 
-any AstVisitor::visit(struct IntLiteral &intLit) { return {}; }
+any AstVisitor::visit(IntLiteral &intLit) { return {}; }
 
-any AstVisitor::visit(struct FloatLiteral &floatLit) { return {}; }
+any AstVisitor::visit(FloatLiteral &floatLit) { return {}; }
 
-any AstVisitor::visit(struct BoolLiteral &boolLit) { return {}; }
+any AstVisitor::visit(BoolLiteral &boolLit) { return {}; }
 
-any AstVisitor::visit(struct StringLiteral &stringLit) { return {}; }
+any AstVisitor::visit(StringLiteral &stringLit) { return {}; }
 
-any AstVisitor::visit(struct VariableReference &var) { return {}; }
+any AstVisitor::visit(VariableReference &var) { return {}; }
 
-any AstVisitor::visit(struct ArrayReference &arr) {
+any AstVisitor::visit(ArrayReference &arr) {
   arr.index->accept(*this);
   return {};
 }
 
-any AstVisitor::visit(struct FunctionCall &funcCall) {
+any AstVisitor::visit(FunctionCall &funcCall) {
   for (auto &arg : funcCall.arguments) {
     arg->accept(*this);
   }
   return {};
 }
 
-any AstVisitor::visit(struct UnaryPrefixOp &unaryOp) {
+any AstVisitor::visit(UnaryPrefixOp &unaryOp) {
   unaryOp.operand->accept(*this);
   return {};
 }
 
-any AstVisitor::visit(struct BinaryArithmetic &binaryOp) {
+any AstVisitor::visit(BinaryArithmetic &binaryOp) {
   binaryOp.lhs->accept(*this);
   binaryOp.rhs->accept(*this);
   return {};
 }
 
-any AstVisitor::visit(struct BinaryComparison &binaryOp) {
+any AstVisitor::visit(BinaryComparison &binaryOp) {
   binaryOp.lhs->accept(*this);
   binaryOp.rhs->accept(*this);
   return {};
 }
 
-any AstVisitor::visit(struct BinaryLogical &binaryOp) {
+any AstVisitor::visit(BinaryLogical &binaryOp) {
   binaryOp.lhs->accept(*this);
   binaryOp.rhs->accept(*this);
   return {};
 }
 
-any AstVisitor::visit(struct TernaryExpr &ternaryOp) {
+any AstVisitor::visit(TernaryExpr &ternaryOp) {
   ternaryOp.condition->accept(*this);
   ternaryOp.thenExpr->accept(*this);
   ternaryOp.elseExpr->accept(*this);
   return {};
 }
 
-any AstVisitor::visit(struct Assignment &assignment) {
+any AstVisitor::visit(Assignment &assignment) {
   assignment.target->accept(*this);
   assignment.value->accept(*this);
   return {};
 }
 
 // sugar
-any AstVisitor::visit(struct sugar::ElifStatement &elifStmt) {
+any AstVisitor::visit(sugar::ElifStatement &elifStmt) {
   throw std::runtime_error("found sugar!");
 }
 
-any AstVisitor::visit(struct sugar::IfElifElseStatement &elifElseStmt) {
+any AstVisitor::visit(sugar::IfElifElseStatement &elifElseStmt) {
   throw std::runtime_error("found sugar!");
 }
 
-any AstVisitor::visit(struct sugar::ForLoop &forStmt) {
+any AstVisitor::visit(sugar::ForLoop &forStmt) {
   throw std::runtime_error("found sugar!");
 }
 
-any AstVisitor::visit(struct sugar::InIntervalExpr &inIntervalExpr) {
+any AstVisitor::visit(sugar::InIntervalExpr &inIntervalExpr) {
   throw std::runtime_error("found sugar!");
 }
 
-any AstVisitor::visit(struct sugar::CompoundAssignment &compoundAssignment) {
+any AstVisitor::visit(sugar::CompoundAssignment &compoundAssignment) {
   throw std::runtime_error("found sugar!");
 }
