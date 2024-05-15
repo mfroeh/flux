@@ -29,7 +29,8 @@ statement:
 	| ifStatement
 	| whileLoop
 	| forLoop
-	| standaloneBlock;
+	| standaloneBlock
+	| functionDefinition;
 
 standaloneBlock: block;
 

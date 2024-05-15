@@ -65,7 +65,7 @@ any VariableResolver::visit(Parameter &parameter) {
   currentScope->addVariable(parameter.name, parameter.type);
   auto variable = currentScope->getVariable(parameter.name);
   symTab.insert(variable);
-  parameter.name = variable->mangledName;
+  parameter.mangledName = variable->mangledName;
   return {};
 }
 
@@ -86,26 +86,30 @@ any VariableResolver::visit(VariableReference &var) {
   if (!variable)
     throw runtime_error("Variable " + var.name + " not found");
 
-  var.name = variable->mangledName;
+  var.mangledName = variable->mangledName;
   return {};
 }
 
 any VariableResolver::visit(ArrayReference &arr) {
-  arr.index->accept(*this);
-  auto variableRef = dynamic_pointer_cast<VariableReference>(arr.arrayExpr);
-  if (variableRef == nullptr)
-    return {};
+  AstVisitor::visit(arr);
+  // TODO: but we shouldn't need this
+  // arr.index->accept(*this);
+  // auto variableRef = dynamic_pointer_cast<VariableReference>(arr.arrayExpr);
+  // if (variableRef == nullptr)
+  //   return {};
 
-  string name = variableRef->name;
-  auto variable = currentScope->getVariable(name);
-  if (!variable)
-    throw runtime_error("Variable " + name + " not found");
+  // string name = variableRef->name;
+  // auto variable = currentScope->getVariable(name);
+  // if (!variable)
+  //   throw runtime_error("Variable " + name + " not found");
 
-  variableRef->name = variable->mangledName;
+  // variableRef->mangledName = variable->mangledName;
   return {};
 }
 
 any VariableResolver::visit(FunctionCall &funcCall) {
+  AstVisitor::visit(funcCall);
+
   auto functions = currentScope->getAllFunctionsWithName(funcCall.callee);
   if (functions.empty())
     throw runtime_error("Function " + funcCall.callee + " not found");

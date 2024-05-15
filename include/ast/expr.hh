@@ -65,6 +65,9 @@ struct StringLiteral : public Expr {
 struct VariableReference : public Expr {
   string name;
 
+  // set during name resolution
+  string mangledName;
+
   VariableReference(Tokens tokens, string name);
 
   virtual any accept(class AbstractAstVisitor &visitor) override;

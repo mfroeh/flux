@@ -98,6 +98,8 @@ AstCreator::visitStatement(FluxParser::StatementContext *ctx) {
     return visitIfStatement(ifStmt);
   else if (auto standaloneBlock = ctx->standaloneBlock())
     return visitStandaloneBlock(standaloneBlock);
+  else if (auto functioDef = ctx->functionDefinition())
+    return make_shared<FunctionDefinition>(visitFunctionDefinition(functioDef));
   else
     throw runtime_error("Unknown statement type");
 }

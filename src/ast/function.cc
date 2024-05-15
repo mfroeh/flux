@@ -15,7 +15,7 @@ any Parameter::accept(AbstractAstVisitor &visitor) {
 FunctionDefinition::FunctionDefinition(Tokens tokens, string name,
                                        vector<Parameter> parameters,
                                        shared_ptr<Type> returnType, Block body)
-    : Node(std::move(tokens)), name(std::move(name)),
+    : Statement(std::move(tokens)), name(std::move(name)),
       parameters(std::move(parameters)), returnType(std::move(returnType)),
       body(std::move(body)) {}
 

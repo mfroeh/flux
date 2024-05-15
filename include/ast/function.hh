@@ -22,7 +22,7 @@ struct Parameter : public Node {
   any accept(AbstractAstVisitor &visitor) override;
 };
 
-struct FunctionDefinition : public Node {
+struct FunctionDefinition : public Statement {
   string name;
   vector<Parameter> parameters;
   shared_ptr<Type> returnType;

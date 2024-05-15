@@ -8,6 +8,10 @@ using std::string;
 using std::vector;
 
 struct Symbol {
+  int depth;
+  int count;
+
+  Symbol(int depth, int count) : depth(depth), count(count) {}
   virtual ~Symbol() = default;
 };
 
@@ -15,6 +19,11 @@ struct VariableSymbol : public Symbol {
   string name;
   string mangledName;
   shared_ptr<Type> type;
+
+  VariableSymbol(string name, string mangledName, shared_ptr<Type> type,
+                 int depth, int count)
+      : Symbol(depth, count), name(std::move(name)),
+        mangledName(std::move(mangledName)), type(std::move(type)) {}
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const VariableSymbol &symbol) {
@@ -29,6 +38,12 @@ struct FunctionSymbol : public Symbol {
   string mangledName;
   shared_ptr<Type> returnType;
   vector<Parameter> parameters;
+
+  FunctionSymbol(string name, string mangledName, shared_ptr<Type> returnType,
+                 vector<Parameter> parameters, int depth, int count)
+      : Symbol(depth, count), name(std::move(name)),
+        mangledName(std::move(mangledName)), returnType(std::move(returnType)),
+        parameters(std::move(parameters)) {}
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const FunctionSymbol &symbol) {

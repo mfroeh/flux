@@ -52,5 +52,20 @@ main(): i64 {
     // single-statement for loop
     for (let i: i64 = 0; i in [0, 100]; i += 1;) -> i *= 2;
 
-    ret 1;
+    add(a: f64, a: f64, c: f64): f64 {
+        ret a + b + c;
+    }
+
+    // and obviously variables
+    let c = add(2.2, 1.2);
+    let c = add(2.2, 1.2, 3.4);
+
+    // also with a diffrent type
+    let c = true;
+
+    // yes you can shadow functions too
+    add(a: f64, b: f64): f64 => b * 2;
+
+    // todo: this doesn't work yet
+    let d = add(2.2, add(2.2, 1.2));
 }

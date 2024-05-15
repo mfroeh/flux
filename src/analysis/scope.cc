@@ -19,11 +19,9 @@ Scope::Scope(shared_ptr<Scope> parent) : parent(std::move(parent)) {
 void Scope::addVariable(string name, shared_ptr<Type> type) {
   int count = variableCounts[name]++;
 
-  VariableSymbol variable;
-  variable.mangledName =
+  auto mangledName =
       std::format("#d={}n={}misc={}:{}", depth, count, counter, name);
-  variable.name = name;
-  variable.type = type;
+  auto variable = VariableSymbol(name, mangledName, type, depth, count);
   cout << "inserting " << variable << endl;
   variables.push_back(make_shared<VariableSymbol>(variable));
 }
@@ -32,12 +30,10 @@ void Scope::addFunction(string name, shared_ptr<Type> returnType,
                         vector<Parameter> parameters) {
   int count = functionCounts[name]++;
 
-  FunctionSymbol function;
-  function.mangledName =
+  auto mangledName =
       std::format("#d={}n={}misc={}:{}", depth, count, counter, name);
-  function.name = name;
-  function.returnType = returnType;
-  function.parameters = parameters;
+  auto function =
+      FunctionSymbol(name, mangledName, returnType, parameters, depth, count);
   cout << "inserting " << function << endl;
   functions.push_back(make_shared<FunctionSymbol>(function));
 }

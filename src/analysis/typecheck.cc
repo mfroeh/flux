@@ -26,6 +26,9 @@ any TypeChecker::visit(FunctionDefinition &function) {
 
   AstVisitor::visit(function);
 
+  // TODO: should probably check that it has one toplevel (function scope level)
+  // return statement. Otherwise really much more complex to analyze that it
+  // returns
   if (returns.top() == 0 && !function.returnType->isVoid()) {
     throw runtime_error("Function must return a value");
   }
@@ -149,7 +152,8 @@ any TypeChecker::visit(StringLiteral &stringLit) {
 }
 
 any TypeChecker::visit(VariableReference &var) {
-  auto symbol = symTab.lookupVariable(var.name);
+  auto symbol = symTab.lookupVariable(var.mangledName);
+  assert(symbol != nullptr);
   var.type = symbol->type;
   assert(!var.type->isInfer());
   return {};
@@ -201,17 +205,23 @@ any TypeChecker::visit(FunctionCall &funcCall) {
     ostringstream oss;
     oss << "No matching function found for call to " << funcCall.callee;
     throw runtime_error(oss.str());
-  } else if (remainingCandidates.size() > 1) {
-    ostringstream oss;
-    oss << "Ambiguous call to function " << funcCall.callee
-        << " with candidates: ";
-    for (auto &candidate : remainingCandidates) {
-      oss << candidate << " ";
-    }
-    throw runtime_error(oss.str());
   }
 
-  auto symbol = symTab.lookupFunction(remainingCandidates[0]);
+  vector<shared_ptr<FunctionSymbol>> candidates;
+  for (auto &candidate : remainingCandidates) {
+    candidates.push_back(symTab.lookupFunction(candidate));
+  }
+
+  // favor by scope depth, then by definition depth
+  // TODO: we could also make it illegal to have multiple possible functions in
+  // the same scope
+  ranges::sort(candidates, [](auto &a, auto &b) {
+    if (a->depth > b->depth)
+      return true;
+    return a->count > b->count;
+  });
+
+  auto symbol = candidates[0];
   for (int i = 0; i < funcCall.arguments.size(); i++) {
     auto &arg = funcCall.arguments[i];
     auto &param = symbol->parameters[i];
