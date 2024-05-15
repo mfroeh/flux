@@ -1,4 +1,4 @@
-add(a: f64, b: f64) => a + b;
+add(a: f64, b: f64) => -b;
 
 main(): i64 {
     let a: bool = false;
@@ -51,4 +51,6 @@ main(): i64 {
 
     // single-statement for loop
     for (let i: i64 = 0; i in [0, 100]; i += 1;) -> i *= 2;
+
+    ret 1;
 }

@@ -7,6 +7,7 @@ using namespace std;
 Type::Type(Kind kind) : kind(std::move(kind)) {}
 
 bool Type::isInfer() const { return kind == INFER; }
+bool Type::isVoid() const { return false; }
 bool Type::isNumber() const { return isInt() || isFloat(); }
 bool Type::isInt() const { return kind == INT; }
 bool Type::isFloat() const { return kind == FLOAT; }

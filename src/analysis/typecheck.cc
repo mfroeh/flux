@@ -16,23 +16,31 @@ using namespace std;
 
 stack<shared_ptr<FunctionSymbol>> functionSymbolStack;
 stack<FunctionDefinition *> functionStack;
+stack<int> returns;
 
 any TypeChecker::visit(FunctionDefinition &function) {
   auto symbol = symTab.lookupFunction(function.mangledName);
   functionSymbolStack.push(symbol);
   functionStack.push(&function);
+  returns.push(0);
 
   AstVisitor::visit(function);
-  // TODO: make sure that return exists
+
+  if (returns.top() == 0 && !function.returnType->isVoid()) {
+    throw runtime_error("Function must return a value");
+  }
 
   functionSymbolStack.pop();
   functionStack.pop();
+  returns.pop();
 
   return {};
 }
 
 any TypeChecker::visit(Return &ret) {
   AstVisitor::visit(ret);
+
+  returns.top()++;
 
   auto &functionSymbol = functionSymbolStack.top();
   auto &currentFunction = functionStack.top();

@@ -29,6 +29,7 @@ struct Type {
   virtual ~Type() = default;
 
   bool isInfer() const;
+  bool isVoid() const;
   bool isNumber() const;
   bool isInt() const;
   bool isFloat() const;
