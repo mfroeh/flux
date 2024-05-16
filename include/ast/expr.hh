@@ -14,6 +14,13 @@ struct Expr : public Node {
   Expr(Tokens tokens, shared_ptr<Type> type);
 
   virtual llvm::Value *codegen(IRVisitor &visitor) = 0;
+
+  virtual void setLValue(bool isLValue);
+  bool isLValue() const { return isLValue_; }
+
+protected:
+  // this can be true only for VariableReference and ArrayReference
+  bool isLValue_ = false;
 };
 
 struct Cast : public Expr {
@@ -83,6 +90,7 @@ struct ArrayReference : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  void setLValue(bool isLValue) override;
 };
 
 struct FunctionCall : public Expr {

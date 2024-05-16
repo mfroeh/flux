@@ -62,6 +62,10 @@ any VariableResolver::visit(StandaloneBlock &block) {
 }
 
 any VariableResolver::visit(Parameter &parameter) {
+  if (currentScope->getVariableNonRecursive(parameter.name) != nullptr) {
+    throw runtime_error("Parameter " + parameter.name + " already declared");
+  }
+
   currentScope->addVariable(parameter.name, parameter.type);
   auto variable = currentScope->getVariable(parameter.name);
   symTab.insert(variable);

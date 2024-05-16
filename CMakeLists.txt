@@ -61,7 +61,7 @@ set(ast
 
 set(analysis src/analysis/desugar.cc src/analysis/scope.cc src/analysis/variable_resolver.cc src/analysis/typecheck.cc)
 
-set(codegen "")
+set(codegen src/codegen/expr.cc src/codegen/function.cc src/codegen/module.cc src/codegen/stmt.cc)
 
 set(toplevel "")
 

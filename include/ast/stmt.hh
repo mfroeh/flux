@@ -12,6 +12,7 @@ using std::vector;
 
 struct Statement : public Node {
   Statement(Tokens tokens);
+  virtual void codegen(struct IRVisitor &visitor) = 0;
 };
 
 // Eventually make this std::optional in all of the types that have it
@@ -20,23 +21,21 @@ struct Block : public Node {
   bool isStandalone;
 
   Block();
-
   Block(Tokens tokens, vector<shared_ptr<Statement>> statements,
         bool isStandalone);
 
   size_t size() const { return statements.size(); }
-
   bool isEmpty() const { return statements.empty(); }
-
   any accept(AbstractAstVisitor &visitor) override;
+  void codegen(struct IRVisitor &visitor);
 };
 
 struct ExpressionStatement : public Statement {
   shared_ptr<Expr> expr;
 
   ExpressionStatement(Tokens tokens, shared_ptr<Expr> expression);
-
   any accept(AbstractAstVisitor &visitor) override;
+  void codegen(struct IRVisitor &visitor) override;
 };
 
 struct VariableDeclaration : public Statement {
@@ -51,6 +50,7 @@ struct VariableDeclaration : public Statement {
                       shared_ptr<Expr> initializer);
 
   any accept(AbstractAstVisitor &visitor) override;
+  void codegen(struct IRVisitor &visitor) override;
 };
 
 struct Return : public Statement {
@@ -59,6 +59,7 @@ struct Return : public Statement {
   Return(Tokens tokens, shared_ptr<Expr> expression);
 
   any accept(AbstractAstVisitor &visitor) override;
+  void codegen(struct IRVisitor &visitor) override;
 };
 
 struct IfElse : public Statement {
@@ -70,6 +71,7 @@ struct IfElse : public Statement {
          Block elseBlock);
 
   any accept(AbstractAstVisitor &visitor) override;
+  void codegen(struct IRVisitor &visitor) override;
 };
 
 struct While : public Statement {
@@ -79,6 +81,7 @@ struct While : public Statement {
   While(Tokens tokens, shared_ptr<Expr> condition, Block body);
 
   any accept(AbstractAstVisitor &visitor) override;
+  void codegen(struct IRVisitor &visitor) override;
 };
 
 struct StandaloneBlock : public Statement {
@@ -87,4 +90,5 @@ struct StandaloneBlock : public Statement {
   StandaloneBlock(Tokens tokens, Block block);
 
   any accept(AbstractAstVisitor &visitor) override;
+  void codegen(struct IRVisitor &visitor) override;
 };

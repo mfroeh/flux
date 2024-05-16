@@ -1,0 +1,7 @@
+main() : i64 { 
+    let a = 64;
+    let b: f64 = a;
+    let c = b - 64.0;
+    let a: bool = a;
+    ret 1;
+}

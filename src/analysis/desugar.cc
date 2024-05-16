@@ -123,6 +123,9 @@ any Desugarer::visit(ArrayReference &arr) {
   any res = arr.index->accept(*this);
   if (res.has_value())
     arr.index = any_cast<shared_ptr<Expr>>(res);
+  res = arr.arrayExpr->accept(*this);
+  if (res.has_value())
+    arr.arrayExpr = any_cast<shared_ptr<Expr>>(res);
   return {};
 }
 
@@ -324,11 +327,14 @@ any Desugarer::visit(sugar::CompoundAssignment &compoundAssignment) {
   // i += 1 -> i = i + 1
   shared_ptr<Expr> referenceCopy;
 
+  // this is the lvalue
   auto reference = compoundAssignment.target;
   if (auto var = dynamic_pointer_cast<VariableReference>(reference)) {
     referenceCopy = make_shared<VariableReference>(*var);
+    referenceCopy->setLValue(false);
   } else if (auto arr = dynamic_pointer_cast<ArrayReference>(reference)) {
     referenceCopy = make_shared<ArrayReference>(*arr);
+    referenceCopy->setLValue(false);
   } else {
     throw runtime_error("Invalid compound assignment target");
   }

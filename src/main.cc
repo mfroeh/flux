@@ -6,6 +6,7 @@
 #include "analysis/typecheck.hh"
 #include "analysis/variable_resolver.hh"
 #include "ast/ast_creator.hh"
+#include "codegen/ir_visitor.hh"
 #include "module_context.hh"
 #include "symbol_table.hh"
 #include "visitor.hh"
@@ -14,6 +15,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <llvm/IR/LLVMContext.h>
 
 using namespace std;
 using std::filesystem::path;
@@ -81,6 +83,11 @@ int main(int argc, char *argv[]) {
     cout << "Type checking and resolving function calls" << file << endl;
     auto typeChecker = make_shared<TypeChecker>(moduleContext, symTab);
     static_pointer_cast<AstVisitor>(typeChecker)->visit(module);
+
+    cout << "Generating IR code" << file << endl;
+    auto irVisitor = make_shared<IRVisitor>(moduleContext, symTab,
+                                            make_unique<llvm::LLVMContext>());
+    auto llvmModule = irVisitor->visit(module);
   }
   return 0;
 }

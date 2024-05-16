@@ -23,6 +23,8 @@ struct Scope {
                    vector<Parameter> parameters);
 
   shared_ptr<VariableSymbol> getVariable(string name);
+  shared_ptr<VariableSymbol> getVariableNonRecursive(string name);
+
   shared_ptr<FunctionSymbol> getFunction(string name);
   vector<shared_ptr<FunctionSymbol>> getAllFunctionsWithName(string name);
 

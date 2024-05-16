@@ -50,6 +50,14 @@ shared_ptr<VariableSymbol> Scope::getVariable(string name) {
   return nullptr;
 }
 
+shared_ptr<VariableSymbol> Scope::getVariableNonRecursive(string name) {
+  for (auto &variable : variables) {
+    if (variable->name == name)
+      return variable;
+  }
+  return nullptr;
+}
+
 shared_ptr<FunctionSymbol> Scope::getFunction(string name) {
   Scope *scope = this;
   do {

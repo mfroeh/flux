@@ -322,6 +322,7 @@ shared_ptr<sugar::CompoundAssignment> AstCreator::visitCompoundAssignmentExpr(
     throw runtime_error("Unknown compound assignment operator");
 
   auto lhs = visitExpression(ctx->expression(0));
+  lhs->setLValue(true);
   auto rhs = visitExpression(ctx->expression(1));
   return make_shared<sugar::CompoundAssignment>(Tokens(ctx), lhs, op, rhs);
 }
@@ -341,6 +342,7 @@ AstCreator::visitCallExpr(FluxParser::CallExprContext *ctx) {
 shared_ptr<Assignment>
 AstCreator::visitAssignmentExpr(FluxParser::AssignmentExprContext *ctx) {
   auto target = visitExpression(ctx->expression(0));
+  target->setLValue(true);
   auto value = visitExpression(ctx->expression(1));
   return make_shared<Assignment>(Tokens(ctx), target, value);
 }

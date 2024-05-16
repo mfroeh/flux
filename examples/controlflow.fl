@@ -29,20 +29,20 @@ main(): i64 {
 
     // bodied while loop
     let i: i64 = 0;
-    while (i < 10) {
+    while (i < 100.00) {
         i += 1;
     } 
     
     {
         let j: i64 = 0;
-        while (j < 10) {
+        while (j < 55.0) {
             j += 1;
             i += j;
         }
     }
 
     // single-statement while loop
-    // while (i < 20) -> i += 1;
+    while (i < 20) -> i += 1;
 
     // bodied for-loop
     for (let i: f64 = 0; i in [0, 100]; i = 1;) {
@@ -52,8 +52,9 @@ main(): i64 {
     // single-statement for loop
     for (let i: i64 = 0; i in [0, 100]; i += 1;) -> i *= 2;
 
-    add(a: f64, a: f64, c: f64): f64 {
-        ret a + b + c;
+    add(a: f64, b: f64, c: f64): f64 {
+        let res = a + b;
+        ret res + c;
     }
 
     // and obviously variables
@@ -70,12 +71,15 @@ main(): i64 {
     let d = add(2.2, add(2.2, 1.2));
 
     let arr: i64[10];
+    let a = arr[2];
 
-    array(): f64[20] {
+    fromArray(): f64 {
         let arr: f64[20];
         arr[0] = 1.1;
-        ret arr;
+        ret arr[0];
     }
 
-    let arr2 = array()[1];
+    let arr = arr;
+    arr[0] = 1;
+    ret 1;
 }

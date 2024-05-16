@@ -1,5 +1,5 @@
 #include "ast/type.hh"
-#include "ir_visitor.hh"
+#include "codegen/ir_visitor.hh"
 #include <ostream>
 
 using namespace std;
@@ -48,9 +48,14 @@ shared_ptr<InferType> InferType::get() {
   return instance;
 }
 
-llvm::Type *InferType::codegen(IRVisitor &visitor) { return nullptr; }
+llvm::Type *InferType::codegen(IRVisitor &visitor) { assert(false); }
 
-bool InferType::canImplicitlyConvert(shared_ptr<Type> other) { return true; }
+bool InferType::canImplicitlyConvertTo(shared_ptr<Type> other) { return true; }
+
+llvm::Value *InferType::castTo(llvm::Value *value, shared_ptr<Type> to,
+                               IRVisitor &visitor) {
+  assert(false);
+}
 
 ArrayType::ArrayType(shared_ptr<Type> elementType, long size)
     : Type(ARRAY), elementType(std::move(elementType)), size(size) {}
@@ -72,8 +77,13 @@ llvm::Type *ArrayType::codegen(IRVisitor &visitor) {
   return llvm::ArrayType::get(elementType->codegen(visitor), size);
 }
 
-bool ArrayType::canImplicitlyConvert(shared_ptr<Type> other) {
+bool ArrayType::canImplicitlyConvertTo(shared_ptr<Type> other) {
   return other.get() == this;
+}
+
+llvm::Value *ArrayType::castTo(llvm::Value *value, shared_ptr<Type> to,
+                               IRVisitor &visitor) {
+  assert(false);
 }
 
 IntType::IntType() : Type(INT) {}
@@ -84,11 +94,28 @@ shared_ptr<IntType> IntType::get() {
 }
 
 llvm::Type *IntType::codegen(IRVisitor &visitor) {
-  return llvm::Type::getInt64Ty(visitor.context);
+  return llvm::Type::getInt64Ty(*visitor.llvmContext);
 }
 
-bool IntType::canImplicitlyConvert(shared_ptr<Type> other) {
+bool IntType::canImplicitlyConvertTo(shared_ptr<Type> other) {
   return other->isInt() || other->isBool() || other->isFloat();
+}
+
+llvm::Value *IntType::castTo(llvm::Value *value, shared_ptr<Type> to,
+                             IRVisitor &visitor) {
+  if (to == this->get())
+    return value;
+
+  if (to->isFloat())
+    return visitor.builder->CreateSIToFP(value, to->codegen(visitor),
+                                         "intToFloat");
+
+  if (to->isBool()) {
+    return visitor.builder->CreateICmpNE(
+        value, llvm::ConstantInt::get(codegen(visitor), 0), "intToBool");
+  }
+
+  throw std::runtime_error("Invalid cast");
 }
 
 FloatType::FloatType() : Type(FLOAT) {}
@@ -100,11 +127,23 @@ shared_ptr<FloatType> FloatType::get() {
 }
 
 llvm::Type *FloatType::codegen(IRVisitor &visitor) {
-  return llvm::Type::getDoubleTy(visitor.context);
+  return llvm::Type::getDoubleTy(*visitor.llvmContext);
 }
 
-bool FloatType::canImplicitlyConvert(shared_ptr<Type> other) {
+bool FloatType::canImplicitlyConvertTo(shared_ptr<Type> other) {
   return other->isFloat();
+}
+
+llvm::Value *FloatType::castTo(llvm::Value *value, shared_ptr<Type> to,
+                               IRVisitor &visitor) {
+  if (to == this->get())
+    return value;
+
+  if (to->isInt())
+    return visitor.builder->CreateFPToSI(value, to->codegen(visitor),
+                                         "floatToInt");
+
+  throw std::runtime_error("Invalid cast");
 }
 
 BoolType::BoolType() : Type(BOOL) {}
@@ -115,11 +154,19 @@ shared_ptr<BoolType> BoolType::get() {
 }
 
 llvm::Type *BoolType::codegen(IRVisitor &visitor) {
-  return llvm::Type::getInt1Ty(visitor.context);
+  return llvm::Type::getInt1Ty(*visitor.llvmContext);
 }
 
-bool BoolType::canImplicitlyConvert(shared_ptr<Type> other) {
+bool BoolType::canImplicitlyConvertTo(shared_ptr<Type> other) {
   return other->isBool();
+}
+
+llvm::Value *BoolType::castTo(llvm::Value *value, shared_ptr<Type> to,
+                              IRVisitor &visitor) {
+  if (to == this->get())
+    return value;
+
+  throw std::runtime_error("Invalid cast");
 }
 
 StringType::StringType() : Type(STRING) {}
@@ -130,11 +177,16 @@ shared_ptr<StringType> StringType::get() {
   return instance;
 }
 
-bool StringType::canImplicitlyConvert(shared_ptr<Type> other) {
+bool StringType::canImplicitlyConvertTo(shared_ptr<Type> other) {
   throw std::runtime_error("String type not implemented");
 }
 
 llvm::Type *StringType::codegen(IRVisitor &visitor) {
   // return llvm::Type::getInt8PtrTy(visitor.context);
+  throw std::runtime_error("String type not implemented");
+}
+
+llvm::Value *StringType::castTo(llvm::Value *value, shared_ptr<Type> to,
+                                IRVisitor &visitor) {
   throw std::runtime_error("String type not implemented");
 }

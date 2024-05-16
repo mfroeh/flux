@@ -47,10 +47,6 @@ any InIntervalExpr::accept(AbstractAstVisitor &visitor) {
   return visitor.visit(*this);
 }
 
-llvm::Value *InIntervalExpr::codegen(IRVisitor &visitor) {
-  throw runtime_error("InIntervalExpr should not exist during codegen");
-}
-
 CompoundAssignment::CompoundAssignment(Tokens tokens, shared_ptr<Expr> lhs,
                                        BinaryArithmetic::Operator op,
                                        shared_ptr<Expr> rhs)
@@ -59,8 +55,4 @@ CompoundAssignment::CompoundAssignment(Tokens tokens, shared_ptr<Expr> lhs,
 
 any CompoundAssignment::accept(AbstractAstVisitor &visitor) {
   return visitor.visit(*this);
-}
-
-llvm::Value *CompoundAssignment::codegen(IRVisitor &visitor) {
-  throw runtime_error("CompoundAssignment should not exist during codegen");
 }

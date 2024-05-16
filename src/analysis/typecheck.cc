@@ -16,34 +16,36 @@ using namespace std;
 
 stack<shared_ptr<FunctionSymbol>> functionSymbolStack;
 stack<FunctionDefinition *> functionStack;
-stack<int> returns;
 
 any TypeChecker::visit(FunctionDefinition &function) {
   auto symbol = symTab.lookupFunction(function.mangledName);
   functionSymbolStack.push(symbol);
   functionStack.push(&function);
-  returns.push(0);
 
   AstVisitor::visit(function);
 
-  // TODO: should probably check that it has one toplevel (function scope level)
-  // return statement. Otherwise really much more complex to analyze that it
-  // returns
-  if (returns.top() == 0 && !function.returnType->isVoid()) {
-    throw runtime_error("Function must return a value");
+  if (function.returnType->isArray()) {
+    throw runtime_error("Function cannot return an array");
   }
+
+  int returnCount = 0;
+  for (auto &stmt : function.body.statements) {
+    if (auto ret = dynamic_pointer_cast<Return>(stmt)) {
+      returnCount++;
+    }
+  }
+
+  if (returnCount == 0)
+    throw runtime_error("Function must have a top-level return statement");
 
   functionSymbolStack.pop();
   functionStack.pop();
-  returns.pop();
 
   return {};
 }
 
 any TypeChecker::visit(Return &ret) {
   AstVisitor::visit(ret);
-
-  returns.top()++;
 
   auto &functionSymbol = functionSymbolStack.top();
   auto &currentFunction = functionStack.top();
@@ -55,7 +57,7 @@ any TypeChecker::visit(Return &ret) {
     return {};
   }
 
-  if (!ret.expression->type->canImplicitlyConvert(returnType)) {
+  if (!ret.expression->type->canImplicitlyConvertTo(returnType)) {
     throw runtime_error("Return type does not match function signature");
   } else if (ret.expression->type != returnType) {
     ret.expression = make_shared<Cast>(ret.expression, returnType);
@@ -109,7 +111,7 @@ any TypeChecker::visit(VariableDeclaration &varDecl) {
     symbol->type = varDecl.type;
   }
 
-  if (!varDecl.initializer->type->canImplicitlyConvert(varDecl.type)) {
+  if (!varDecl.initializer->type->canImplicitlyConvertTo(varDecl.type)) {
     throw runtime_error("Variable type does not match initializer type");
   } else if (varDecl.initializer->type != varDecl.type) {
     varDecl.initializer = make_shared<Cast>(varDecl.initializer, varDecl.type);
@@ -122,7 +124,7 @@ any TypeChecker::visit(VariableDeclaration &varDecl) {
 any TypeChecker::visit(Cast &cast) {
   AstVisitor::visit(cast);
 
-  if (!cast.expr->type->canImplicitlyConvert(cast.type)) {
+  if (!cast.expr->type->canImplicitlyConvertTo(cast.type)) {
     ostringstream oss;
     oss << "Cannot cast from " << cast.expr->type << " to " << cast.type;
     throw runtime_error(oss.str());
@@ -167,6 +169,7 @@ any TypeChecker::visit(ArrayReference &arr) {
   }
 
   if (!arr.arrayExpr->type->isArray()) {
+    cout << *arr.arrayExpr->type << endl;
     throw runtime_error("Array reference must be an array");
   }
 
@@ -191,7 +194,7 @@ any TypeChecker::visit(FunctionCall &funcCall) {
     for (int i = 0; i < functionSymbol->parameters.size(); i++) {
       auto &param = functionSymbol->parameters[i];
       auto &arg = funcCall.arguments[i];
-      if (!arg->type->canImplicitlyConvert(param.type)) {
+      if (!arg->type->canImplicitlyConvertTo(param.type)) {
         match = false;
         break;
       }
@@ -244,7 +247,7 @@ any TypeChecker::visit(UnaryPrefixOp &unaryOp) {
     }
     unaryOp.type = unaryOp.operand->type;
   } else if (unaryOp.op == UnaryPrefixOp::Operator::Not) {
-    if (!unaryOp.operand->type->canImplicitlyConvert(BoolType::get())) {
+    if (!unaryOp.operand->type->canImplicitlyConvertTo(BoolType::get())) {
       throw runtime_error("Unary not operator must be applied to a boolean");
     } else if (unaryOp.operand->type != BoolType::get()) {
       unaryOp.operand = make_shared<Cast>(unaryOp.operand, BoolType::get());
@@ -266,9 +269,9 @@ any TypeChecker::visit(BinaryArithmetic &binaryOp) {
   auto lhsType = binaryOp.lhs->type;
   auto rhsType = binaryOp.rhs->type;
   if (lhsType != rhsType) {
-    if (lhsType->canImplicitlyConvert(rhsType)) {
+    if (lhsType->canImplicitlyConvertTo(rhsType)) {
       binaryOp.lhs = make_shared<Cast>(binaryOp.lhs, rhsType);
-    } else if (rhsType->canImplicitlyConvert(lhsType)) {
+    } else if (rhsType->canImplicitlyConvertTo(lhsType)) {
       binaryOp.rhs = make_shared<Cast>(binaryOp.rhs, lhsType);
     } else {
       throw runtime_error("Binary arithmetic operator types do not match");
@@ -291,9 +294,9 @@ any TypeChecker::visit(BinaryComparison &binaryOp) {
   auto lhsType = binaryOp.lhs->type;
   auto rhsType = binaryOp.rhs->type;
   if (lhsType != rhsType) {
-    if (lhsType->canImplicitlyConvert(rhsType)) {
+    if (lhsType->canImplicitlyConvertTo(rhsType)) {
       binaryOp.lhs = make_shared<Cast>(binaryOp.lhs, rhsType);
-    } else if (rhsType->canImplicitlyConvert(lhsType)) {
+    } else if (rhsType->canImplicitlyConvertTo(lhsType)) {
       binaryOp.rhs = make_shared<Cast>(binaryOp.rhs, lhsType);
     } else {
       throw runtime_error("Binary comparison operator types do not match");
@@ -308,8 +311,8 @@ any TypeChecker::visit(BinaryComparison &binaryOp) {
 any TypeChecker::visit(BinaryLogical &binaryOp) {
   AstVisitor::visit(binaryOp);
 
-  if (!binaryOp.lhs->type->canImplicitlyConvert(BoolType::get()) ||
-      !binaryOp.lhs->type->canImplicitlyConvert(BoolType::get())) {
+  if (!binaryOp.lhs->type->canImplicitlyConvertTo(BoolType::get()) ||
+      !binaryOp.lhs->type->canImplicitlyConvertTo(BoolType::get())) {
     throw runtime_error("Binary logical operator must be applied to booleans");
   } else {
     if (binaryOp.lhs->type != BoolType::get()) {
@@ -334,13 +337,16 @@ any TypeChecker::visit(Assignment &assignment) {
   bool isArrayReference =
       dynamic_pointer_cast<ArrayReference>(assignment.target) != nullptr;
 
+  assert(assignment.target->isLValue());
+
   if (!isVariable && !isArrayReference) {
     throw runtime_error("Can only assign to variables or array indices");
   }
 
   assert(!assignment.target->type->isInfer());
 
-  if (!assignment.value->type->canImplicitlyConvert(assignment.target->type)) {
+  if (!assignment.value->type->canImplicitlyConvertTo(
+          assignment.target->type)) {
     throw runtime_error("Cannot assign value to target of different type");
   } else if (assignment.value->type != assignment.target->type) {
     assignment.value =
@@ -355,7 +361,7 @@ any TypeChecker::visit(Assignment &assignment) {
 any TypeChecker::visit(TernaryExpr &ternaryOp) {
   AstVisitor::visit(ternaryOp);
 
-  if (!ternaryOp.condition->type->canImplicitlyConvert(BoolType::get())) {
+  if (!ternaryOp.condition->type->canImplicitlyConvertTo(BoolType::get())) {
     throw runtime_error("Ternary condition must be a boolean");
   } else if (ternaryOp.condition->type != BoolType::get()) {
     ternaryOp.condition =
@@ -365,11 +371,11 @@ any TypeChecker::visit(TernaryExpr &ternaryOp) {
   auto trueType = ternaryOp.thenExpr->type;
   auto falseType = ternaryOp.elseExpr->type;
 
-  if (!trueType->canImplicitlyConvert(falseType) &&
-      !falseType->canImplicitlyConvert(trueType)) {
+  if (!trueType->canImplicitlyConvertTo(falseType) &&
+      !falseType->canImplicitlyConvertTo(trueType)) {
     throw runtime_error("Ternary expressions must have compatible types");
   } else if (trueType != falseType) {
-    if (trueType->canImplicitlyConvert(falseType)) {
+    if (trueType->canImplicitlyConvertTo(falseType)) {
       ternaryOp.thenExpr = make_shared<Cast>(ternaryOp.thenExpr, falseType);
     } else {
       ternaryOp.elseExpr = make_shared<Cast>(ternaryOp.elseExpr, trueType);

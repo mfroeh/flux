@@ -1,5 +1,5 @@
 #include "ast/function.hh"
-#include "ir_visitor.hh"
+#include "codegen/ir_visitor.hh"
 #include "visitor.hh"
 #include <llvm/IR/Value.h>
 
@@ -23,6 +23,4 @@ any FunctionDefinition::accept(AbstractAstVisitor &visitor) {
   return visitor.visit(*this);
 }
 
-llvm::Function *FunctionDefinition::codegen(IRVisitor &visitor) {
-  return visitor.visit(*this);
-}
+void FunctionDefinition::codegen(IRVisitor &visitor) { visitor.visit(*this); }

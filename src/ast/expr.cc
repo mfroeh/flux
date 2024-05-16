@@ -1,12 +1,14 @@
 #include "ast/expr.hh"
 #include "ast/type.hh"
-#include "ir_visitor.hh"
+#include "codegen/ir_visitor.hh"
 #include "visitor.hh"
 
 using namespace std;
 
 Expr::Expr(Tokens tokens, shared_ptr<Type> type)
     : Node(std::move(tokens)), type(std::move(type)) {}
+
+void Expr::setLValue(bool isLValue) { this->isLValue_ = isLValue; };
 
 Cast::Cast(Tokens tokens, shared_ptr<Expr> expr, shared_ptr<Type> type)
     : Expr(std::move(tokens), std::move(type)), expr(std::move(expr)) {}
@@ -84,6 +86,11 @@ any ArrayReference::accept(AbstractAstVisitor &visitor) {
 
 llvm::Value *ArrayReference::codegen(IRVisitor &visitor) {
   return visitor.visit(*this);
+}
+
+void ArrayReference::setLValue(bool isLValue) {
+  this->isLValue_ = isLValue;
+  arrayExpr->setLValue(isLValue);
 }
 
 FunctionCall::FunctionCall(Tokens tokens, string callee,

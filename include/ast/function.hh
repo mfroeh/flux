@@ -36,5 +36,5 @@ struct FunctionDefinition : public Statement {
 
   any accept(AbstractAstVisitor &visitor) override;
 
-  llvm::Function *codegen(IRVisitor &visitor);
+  void codegen(struct IRVisitor &visitor) override;
 };

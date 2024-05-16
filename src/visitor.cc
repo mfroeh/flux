@@ -109,6 +109,8 @@ any AstVisitor::visit(UnaryPrefixOp &unaryOp) {
 any AstVisitor::visit(BinaryArithmetic &binaryOp) {
   binaryOp.lhs->accept(*this);
   binaryOp.rhs->accept(*this);
+  cout << "visited binary arithmetic at " << binaryOp.tokens.getStart().line
+       << endl;
   return {};
 }
 

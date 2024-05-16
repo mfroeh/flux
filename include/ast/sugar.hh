@@ -14,6 +14,7 @@ struct ElifStatement : public Statement {
   ElifStatement(Tokens tokens, shared_ptr<Expr> condition, Block thenBlock);
 
   any accept(class AbstractAstVisitor &visitor) override;
+  void codegen(class IRVisitor &visitor) override { assert(false); }
 };
 
 struct IfElifElseStatement : public Statement {
@@ -27,6 +28,7 @@ struct IfElifElseStatement : public Statement {
                       Block elseBlock);
 
   any accept(class AbstractAstVisitor &visitor) override;
+  void codegen(class IRVisitor &visitor) override { assert(false); }
 };
 
 struct ForLoop : public Statement {
@@ -39,6 +41,7 @@ struct ForLoop : public Statement {
           shared_ptr<Expr> condition, shared_ptr<Statement> update, Block body);
 
   any accept(class AbstractAstVisitor &visitor) override;
+  void codegen(class IRVisitor &visitor) override { assert(false); }
 };
 
 struct InIntervalExpr : public Expr {
@@ -51,7 +54,7 @@ struct InIntervalExpr : public Expr {
                  shared_ptr<Expr> upper, IntervalKind intervalKind);
 
   any accept(class AbstractAstVisitor &visitor) override;
-  llvm::Value *codegen(IRVisitor &visitor) override;
+  llvm::Value *codegen(class IRVisitor &visitor) override { assert(false); }
 };
 
 struct CompoundAssignment : public Expr {
@@ -64,7 +67,7 @@ struct CompoundAssignment : public Expr {
                      BinaryArithmetic::Operator op, shared_ptr<Expr> value);
 
   any accept(class AbstractAstVisitor &visitor) override;
-  llvm::Value *codegen(IRVisitor &visitor) override;
+  llvm::Value *codegen(class IRVisitor &visitor) override { assert(false); }
 };
 
 } // namespace sugar

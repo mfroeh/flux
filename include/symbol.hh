@@ -2,6 +2,7 @@
 
 #include "ast/function.hh"
 #include "ast/type.hh"
+#include <llvm/IR/Instructions.h>
 #include <ostream>
 #include <string>
 using std::string;
@@ -19,6 +20,9 @@ struct VariableSymbol : public Symbol {
   string name;
   string mangledName;
   shared_ptr<Type> type;
+
+  // set during codegen
+  llvm::AllocaInst *alloc = nullptr;
 
   VariableSymbol(string name, string mangledName, shared_ptr<Type> type,
                  int depth, int count)
@@ -38,6 +42,9 @@ struct FunctionSymbol : public Symbol {
   string mangledName;
   shared_ptr<Type> returnType;
   vector<Parameter> parameters;
+
+  // set during codegen
+  llvm::Function *llvmFunction = nullptr;
 
   FunctionSymbol(string name, string mangledName, shared_ptr<Type> returnType,
                  vector<Parameter> parameters, int depth, int count)
