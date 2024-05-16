@@ -90,6 +90,7 @@ any AstVisitor::visit(VariableReference &var) { return {}; }
 
 any AstVisitor::visit(ArrayReference &arr) {
   arr.index->accept(*this);
+  arr.arrayExpr->accept(*this);
   return {};
 }
 

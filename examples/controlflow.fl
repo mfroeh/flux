@@ -68,4 +68,14 @@ main(): i64 {
 
     // todo: this doesn't work yet
     let d = add(2.2, add(2.2, 1.2));
+
+    let arr: i64[10];
+
+    array(): f64[20] {
+        let arr: f64[20];
+        arr[0] = 1.1;
+        ret arr;
+    }
+
+    let arr2 = array()[1];
 }
