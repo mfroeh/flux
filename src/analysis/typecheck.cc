@@ -44,6 +44,16 @@ any TypeChecker::visit(FunctionDefinition &function) {
   return {};
 }
 
+any TypeChecker::visit(Parameter &param) {
+  AstVisitor::visit(param);
+
+  if (param.type->isArray()) {
+    throw runtime_error("Function parameters cannot be arrays");
+  }
+
+  return {};
+}
+
 any TypeChecker::visit(Return &ret) {
   AstVisitor::visit(ret);
 

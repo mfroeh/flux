@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ast/stmt.hh"
 #include "symbol_table.hh"
 #include "visitor.hh"
+
 class TypeChecker : public AstVisitor {
 public:
   TypeChecker(ModuleContext &context, SymbolTable &symTab)
@@ -10,6 +10,7 @@ public:
 
   // functions
   any visit(struct FunctionDefinition &function) override;
+  any visit(struct Parameter &param) override;
 
   // statements
   any visit(struct Return &ret) override;
