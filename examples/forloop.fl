@@ -1,0 +1,8 @@
+main() : i64 {
+    let a: i64[200];
+    let size = 200;
+    for (let i = 0; i in [0, size); i += 1;) -> a[i] = i * i;
+    for (let i = 0; i in [0, size); i += 1;) -> a[i] *= i;
+
+    ret a[size - 1];
+}

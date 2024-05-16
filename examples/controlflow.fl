@@ -2,7 +2,6 @@ add(a: f64, b: f64) => -b;
 
 main(): i64 {
     let a: bool = false;
-    let b = main();
     let c = add(1, 2.2);
     
     // bodied if-elif-else

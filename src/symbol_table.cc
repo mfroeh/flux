@@ -30,3 +30,13 @@ shared_ptr<FunctionSymbol> SymbolTable::lookupFunction(string mangledName) {
   }
   return nullptr;
 }
+
+vector<shared_ptr<FunctionSymbol>> SymbolTable::getFunctions(string name) {
+  vector<shared_ptr<FunctionSymbol>> result;
+  for (auto &[mangledName, function] : functions) {
+    if (function->name == name) {
+      result.push_back(function);
+    }
+  }
+  return result;
+}

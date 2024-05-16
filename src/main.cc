@@ -15,10 +15,35 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/GenericValue.h>
+#include <llvm/ExecutionEngine/MCJIT.h>
 #include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/Module.h>
+#include <llvm/MC/TargetRegistry.h>
+#include <llvm/Support/CodeGen.h>
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Support/Host.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/Target/TargetOptions.h>
 
 using namespace std;
 using std::filesystem::path;
+
+void initializeTargets() {
+  // initialize the target registry etc.
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllTargets();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllAsmParsers();
+  llvm::InitializeAllAsmPrinters();
+
+  // interpreter
+  LLVMLinkInMCJIT();
+}
 
 int main(int argc, char *argv[]) {
   argparse::ArgumentParser program("flux");
@@ -85,9 +110,29 @@ int main(int argc, char *argv[]) {
     static_pointer_cast<AstVisitor>(typeChecker)->visit(module);
 
     cout << "Generating IR code" << file << endl;
+    initializeTargets();
     auto irVisitor = make_shared<IRVisitor>(moduleContext, symTab,
                                             make_unique<llvm::LLVMContext>());
     auto llvmModule = irVisitor->visit(module);
+
+    string err;
+    auto ee =
+        llvm::EngineBuilder(std::move(llvmModule)).setErrorStr(&err).create();
+
+    if (!ee) {
+      cerr << "Failed to create ExecutionEngine: " << err << endl;
+      return 1;
+    }
+
+    auto main = symTab.getFunctions("main").front();
+    if (!main) {
+      cerr << "No main function found" << endl;
+      return 1;
+    }
+
+    cout << "Executing main" << endl;
+    auto result = ee->runFunction(main->llvmFunction, {});
+    cout << "Result: " << result.IntVal.getSExtValue() << endl;
   }
   return 0;
 }
