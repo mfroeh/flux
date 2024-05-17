@@ -139,6 +139,16 @@ any AstVisitor::visit(Assignment &assignment) {
   return {};
 }
 
+any AstVisitor::visit(Pointer &pointer) {
+  pointer.lvalue->accept(*this);
+  return {};
+}
+
+any AstVisitor::visit(Dereference &dereference) {
+  dereference.pointer->accept(*this);
+  return {};
+}
+
 // sugar
 any AstVisitor::visit(sugar::ElifStatement &elifStmt) {
   throw std::runtime_error("found sugar!");

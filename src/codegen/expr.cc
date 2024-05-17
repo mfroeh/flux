@@ -34,24 +34,50 @@ Value *IRVisitor::visit(::StringLiteral &literal) {
 Value *IRVisitor::visit(VariableReference &variable) {
   auto symbol = symTab.lookupVariable(variable.mangledName);
   assert(symbol);
-  assert(symbol->type == variable.type);
 
-  // always pass pointers instead of the array (also if array is rvalue)
-  if (variable.isLValue() || variable.type->isArray())
+  // if this is a left-hand side of an assignment return address
+  if (variable.isLhs())
     return symbol->alloc;
 
   return builder->CreateLoad(symbol->type->codegen(*this), symbol->alloc,
                              symbol->name);
 }
 
+// &x
+Value *IRVisitor::visit(Pointer &pointer) {
+  // force to return address
+  pointer.lvalue->setLhs(true);
+  return pointer.lvalue->codegen(*this);
+}
+
+// *(&x)
+Value *IRVisitor::visit(Dereference &dereference) {
+  // force to return address
+  assert(dereference.pointer->type->isPointer());
+  cout << dereference.isLhs() << endl;
+  cout << dereference.pointer->isLhs() << endl;
+
+  auto ptr = dereference.pointer->codegen(*this);
+  auto derefType = dereference.type->codegen(*this);
+  // lhs, load the address of the pointer, rhs, load the value of the pointer
+
+  return dereference.isLhs()
+             ? builder->CreateLoad(dereference.pointer->type->codegen(*this),
+                                   ptr, "ptrAddress")
+             : builder->CreateLoad(derefType, ptr, "deref");
+}
+
 Value *IRVisitor::visit(ArrayReference &ref) {
   auto index = ref.index->codegen(*this);
+
+  // force to return address
+  ref.arrayExpr->setLhs(true);
   auto value = ref.arrayExpr->codegen(*this);
 
   auto elemType = ref.type->codegen(*this);
   auto ptr = builder->CreateGEP(elemType, value, index, "arrayElemPtr");
 
-  return ref.isLValue() ? ptr : builder->CreateLoad(elemType, ptr, "arrayElem");
+  return ref.isLhs() ? ptr : builder->CreateLoad(elemType, ptr, "arrayElem");
 }
 
 Value *IRVisitor::visit(FunctionCall &call) {
@@ -160,5 +186,6 @@ Value *IRVisitor::visit(Assignment &assignment) {
   auto target = assignment.target->codegen(*this);
   auto value = assignment.value->codegen(*this);
 
-  return builder->CreateStore(value, target, "assignment");
+  builder->CreateStore(value, target, "storeAssign");
+  return builder->CreateLoad(value->getType(), target, "loadAssigned");
 }

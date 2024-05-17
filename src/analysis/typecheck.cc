@@ -263,6 +263,8 @@ any TypeChecker::visit(UnaryPrefixOp &unaryOp) {
       unaryOp.operand = make_shared<Cast>(unaryOp.operand, BoolType::get());
     }
     unaryOp.type = BoolType::get();
+  } else {
+    throw runtime_error("Unknown unary operator");
   }
 
   return {};
@@ -342,15 +344,10 @@ any TypeChecker::visit(BinaryLogical &binaryOp) {
 any TypeChecker::visit(Assignment &assignment) {
   AstVisitor::visit(assignment);
 
-  bool isVariable =
-      dynamic_pointer_cast<VariableReference>(assignment.target) != nullptr;
-  bool isArrayReference =
-      dynamic_pointer_cast<ArrayReference>(assignment.target) != nullptr;
+  assert(assignment.target->isLhs());
 
-  assert(assignment.target->isLValue());
-
-  if (!isVariable && !isArrayReference) {
-    throw runtime_error("Can only assign to variables or array indices");
+  if (!assignment.target->isLValue()) {
+    throw runtime_error("Can only assign to lvalues");
   }
 
   assert(!assignment.target->type->isInfer());
@@ -393,6 +390,30 @@ any TypeChecker::visit(TernaryExpr &ternaryOp) {
   }
 
   ternaryOp.type = ternaryOp.thenExpr->type;
+
+  return {};
+}
+
+any TypeChecker::visit(Pointer &pointer) {
+  AstVisitor::visit(pointer);
+
+  if (!pointer.lvalue->isLValue()) {
+    throw runtime_error("Can only create a pointer to an lvalue");
+  }
+
+  pointer.type = PointerType::get(pointer.lvalue->type);
+  return {};
+}
+
+any TypeChecker::visit(Dereference &dereference) {
+  AstVisitor::visit(dereference);
+
+  if (!dereference.pointer->type->isPointer()) {
+    throw runtime_error("Dereference operator must be applied to a pointer");
+  }
+
+  dereference.type =
+      static_pointer_cast<PointerType>(dereference.pointer->type)->pointee;
 
   return {};
 }

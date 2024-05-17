@@ -66,7 +66,7 @@ expression:
 	| Identifier													# IdentifierExpr
 	| expression '[' expression ']'									# ArrayRefExpr
 	| Identifier '(' expressionList? ')'							# CallExpr
-	| ('-' | '!') expression										# PrefixUnaryExpr
+	| ('-' | '!' | '&' | '*') expression							# PrefixUnaryExpr
 	| expression ('*' | '/' | '%') expression						# BinaryArithmeticExpr
 	| expression ('+' | '-') expression								# BinaryArithmeticExpr
 	| expression ('<' | '<=' | '==' | '!=' | '>' | '>=') expression	# BinaryCompExpr
@@ -80,8 +80,9 @@ expression:
 
 expressionList: expression (',' expression)*;
 
-type: builtinType | arrayType;
-// type: builtinType | arrayType | Identifier;
+type: builtinType | arrayType | pointerType;
+
+pointerType: builtinType '*';
 
 arrayType: builtinType '[' IntLiteral ']';
 

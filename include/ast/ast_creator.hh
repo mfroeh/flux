@@ -53,8 +53,7 @@ public:
 
   // expressions
   shared_ptr<Expr> visitExpression(FP::ExpressionContext *ctx);
-  shared_ptr<UnaryPrefixOp>
-  visitPrefixUnaryExpr(FP::PrefixUnaryExprContext *ctx);
+  shared_ptr<Expr> visitPrefixUnaryExpr(FP::PrefixUnaryExprContext *ctx);
   shared_ptr<sugar::InIntervalExpr>
   visitInIntervalExpr(FP::InIntervalExprContext *ctx);
   shared_ptr<ArrayReference> visitArrayRefExpr(FP::ArrayRefExprContext *ctx);
@@ -78,6 +77,7 @@ public:
   // misc
   vector<shared_ptr<Expr>> visitExpressionList(FP::ExpressionListContext *ctx);
   shared_ptr<Type> visitType(FP::TypeContext *ctx);
+  shared_ptr<PointerType> visitPointerType(FP::PointerTypeContext *ctx);
   shared_ptr<ArrayType> visitArrayType(FP::ArrayTypeContext *ctx);
   shared_ptr<Type> visitBuiltinType(FP::BuiltinTypeContext *ctx);
 

@@ -219,13 +219,19 @@ AstCreator::visitExpression(FluxParser::ExpressionContext *ctx) {
     throw runtime_error("Unknown expression type");
 }
 
-shared_ptr<UnaryPrefixOp>
+shared_ptr<Expr>
 AstCreator::visitPrefixUnaryExpr(FluxParser::PrefixUnaryExprContext *ctx) {
   UnaryPrefixOp::Operator op;
   if (ctx->Minus())
     op = UnaryPrefixOp::Operator::Negate;
   else if (ctx->Not())
     op = UnaryPrefixOp::Operator::Not;
+  else if (ctx->Mul())
+    return make_shared<Dereference>(Tokens(ctx),
+                                    visitExpression(ctx->expression()));
+  else if (ctx->Reference())
+    return make_shared<Pointer>(Tokens(ctx),
+                                visitExpression(ctx->expression()));
   else
     throw runtime_error("Unknown unary operator");
 
@@ -322,7 +328,7 @@ shared_ptr<sugar::CompoundAssignment> AstCreator::visitCompoundAssignmentExpr(
     throw runtime_error("Unknown compound assignment operator");
 
   auto lhs = visitExpression(ctx->expression(0));
-  lhs->setLValue(true);
+  lhs->setLhs(true);
   auto rhs = visitExpression(ctx->expression(1));
   return make_shared<sugar::CompoundAssignment>(Tokens(ctx), lhs, op, rhs);
 }
@@ -342,7 +348,7 @@ AstCreator::visitCallExpr(FluxParser::CallExprContext *ctx) {
 shared_ptr<Assignment>
 AstCreator::visitAssignmentExpr(FluxParser::AssignmentExprContext *ctx) {
   auto target = visitExpression(ctx->expression(0));
-  target->setLValue(true);
+  target->setLhs(true);
   auto value = visitExpression(ctx->expression(1));
   return make_shared<Assignment>(Tokens(ctx), target, value);
 }
@@ -406,8 +412,16 @@ shared_ptr<Type> AstCreator::visitType(FluxParser::TypeContext *ctx) {
     return visitArrayType(arrayType);
   else if (auto builtinType = ctx->builtinType())
     return visitBuiltinType(builtinType);
+  else if (auto pointerType = ctx->pointerType())
+    return visitPointerType(pointerType);
   else
     throw runtime_error("Unknown type");
+}
+
+shared_ptr<PointerType>
+AstCreator::visitPointerType(FluxParser::PointerTypeContext *ctx) {
+  auto pointee = visitBuiltinType(ctx->builtinType());
+  return PointerType::get(pointee);
 }
 
 shared_ptr<ArrayType>

@@ -115,6 +115,10 @@ int main(int argc, char *argv[]) {
                                             make_unique<llvm::LLVMContext>());
     auto llvmModule = irVisitor->visit(module);
 
+    cout << "Optimizing IR code" << file << endl;
+
+    llvm::outs() << *llvmModule;
+
     string err;
     auto ee =
         llvm::EngineBuilder(std::move(llvmModule)).setErrorStr(&err).create();

@@ -47,6 +47,8 @@ public:
   llvm::Value *visit(struct BinaryLogical &operation);
   llvm::Value *visit(struct TernaryExpr &operation);
   llvm::Value *visit(struct Assignment &assignment);
+  llvm::Value *visit(struct Pointer &pointer);
+  llvm::Value *visit(struct Dereference &dereference);
 
 public:
   ModuleContext &context;

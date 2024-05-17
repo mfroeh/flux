@@ -198,6 +198,20 @@ any Desugarer::visit(Assignment &assignment) {
   return {};
 }
 
+any Desugarer::visit(Pointer &pointer) {
+  any res = pointer.lvalue->accept(*this);
+  if (res.has_value())
+    pointer.lvalue = any_cast<shared_ptr<Expr>>(res);
+  return {};
+}
+
+any Desugarer::visit(Dereference &dereference) {
+  any res = dereference.pointer->accept(*this);
+  if (res.has_value())
+    dereference.pointer = any_cast<shared_ptr<Expr>>(res);
+  return {};
+}
+
 // sugar
 any Desugarer::visit(sugar::ElifStatement &elifStmt) {
   any res = elifStmt.condition->accept(*this);
@@ -325,25 +339,15 @@ any Desugarer::visit(sugar::CompoundAssignment &compoundAssignment) {
 
   // then desugar itself
   // i += 1 -> i = i + 1
-  shared_ptr<Expr> referenceCopy;
-
-  // this is the lvalue
-  auto reference = compoundAssignment.target;
-  if (auto var = dynamic_pointer_cast<VariableReference>(reference)) {
-    referenceCopy = make_shared<VariableReference>(*var);
-    referenceCopy->setLValue(false);
-  } else if (auto arr = dynamic_pointer_cast<ArrayReference>(reference)) {
-    referenceCopy = make_shared<ArrayReference>(*arr);
-    referenceCopy->setLValue(false);
-  } else {
-    throw runtime_error("Invalid compound assignment target");
-  }
+  auto lvalue = compoundAssignment.target;
+  auto lvalueCopy = lvalue->deepcopy();
+  lvalueCopy->setLhs(false);
 
   auto operation = make_shared<BinaryArithmetic>(
-      compoundAssignment.tokens, referenceCopy, compoundAssignment.op,
+      compoundAssignment.tokens, lvalueCopy, compoundAssignment.op,
       compoundAssignment.value);
 
   auto assignment =
-      make_shared<Assignment>(compoundAssignment.tokens, reference, operation);
+      make_shared<Assignment>(compoundAssignment.tokens, lvalue, operation);
   return static_pointer_cast<Expr>(assignment);
 }

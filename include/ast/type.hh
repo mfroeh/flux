@@ -16,6 +16,7 @@ struct Type {
     FLOAT,
     BOOL,
     STRING,
+    POINTER,
   } kind;
 
   Kind Infer = INFER;
@@ -24,6 +25,7 @@ struct Type {
   Kind Float = FLOAT;
   Kind Bool = BOOL;
   Kind String = STRING;
+  Kind Pointer = POINTER;
 
   Type(Kind kind);
   virtual ~Type() = default;
@@ -36,6 +38,7 @@ struct Type {
   bool isBool() const;
   bool isString() const;
   bool isArray() const;
+  bool isPointer() const;
 
   virtual bool canImplicitlyConvertTo(shared_ptr<Type> other) = 0;
 
@@ -56,6 +59,20 @@ struct InferType : public Type {
 
 private:
   InferType();
+};
+
+struct PointerType : public Type {
+  shared_ptr<Type> pointee;
+
+  static shared_ptr<PointerType> get(shared_ptr<Type> pointee);
+  llvm::Type *codegen(class IRVisitor &visitor) override;
+
+  bool canImplicitlyConvertTo(shared_ptr<Type> other) override;
+  virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
+                              class IRVisitor &visitor) override;
+
+private:
+  PointerType(shared_ptr<Type> pointee);
 };
 
 struct ArrayType : public Type {

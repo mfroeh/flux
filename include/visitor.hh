@@ -47,6 +47,8 @@ public:
   virtual any visit(struct BinaryLogical &binaryOp) = 0;
   virtual any visit(struct TernaryExpr &ternaryOp) = 0;
   virtual any visit(struct Assignment &assignment) = 0;
+  virtual any visit(struct Pointer &pointer) = 0;
+  virtual any visit(struct Dereference &dereference) = 0;
 
   // sugar
   virtual any visit(struct sugar::ElifStatement &elifStmt) = 0;
@@ -95,6 +97,8 @@ public:
   any visit(struct BinaryLogical &binaryOp) override;
   any visit(struct TernaryExpr &ternaryOp) override;
   any visit(struct Assignment &assignment) override;
+  any visit(struct Pointer &pointer) override;
+  any visit(struct Dereference &dereference) override;
 
   // sugar
   any visit(struct sugar::ElifStatement &elifStmt) override;

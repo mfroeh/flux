@@ -14,6 +14,7 @@ bool Type::isFloat() const { return kind == FLOAT; }
 bool Type::isBool() const { return kind == BOOL; }
 bool Type::isString() const { return kind == STRING; }
 bool Type::isArray() const { return kind == ARRAY; }
+bool Type::isPointer() const { return kind == POINTER; }
 
 ostream &operator<<(ostream &os, const Type &type) {
   switch (type.kind) {
@@ -36,6 +37,9 @@ ostream &operator<<(ostream &os, const Type &type) {
   case Type::STRING:
     os << "String";
     break;
+  case Type::POINTER:
+    os << "Pointer(" << *static_cast<const PointerType &>(type).pointee << ")";
+    break;
   }
   return os;
 }
@@ -54,6 +58,32 @@ bool InferType::canImplicitlyConvertTo(shared_ptr<Type> other) { return true; }
 
 llvm::Value *InferType::castTo(llvm::Value *value, shared_ptr<Type> to,
                                IRVisitor &visitor) {
+  assert(false);
+}
+
+PointerType::PointerType(shared_ptr<Type> pointee)
+    : Type(POINTER), pointee(std::move(pointee)) {}
+
+shared_ptr<PointerType> PointerType::get(shared_ptr<Type> pointee) {
+  static std::unordered_map<shared_ptr<Type>, shared_ptr<PointerType>>
+      instances;
+
+  if (!instances.contains(pointee)) {
+    instances[pointee] = shared_ptr<PointerType>(new PointerType(pointee));
+  }
+  return instances[pointee];
+}
+
+llvm::Type *PointerType::codegen(IRVisitor &visitor) {
+  return llvm::PointerType::getUnqual(pointee->codegen(visitor));
+}
+
+bool PointerType::canImplicitlyConvertTo(shared_ptr<Type> other) {
+  return other.get() == this;
+}
+
+llvm::Value *PointerType::castTo(llvm::Value *value, shared_ptr<Type> to,
+                                 IRVisitor &visitor) {
   assert(false);
 }
 

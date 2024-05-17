@@ -69,6 +69,7 @@ RIGHTArrow: '=>';
 ModuleSeperator: '::';
 TernaryOp: '?';
 MemberAccess: '.';
+Reference: '&';
 
 BoolLiteral: 'true' | 'false';
 IntLiteral: '0' | [1-9][0-9]*;

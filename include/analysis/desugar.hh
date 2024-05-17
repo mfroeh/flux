@@ -41,6 +41,8 @@ public:
   any visit(struct BinaryLogical &binaryOp) override;
   any visit(struct TernaryExpr &ternaryOp) override;
   any visit(struct Assignment &assignment) override;
+  any visit(struct Pointer &pointer) override;
+  any visit(struct Dereference &dereference) override;
 
   // sugar
   any visit(struct sugar::ElifStatement &elifStmt) override;

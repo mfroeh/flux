@@ -55,6 +55,7 @@ struct InIntervalExpr : public Expr {
 
   any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(class IRVisitor &visitor) override { assert(false); }
+  shared_ptr<Expr> deepcopy() const override { assert(false); }
 };
 
 struct CompoundAssignment : public Expr {
@@ -68,6 +69,7 @@ struct CompoundAssignment : public Expr {
 
   any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(class IRVisitor &visitor) override { assert(false); }
+  shared_ptr<Expr> deepcopy() const override { assert(false); }
 };
 
 } // namespace sugar

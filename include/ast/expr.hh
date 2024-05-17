@@ -15,12 +15,22 @@ struct Expr : public Node {
 
   virtual llvm::Value *codegen(IRVisitor &visitor) = 0;
 
-  virtual void setLValue(bool isLValue);
-  bool isLValue() const { return isLValue_; }
+  virtual void setLhs(bool isLhs);
+  bool isLhs() const { return isLhs_; }
+
+  virtual bool isLValue() const { return false; }
+
+  virtual shared_ptr<Expr> deepcopy() const = 0;
 
 protected:
   // this can be true only for VariableReference and ArrayReference
-  bool isLValue_ = false;
+  bool isLhs_ = false;
+};
+
+struct LValueExpr : public Expr {
+  LValueExpr(Tokens tokens, shared_ptr<Type> type);
+
+  bool isLValue() const override { return true; }
 };
 
 struct Cast : public Expr {
@@ -31,6 +41,7 @@ struct Cast : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
 };
 
 struct IntLiteral : public Expr {
@@ -40,6 +51,7 @@ struct IntLiteral : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
 };
 
 struct FloatLiteral : public Expr {
@@ -49,6 +61,7 @@ struct FloatLiteral : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
 };
 
 struct BoolLiteral : public Expr {
@@ -58,6 +71,7 @@ struct BoolLiteral : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
 };
 
 struct StringLiteral : public Expr {
@@ -67,9 +81,20 @@ struct StringLiteral : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
 };
 
-struct VariableReference : public Expr {
+struct Pointer : public Expr {
+  shared_ptr<Expr> lvalue;
+
+  Pointer(Tokens tokens, shared_ptr<Expr> lvalue);
+
+  virtual any accept(class AbstractAstVisitor &visitor) override;
+  llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
+};
+
+struct VariableReference : public LValueExpr {
   string name;
 
   // set during name resolution
@@ -79,9 +104,21 @@ struct VariableReference : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
 };
 
-struct ArrayReference : public Expr {
+struct Dereference : public LValueExpr {
+  shared_ptr<Expr> pointer;
+
+  Dereference(Tokens tokens, shared_ptr<Expr> expr);
+
+  virtual any accept(class AbstractAstVisitor &visitor) override;
+  llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
+  void setLhs(bool isLhs) override;
+};
+
+struct ArrayReference : public LValueExpr {
   shared_ptr<Expr> arrayExpr;
   shared_ptr<Expr> index;
 
@@ -90,7 +127,8 @@ struct ArrayReference : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
-  void setLValue(bool isLValue) override;
+  shared_ptr<Expr> deepcopy() const override;
+  void setLhs(bool isLhs) override;
 };
 
 struct FunctionCall : public Expr {
@@ -107,6 +145,7 @@ struct FunctionCall : public Expr {
                vector<shared_ptr<Expr>> arguments);
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
   llvm::Value *codegen(IRVisitor &visitor) override;
 };
 
@@ -119,6 +158,7 @@ struct UnaryPrefixOp : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
 };
 
 struct BinaryComparison : public Expr {
@@ -132,6 +172,7 @@ struct BinaryComparison : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
 };
 
 struct BinaryArithmetic : public Expr {
@@ -145,6 +186,7 @@ struct BinaryArithmetic : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
 };
 
 struct BinaryLogical : public Expr {
@@ -158,6 +200,7 @@ struct BinaryLogical : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
 };
 
 struct Assignment : public Expr {
@@ -169,6 +212,7 @@ struct Assignment : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
 };
 
 struct TernaryExpr : public Expr {
@@ -181,4 +225,5 @@ struct TernaryExpr : public Expr {
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
 };
