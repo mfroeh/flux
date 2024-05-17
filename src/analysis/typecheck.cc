@@ -24,9 +24,9 @@ any TypeChecker::visit(FunctionDefinition &function) {
 
   AstVisitor::visit(function);
 
-  if (function.returnType->isArray()) {
-    throw runtime_error("Function cannot return an array");
-  }
+  // if (function.returnType->isArray()) {
+  //   throw runtime_error("Function cannot return an array");
+  // }
 
   int returnCount = 0;
   for (auto &stmt : function.body.statements) {
@@ -48,9 +48,9 @@ any TypeChecker::visit(FunctionDefinition &function) {
 any TypeChecker::visit(Parameter &param) {
   AstVisitor::visit(param);
 
-  if (param.type->isArray()) {
-    throw runtime_error("Function parameters cannot be arrays");
-  }
+  // if (param.type->isArray()) {
+  //   throw runtime_error("Function parameters cannot be arrays");
+  // }
 
   return {};
 }

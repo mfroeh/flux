@@ -13,6 +13,17 @@ setarr(ptr: i64[200]*, val: i64): i64 {
     ret 1;
 }
 
+testarr(arr: i64[20]): i64[20] {
+    arr[0] = -200;
+    ret arr;
+}
+
+fill(val: i64): i64[20] {
+    let a: i64[20];
+    for (let i = 0; i in [0, 20); i += 1;) -> a[i] = val;
+    ret a;
+}
+
 set(ptr: i64*, val: i64*) => *ptr = *val;
 
 main() : i64 {
@@ -30,5 +41,8 @@ main() : i64 {
     let b = &i;
     swapptr(&b, &b);
 
-    ret a[0];
+    let arr = fill(20);
+    arr = testarr(arr);
+
+    ret arr[0];
 }
