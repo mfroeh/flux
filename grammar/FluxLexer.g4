@@ -15,6 +15,7 @@ KwFloat64: 'f64';
 KwFloat32: 'f32';
 KwBool: 'bool';
 KwString: 'str';
+KwVoid: 'void';
 
 // other keywords
 KwClass: 'class';

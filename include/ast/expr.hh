@@ -227,3 +227,11 @@ struct TernaryExpr : public Expr {
   llvm::Value *codegen(IRVisitor &visitor) override;
   shared_ptr<Expr> deepcopy() const override;
 };
+
+struct VoidExpr : public Expr {
+  VoidExpr(Tokens tokens);
+
+  virtual any accept(class AbstractAstVisitor &visitor) override;
+  llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
+};

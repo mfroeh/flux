@@ -1,3 +1,18 @@
+setptr(ptr: i64**, other: i64*): i64 {
+    *ptr = other;
+    ret 1;
+}
+
+swapptr(a: i64**, b: i64**): void {
+    *a = *b;
+    ret;
+}
+
+setarr(ptr: i64[200]*, val: i64): i64 {
+    (*ptr)[0] = val;
+    ret 1;
+}
+
 set(ptr: i64*, val: i64*) => *ptr = *val;
 
 main() : i64 {
@@ -7,5 +22,13 @@ main() : i64 {
     for (let i = 0; i in [0, size); i += 1;) -> set(&a[i], &i);
     // for (let i = 0; i in [0, size); i += 1;) -> a[i] *= i;
 
-    ret i;
+    let b = &a;
+    let b: i64[200]* = &a;
+    setarr(b, 222);
+
+    let i: i64;
+    let b = &i;
+    swapptr(&b, &b);
+
+    ret a[0];
 }

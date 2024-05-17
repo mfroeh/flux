@@ -35,8 +35,9 @@ any TypeChecker::visit(FunctionDefinition &function) {
     }
   }
 
-  if (returnCount == 0)
+  if (returnCount == 0) {
     throw runtime_error("Function must have a top-level return statement");
+  }
 
   functionSymbolStack.pop();
   functionStack.pop();
@@ -110,8 +111,11 @@ any TypeChecker::visit(ExpressionStatement &exprStmt) {
 any TypeChecker::visit(VariableDeclaration &varDecl) {
   AstVisitor::visit(varDecl);
 
-  if (varDecl.initializer == nullptr)
-    return {};
+  if (varDecl.type->isVoid())
+    throw runtime_error("Variable cannot have void type");
+
+  if (varDecl.type->isInfer() && varDecl.initializer == nullptr)
+    throw runtime_error("Variable type could not be inferred");
 
   if (varDecl.type->isInfer()) {
     varDecl.type = varDecl.initializer->type;
@@ -120,6 +124,14 @@ any TypeChecker::visit(VariableDeclaration &varDecl) {
     assert(symbol != nullptr);
     symbol->type = varDecl.type;
   }
+
+  // if it was inferred to be void
+  if (varDecl.type->isVoid())
+    throw runtime_error("Variable cannot have void type");
+
+  // if there is no initializer, no need to check if the types match
+  if (varDecl.initializer == nullptr)
+    return {};
 
   if (!varDecl.initializer->type->canImplicitlyConvertTo(varDecl.type)) {
     throw runtime_error("Variable type does not match initializer type");

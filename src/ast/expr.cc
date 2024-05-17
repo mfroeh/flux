@@ -290,3 +290,13 @@ shared_ptr<Expr> TernaryExpr::deepcopy() const {
   return make_shared<TernaryExpr>(tokens, condition->deepcopy(),
                                   thenExpr->deepcopy(), elseExpr->deepcopy());
 }
+
+VoidExpr::VoidExpr(Tokens tokens) : Expr(std::move(tokens), VoidType::get()) {}
+
+any VoidExpr::accept(AbstractAstVisitor &visitor) { return {}; }
+
+llvm::Value *VoidExpr::codegen(IRVisitor &visitor) { return nullptr; }
+
+shared_ptr<Expr> VoidExpr::deepcopy() const {
+  return make_shared<VoidExpr>(tokens);
+}

@@ -10,6 +10,7 @@ using std::string;
 
 struct Type {
   enum Kind {
+    VOID,
     INFER,
     ARRAY,
     INT,
@@ -19,6 +20,7 @@ struct Type {
     POINTER,
   } kind;
 
+  Kind Void = VOID;
   Kind Infer = INFER;
   Kind Array = ARRAY;
   Kind Int = INT;
@@ -49,6 +51,18 @@ struct Type {
 
 std::ostream &operator<<(std::ostream &os, const Type &type);
 
+struct VoidType : public Type {
+  static shared_ptr<VoidType> get();
+  llvm::Type *codegen(class IRVisitor &visitor) override;
+
+  bool canImplicitlyConvertTo(shared_ptr<Type> other) override;
+  virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
+                              class IRVisitor &visitor) override;
+
+private:
+  VoidType();
+};
+
 struct InferType : public Type {
   static shared_ptr<InferType> get();
   llvm::Type *codegen(class IRVisitor &visitor) override;
@@ -64,7 +78,7 @@ private:
 struct PointerType : public Type {
   shared_ptr<Type> pointee;
 
-  static shared_ptr<PointerType> get(shared_ptr<Type> pointee);
+  static shared_ptr<PointerType> get(const shared_ptr<Type> &pointee);
   llvm::Type *codegen(class IRVisitor &visitor) override;
 
   bool canImplicitlyConvertTo(shared_ptr<Type> other) override;

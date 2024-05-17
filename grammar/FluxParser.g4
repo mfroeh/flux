@@ -80,9 +80,11 @@ expression:
 
 expressionList: expression (',' expression)*;
 
-type: builtinType | arrayType | pointerType;
+type: pointerType | nonPointerType;
 
-pointerType: builtinType '*';
+pointerType: nonPointerType '*'+;
+
+nonPointerType: builtinType | arrayType;
 
 arrayType: builtinType '[' IntLiteral ']';
 
@@ -92,7 +94,8 @@ builtinType:
 	| KwFloat64
 	| KwFloat32
 	| KwBool
-	| KwString;
+	| KwString
+	| KwVoid;
 
 // todo: array literal
 literal:

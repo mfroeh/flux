@@ -7,7 +7,7 @@ using namespace std;
 Type::Type(Kind kind) : kind(std::move(kind)) {}
 
 bool Type::isInfer() const { return kind == INFER; }
-bool Type::isVoid() const { return false; }
+bool Type::isVoid() const { return kind == VOID; }
 bool Type::isNumber() const { return isInt() || isFloat(); }
 bool Type::isInt() const { return kind == INT; }
 bool Type::isFloat() const { return kind == FLOAT; }
@@ -19,29 +19,52 @@ bool Type::isPointer() const { return kind == POINTER; }
 ostream &operator<<(ostream &os, const Type &type) {
   switch (type.kind) {
   case Type::INFER:
-    os << "Infer";
+    os << "infer";
     break;
   case Type::ARRAY:
     os << "Array(" << *static_cast<const ArrayType &>(type).elementType << ", "
        << static_cast<const ArrayType &>(type).size << ")";
     break;
   case Type::INT:
-    os << "Int";
+    os << "int";
     break;
   case Type::FLOAT:
-    os << "Float";
+    os << "float";
     break;
   case Type::BOOL:
-    os << "Bool";
+    os << "bool";
     break;
   case Type::STRING:
-    os << "String";
+    os << "str";
     break;
   case Type::POINTER:
     os << "Pointer(" << *static_cast<const PointerType &>(type).pointee << ")";
     break;
+  case Type::VOID:
+    os << "void";
+    break;
   }
   return os;
+}
+
+VoidType::VoidType() : Type(VOID) {}
+
+shared_ptr<VoidType> VoidType::get() {
+  static shared_ptr<VoidType> instance = shared_ptr<VoidType>(new VoidType());
+  return instance;
+}
+
+llvm::Type *VoidType::codegen(IRVisitor &visitor) {
+  return llvm::Type::getVoidTy(*visitor.llvmContext);
+}
+
+bool VoidType::canImplicitlyConvertTo(shared_ptr<Type> other) {
+  return other->isVoid();
+}
+
+llvm::Value *VoidType::castTo(llvm::Value *value, shared_ptr<Type> to,
+                              IRVisitor &visitor) {
+  assert(false);
 }
 
 InferType::InferType() : Type(INFER) {}
@@ -54,7 +77,9 @@ shared_ptr<InferType> InferType::get() {
 
 llvm::Type *InferType::codegen(IRVisitor &visitor) { assert(false); }
 
-bool InferType::canImplicitlyConvertTo(shared_ptr<Type> other) { return true; }
+bool InferType::canImplicitlyConvertTo(shared_ptr<Type> other) {
+  return !other->isVoid();
+}
 
 llvm::Value *InferType::castTo(llvm::Value *value, shared_ptr<Type> to,
                                IRVisitor &visitor) {
@@ -64,7 +89,7 @@ llvm::Value *InferType::castTo(llvm::Value *value, shared_ptr<Type> to,
 PointerType::PointerType(shared_ptr<Type> pointee)
     : Type(POINTER), pointee(std::move(pointee)) {}
 
-shared_ptr<PointerType> PointerType::get(shared_ptr<Type> pointee) {
+shared_ptr<PointerType> PointerType::get(const shared_ptr<Type> &pointee) {
   static std::unordered_map<shared_ptr<Type>, shared_ptr<PointerType>>
       instances;
 

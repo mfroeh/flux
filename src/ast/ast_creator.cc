@@ -188,6 +188,10 @@ Block AstCreator::visitElseBlock(FluxParser::ElseBlockContext *ctx) {
 // expressions
 shared_ptr<Expr>
 AstCreator::visitExpression(FluxParser::ExpressionContext *ctx) {
+  // E.g. ret;
+  if (!ctx)
+    return make_shared<VoidExpr>(Tokens());
+
   using FP = FluxParser;
   if (auto expr = dynamic_cast<FP::ParenExprContext *>(ctx))
     return visitParenExpr(expr);
@@ -408,20 +412,34 @@ shared_ptr<Type> AstCreator::visitType(FluxParser::TypeContext *ctx) {
   if (!ctx)
     return InferType::get();
 
-  if (auto arrayType = ctx->arrayType())
-    return visitArrayType(arrayType);
-  else if (auto builtinType = ctx->builtinType())
-    return visitBuiltinType(builtinType);
-  else if (auto pointerType = ctx->pointerType())
+  if (auto pointerType = ctx->pointerType()) {
     return visitPointerType(pointerType);
-  else
+  } else if (auto nonPointerType = ctx->nonPointerType()) {
+    return visitNonPointerType(nonPointerType);
+  } else {
     throw runtime_error("Unknown type");
+  }
 }
 
 shared_ptr<PointerType>
 AstCreator::visitPointerType(FluxParser::PointerTypeContext *ctx) {
-  auto pointee = visitBuiltinType(ctx->builtinType());
-  return PointerType::get(pointee);
+  auto pointee = visitNonPointerType(ctx->nonPointerType());
+
+  shared_ptr<Type> type = pointee;
+  for (unsigned i = 0; i < ctx->Mul().size(); i++) {
+    type = PointerType::get(type);
+  }
+  return static_pointer_cast<PointerType>(type);
+}
+
+shared_ptr<Type>
+AstCreator::visitNonPointerType(FluxParser::NonPointerTypeContext *ctx) {
+  if (auto arrayType = ctx->arrayType())
+    return visitArrayType(arrayType);
+  else if (auto bultin = ctx->builtinType())
+    return visitBuiltinType(bultin);
+  else
+    assert(false);
 }
 
 shared_ptr<ArrayType>
@@ -441,8 +459,10 @@ AstCreator::visitBuiltinType(FluxParser::BuiltinTypeContext *ctx) {
     return BoolType::get();
   else if (ctx->KwString())
     return StringType::get();
+  else if (ctx->KwVoid())
+    return VoidType::get();
   else
-    throw runtime_error("Unknown builtin type");
+    assert(false && "Unknown builtin type");
 }
 
 Interval AstCreator::visitInterval(FluxParser::IntervalContext *ctx) {
