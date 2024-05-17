@@ -26,6 +26,11 @@ fill(val: i64): i64[20] {
 
 set(ptr: i64*, val: i64*) => *ptr = *val;
 
+fillInplace(arr: i64[20]*, val: i64): void {
+    for (let i = 0; i in [0, 20); i += 1;) -> (*arr)[i] = val;
+    ret;
+}
+
 main() : i64 {
     let i: i64;
     let a: i64[200];
@@ -42,7 +47,8 @@ main() : i64 {
     swapptr(&b, &b);
 
     let arr = fill(20);
-    arr = testarr(arr);
+    testarr(arr);
+    fillInplace(&arr, 300);
 
     ret arr[0];
 }
