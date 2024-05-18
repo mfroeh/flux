@@ -219,6 +219,8 @@ AstCreator::visitExpression(FluxParser::ExpressionContext *ctx) {
     return visitCompoundAssignmentExpr(expr);
   else if (auto expr = dynamic_cast<FP::AssignmentExprContext *>(ctx))
     return visitAssignmentExpr(expr);
+  else if (auto arrayInit = dynamic_cast<FP::ArrayLiteralContext *>(ctx))
+    return visitArrayLiteral(arrayInit);
   else
     throw runtime_error("Unknown expression type");
 }
@@ -393,6 +395,11 @@ shared_ptr<Expr> AstCreator::visitLiteral(FluxParser::LiteralContext *ctx) {
         make_shared<BoolLiteral>(Tokens(ctx), boolLit->getText() == "true"));
   else
     throw runtime_error("Unknown literal type");
+}
+
+shared_ptr<Expr> AstCreator::visitArrayLiteral(FP::ArrayLiteralContext *ctx) {
+  return make_shared<ArrayLiteral>(Tokens(ctx),
+                                   visitExpressionList(ctx->expressionList()));
 }
 
 // misc

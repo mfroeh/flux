@@ -32,6 +32,7 @@ public:
   any visit(struct FloatLiteral &floatLit) override;
   any visit(struct BoolLiteral &boolLit) override;
   any visit(struct StringLiteral &stringLit) override;
+  any visit(struct ArrayLiteral &arrInit) override;
   any visit(struct VariableReference &var) override;
   any visit(struct ArrayReference &arr) override;
   any visit(struct FunctionCall &funcCall) override;

@@ -2,6 +2,7 @@
 
 #include "ast.hh"
 #include "ast/type.hh"
+#include <llvm/IR/Instructions.h>
 #include <llvm/IR/Value.h>
 #include <memory>
 
@@ -78,6 +79,19 @@ struct StringLiteral : public Expr {
   string value;
 
   StringLiteral(Tokens tokens, string value);
+
+  virtual any accept(class AbstractAstVisitor &visitor) override;
+  llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
+};
+
+struct ArrayLiteral : public Expr {
+  vector<shared_ptr<Expr>> values;
+
+  // set after allocation during codegen
+  llvm::AllocaInst *alloca;
+
+  ArrayLiteral(Tokens tokens, vector<shared_ptr<Expr>> values);
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;

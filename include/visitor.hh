@@ -38,6 +38,7 @@ public:
   virtual any visit(struct FloatLiteral &floatLit) = 0;
   virtual any visit(struct BoolLiteral &boolLit) = 0;
   virtual any visit(struct StringLiteral &stringLit) = 0;
+  virtual any visit(struct ArrayLiteral &arrInit) = 0;
   virtual any visit(struct VariableReference &var) = 0;
   virtual any visit(struct ArrayReference &arr) = 0;
   virtual any visit(struct FunctionCall &funcCall) = 0;
@@ -88,6 +89,7 @@ public:
   any visit(struct FloatLiteral &floatLit) override;
   any visit(struct BoolLiteral &boolLit) override;
   any visit(struct StringLiteral &stringLit) override;
+  any visit(struct ArrayLiteral &arrInit) override;
   any visit(struct VariableReference &var) override;
   any visit(struct ArrayReference &arr) override;
   any visit(struct FunctionCall &funcCall) override;

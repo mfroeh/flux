@@ -7,6 +7,7 @@
 
 using std::shared_ptr;
 using std::string;
+using std::vector;
 
 struct Type {
   enum Kind {
@@ -47,6 +48,9 @@ struct Type {
   virtual llvm::Type *codegen(class IRVisitor &visitor) = 0;
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) = 0;
+
+  virtual bool canDefaultInitialize() const = 0;
+  virtual llvm::Value *getDefaultValue(class IRVisitor &visitor) = 0;
 };
 
 std::ostream &operator<<(std::ostream &os, const Type &type);
@@ -58,6 +62,8 @@ struct VoidType : public Type {
   bool canImplicitlyConvertTo(shared_ptr<Type> other) override;
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
+  virtual bool canDefaultInitialize() const override;
+  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
 
 private:
   VoidType();
@@ -70,6 +76,8 @@ struct InferType : public Type {
   bool canImplicitlyConvertTo(shared_ptr<Type> other) override;
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
+  virtual bool canDefaultInitialize() const override;
+  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
 
 private:
   InferType();
@@ -84,6 +92,8 @@ struct PointerType : public Type {
   bool canImplicitlyConvertTo(shared_ptr<Type> other) override;
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
+  virtual bool canDefaultInitialize() const override;
+  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
 
 private:
   PointerType(shared_ptr<Type> pointee);
@@ -99,6 +109,13 @@ struct ArrayType : public Type {
   bool canImplicitlyConvertTo(shared_ptr<Type> other) override;
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
+  virtual bool canDefaultInitialize() const override;
+
+  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
+
+  void initializeArray(llvm::Value *array,
+                       const shared_ptr<struct ArrayLiteral> &initializer,
+                       class IRVisitor &visitor);
 
 private:
   ArrayType(shared_ptr<Type> elementType, long size);
@@ -111,6 +128,8 @@ struct IntType : public Type {
   bool canImplicitlyConvertTo(shared_ptr<Type> other) override;
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
+  virtual bool canDefaultInitialize() const override;
+  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
 
 private:
   IntType();
@@ -123,6 +142,8 @@ struct FloatType : public Type {
   bool canImplicitlyConvertTo(shared_ptr<Type> other) override;
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
+  virtual bool canDefaultInitialize() const override;
+  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
 
 private:
   FloatType();
@@ -135,6 +156,8 @@ struct BoolType : public Type {
   bool canImplicitlyConvertTo(shared_ptr<Type> other) override;
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
+  virtual bool canDefaultInitialize() const override;
+  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
 
 private:
   BoolType();
@@ -148,6 +171,8 @@ struct StringType : public Type {
 
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
+  virtual bool canDefaultInitialize() const override;
+  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
 
 private:
   StringType();

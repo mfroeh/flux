@@ -117,6 +117,15 @@ any Desugarer::visit(BoolLiteral &boolLit) { return {}; }
 
 any Desugarer::visit(StringLiteral &stringLit) { return {}; }
 
+any Desugarer::visit(ArrayLiteral &arrInit) {
+  for (auto &value : arrInit.values) {
+    any res = value->accept(*this);
+    if (res.has_value())
+      value = any_cast<shared_ptr<Expr>>(res);
+  }
+  return {};
+}
+
 any Desugarer::visit(VariableReference &var) { return {}; }
 
 any Desugarer::visit(ArrayReference &arr) {

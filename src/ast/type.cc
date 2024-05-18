@@ -1,6 +1,9 @@
 #include "ast/type.hh"
+#include "ast/expr.hh"
 #include "codegen/ir_visitor.hh"
+#include <algorithm>
 #include <ostream>
+#include <ranges>
 
 using namespace std;
 
@@ -67,6 +70,10 @@ llvm::Value *VoidType::castTo(llvm::Value *value, shared_ptr<Type> to,
   assert(false);
 }
 
+bool VoidType::canDefaultInitialize() const { assert(false); }
+
+llvm::Value *VoidType::getDefaultValue(IRVisitor &visitor) { assert(false); }
+
 InferType::InferType() : Type(INFER) {}
 
 shared_ptr<InferType> InferType::get() {
@@ -85,6 +92,10 @@ llvm::Value *InferType::castTo(llvm::Value *value, shared_ptr<Type> to,
                                IRVisitor &visitor) {
   assert(false);
 }
+
+bool InferType::canDefaultInitialize() const { assert(false); }
+
+llvm::Value *InferType::getDefaultValue(IRVisitor &visitor) { assert(false); }
 
 PointerType::PointerType(shared_ptr<Type> pointee)
     : Type(POINTER), pointee(std::move(pointee)) {}
@@ -112,6 +123,10 @@ llvm::Value *PointerType::castTo(llvm::Value *value, shared_ptr<Type> to,
   assert(false);
 }
 
+bool PointerType::canDefaultInitialize() const { return false; }
+
+llvm::Value *PointerType::getDefaultValue(IRVisitor &visitor) { assert(false); }
+
 ArrayType::ArrayType(shared_ptr<Type> elementType, long size)
     : Type(ARRAY), elementType(std::move(elementType)), size(size) {}
 
@@ -133,12 +148,103 @@ llvm::Type *ArrayType::codegen(IRVisitor &visitor) {
 }
 
 bool ArrayType::canImplicitlyConvertTo(shared_ptr<Type> other) {
-  return other.get() == this;
+  if (other.get() == this)
+    return true;
+
+  cout << *other << endl;
+
+  if (!other->isArray())
+    return false;
+
+  auto otherArray = static_pointer_cast<ArrayType>(other);
+  if (otherArray->size < size)
+    return false;
+
+  // required matching element types (relax to implicit conversion later)
+  if (otherArray->elementType != elementType)
+    return false;
+
+  return true;
 }
 
-llvm::Value *ArrayType::castTo(llvm::Value *value, shared_ptr<Type> to,
+llvm::Value *ArrayType::castTo(llvm::Value *loadedArr, shared_ptr<Type> to,
                                IRVisitor &visitor) {
-  assert(false);
+  assert(canImplicitlyConvertTo(to));
+  if (to.get() == this)
+    return loadedArr;
+
+  auto oldSize = size;
+  auto oldElementType = elementType;
+  auto oldElemTypeLlvm = oldElementType->codegen(visitor);
+
+  auto newSize = static_pointer_cast<ArrayType>(to)->size;
+  auto newElementType = static_pointer_cast<ArrayType>(to)->elementType;
+  auto newElemTypeLlvm = newElementType->codegen(visitor);
+
+  assert(oldSize <= newSize);
+  // todo: maybe relax later
+  assert(oldElementType == newElementType);
+
+  auto &builder = visitor.builder;
+
+  // new array
+  auto newAlloca =
+      visitor.builder->CreateAlloca(to->codegen(visitor), nullptr, "arrayCast");
+
+  // copy over old elements
+  for (unsigned i = 0; i < oldSize; i++) {
+    auto oldElement = builder->CreateExtractValue(loadedArr, {i}, "oldElem");
+
+    auto index =
+        llvm::ConstantInt::get(*visitor.llvmContext, llvm::APInt(64, i));
+    auto newElementPtr = builder->CreateInBoundsGEP(newElemTypeLlvm, newAlloca,
+                                                    index, "newElemPtr");
+    builder->CreateStore(oldElement, newElementPtr);
+  }
+
+  // fill with rest
+  auto defaultVal = newElementType->getDefaultValue(visitor);
+  llvm::outs() << *defaultVal;
+  for (int i = oldSize; i < newSize; i++) {
+    auto index =
+        llvm::ConstantInt::get(*visitor.llvmContext, llvm::APInt(64, i));
+    auto elemPtr = builder->CreateInBoundsGEP(newElemTypeLlvm, newAlloca, index,
+                                              "newElemPtr");
+    builder->CreateStore(defaultVal, elemPtr);
+  }
+
+  // todo: should we also load here?
+  return builder->CreateLoad(to->codegen(visitor), newAlloca, "arrayCast");
+}
+
+bool ArrayType::canDefaultInitialize() const {
+  return elementType->canDefaultInitialize();
+}
+
+llvm::Value *ArrayType::getDefaultValue(IRVisitor &visitor) {
+  assert(false && "Use ArrayType::initializeArray instead");
+}
+
+void ArrayType::initializeArray(llvm::Value *array,
+                                const shared_ptr<ArrayLiteral> &initializer,
+                                class IRVisitor &visitor) {
+  auto elemType = elementType->codegen(visitor);
+  auto elemDefault = elementType->getDefaultValue(visitor);
+
+  auto values = initializer ? initializer->values : vector<shared_ptr<Expr>>();
+  for (auto i : std::views::iota(0, size)) {
+    auto index = llvm::ConstantInt::get(
+        llvm::Type::getInt64Ty(*visitor.llvmContext), i, false);
+    auto elementPtr =
+        visitor.builder->CreateGEP(elemType, array, index, "arrayidx");
+
+    if (i < values.size()) {
+      auto value = values[i]->codegen(visitor);
+      visitor.builder->CreateStore(value, elementPtr);
+    } else {
+      visitor.builder->CreateStore(elemDefault, elementPtr);
+    }
+  }
 }
 
 IntType::IntType() : Type(INT) {}
@@ -173,6 +279,12 @@ llvm::Value *IntType::castTo(llvm::Value *value, shared_ptr<Type> to,
   throw std::runtime_error("Invalid cast");
 }
 
+bool IntType::canDefaultInitialize() const { return true; }
+
+llvm::Value *IntType::getDefaultValue(IRVisitor &visitor) {
+  return llvm::ConstantInt::get(codegen(visitor), 0);
+}
+
 FloatType::FloatType() : Type(FLOAT) {}
 
 shared_ptr<FloatType> FloatType::get() {
@@ -201,6 +313,12 @@ llvm::Value *FloatType::castTo(llvm::Value *value, shared_ptr<Type> to,
   throw std::runtime_error("Invalid cast");
 }
 
+bool FloatType::canDefaultInitialize() const { return true; }
+
+llvm::Value *FloatType::getDefaultValue(IRVisitor &visitor) {
+  return llvm::ConstantFP::get(codegen(visitor), 0.0);
+}
+
 BoolType::BoolType() : Type(BOOL) {}
 
 shared_ptr<BoolType> BoolType::get() {
@@ -224,6 +342,12 @@ llvm::Value *BoolType::castTo(llvm::Value *value, shared_ptr<Type> to,
   throw std::runtime_error("Invalid cast");
 }
 
+bool BoolType::canDefaultInitialize() const { return true; }
+
+llvm::Value *BoolType::getDefaultValue(IRVisitor &visitor) {
+  return llvm::ConstantInt::get(codegen(visitor), 0);
+}
+
 StringType::StringType() : Type(STRING) {}
 
 shared_ptr<StringType> StringType::get() {
@@ -243,5 +367,13 @@ llvm::Type *StringType::codegen(IRVisitor &visitor) {
 
 llvm::Value *StringType::castTo(llvm::Value *value, shared_ptr<Type> to,
                                 IRVisitor &visitor) {
+  throw std::runtime_error("String type not implemented");
+}
+
+bool StringType::canDefaultInitialize() const {
+  throw std::runtime_error("String type not implemented");
+}
+
+llvm::Value *StringType::getDefaultValue(IRVisitor &visitor) {
   throw std::runtime_error("String type not implemented");
 }

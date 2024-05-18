@@ -88,6 +88,25 @@ llvm::Value *StringLiteral::codegen(IRVisitor &visitor) {
   return visitor.visit(*this);
 }
 
+ArrayLiteral::ArrayLiteral(Tokens tokens, vector<shared_ptr<Expr>> values)
+    : Expr(std::move(tokens), InferType::get()), values(std::move(values)) {}
+
+any ArrayLiteral::accept(AbstractAstVisitor &visitor) {
+  return visitor.visit(*this);
+}
+
+llvm::Value *ArrayLiteral::codegen(IRVisitor &visitor) {
+  return visitor.visit(*this);
+}
+
+shared_ptr<Expr> ArrayLiteral::deepcopy() const {
+  vector<shared_ptr<Expr>> newValues;
+  for (auto &value : values) {
+    newValues.push_back(value->deepcopy());
+  }
+  return make_shared<ArrayLiteral>(tokens, newValues);
+}
+
 VariableReference::VariableReference(Tokens tokens, string name)
     : LValueExpr(std::move(tokens), InferType::get()), name(name) {}
 

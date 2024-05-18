@@ -37,6 +37,7 @@ public:
   llvm::Value *visit(struct FloatLiteral &literal);
   llvm::Value *visit(struct BoolLiteral &literal);
   llvm::Value *visit(struct StringLiteral &literal);
+  llvm::Value *visit(struct ArrayLiteral &literal);
 
   llvm::Value *visit(struct VariableReference &var);
   llvm::Value *visit(struct ArrayReference &array);

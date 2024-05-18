@@ -1,8 +1,10 @@
 #include "ast/expr.hh"
+#include "ast/type.hh"
 #include "codegen/ir_visitor.hh"
 #include "symbol.hh"
 #include <llvm/ADT/APFloat.h>
 #include <memory>
+#include <ranges>
 
 using namespace llvm;
 using namespace std;
@@ -29,6 +31,25 @@ Value *IRVisitor::visit(BoolLiteral &literal) {
 Value *IRVisitor::visit(::StringLiteral &literal) {
   throw runtime_error("Not implemented");
   // return builder->CreateGlobalStringPtr(literal.value);
+}
+
+Value *IRVisitor::visit(ArrayLiteral &literal) {
+  auto arrType = literal.type->codegen(*this);
+  auto alloca = builder->CreateAlloca(arrType, nullptr, "arrayLiteral");
+
+  auto elemType = static_pointer_cast<::ArrayType>(literal.type)
+                      ->elementType->codegen(*this);
+
+  for (int i = 0; i < literal.values.size(); i++) {
+    auto index = ConstantInt::get(*llvmContext, APInt(64, i));
+    auto elemPtr = builder->CreateGEP(elemType, alloca, index, "arrayElemPtr");
+
+    auto value = literal.values[i]->codegen(*this);
+    builder->CreateStore(value, elemPtr);
+  }
+
+  // todo: should we also load here?
+  return builder->CreateLoad(arrType, alloca, "arrayLiteral");
 }
 
 Value *IRVisitor::visit(VariableReference &variable) {

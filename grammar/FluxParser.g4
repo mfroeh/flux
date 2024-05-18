@@ -66,6 +66,7 @@ expression:
 	| Identifier													# IdentifierExpr
 	| expression '[' expression ']'									# ArrayRefExpr
 	| Identifier '(' expressionList? ')'							# CallExpr
+	| '[' expressionList ']'										# ArrayLiteral
 	| ('-' | '!' | '&' | '*') expression							# PrefixUnaryExpr
 	| expression ('*' | '/' | '%') expression						# BinaryArithmeticExpr
 	| expression ('+' | '-') expression								# BinaryArithmeticExpr
@@ -97,7 +98,6 @@ builtinType:
 	| KwString
 	| KwVoid;
 
-// todo: array literal
 literal:
 	IntLiteral
 	| FloatLiteral

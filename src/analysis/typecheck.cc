@@ -48,10 +48,6 @@ any TypeChecker::visit(FunctionDefinition &function) {
 any TypeChecker::visit(Parameter &param) {
   AstVisitor::visit(param);
 
-  // if (param.type->isArray()) {
-  //   throw runtime_error("Function parameters cannot be arrays");
-  // }
-
   return {};
 }
 
@@ -129,13 +125,20 @@ any TypeChecker::visit(VariableDeclaration &varDecl) {
   if (varDecl.type->isVoid())
     throw runtime_error("Variable cannot have void type");
 
-  // if there is no initializer, no need to check if the types match
+  if (varDecl.initializer == nullptr && !varDecl.type->canDefaultInitialize()) {
+    throw runtime_error("Variable must be initialized");
+  }
+
+  // if there is no initializer, and we can default initialize, no need to check
+  // the type
   if (varDecl.initializer == nullptr)
     return {};
 
   if (!varDecl.initializer->type->canImplicitlyConvertTo(varDecl.type)) {
     throw runtime_error("Variable type does not match initializer type");
   } else if (varDecl.initializer->type != varDecl.type) {
+    cout << "Casting:" << *varDecl.initializer->type << " -> " << *varDecl.type
+         << endl;
     varDecl.initializer = make_shared<Cast>(varDecl.initializer, varDecl.type);
   }
 
@@ -172,6 +175,26 @@ any TypeChecker::visit(BoolLiteral &boolLit) {
 
 any TypeChecker::visit(StringLiteral &stringLit) {
   stringLit.type = StringType::get();
+  return {};
+}
+
+any TypeChecker::visit(ArrayLiteral &arrLiteral) {
+  AstVisitor::visit(arrLiteral);
+
+  // the first element decides the element type
+  auto elemType = arrLiteral.values[0]->type;
+
+  for (auto &value : arrLiteral.values) {
+    if (!value->type->canImplicitlyConvertTo(elemType)) {
+      throw runtime_error(
+          "Array initializer value does not match element type");
+    } else if (value->type != elemType) {
+      value = make_shared<Cast>(value, elemType);
+    }
+  }
+
+  arrLiteral.type = ArrayType::get(elemType, arrLiteral.values.size());
+
   return {};
 }
 

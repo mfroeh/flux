@@ -86,6 +86,13 @@ any AstVisitor::visit(BoolLiteral &boolLit) { return {}; }
 
 any AstVisitor::visit(StringLiteral &stringLit) { return {}; }
 
+any AstVisitor::visit(ArrayLiteral &arrInit) {
+  for (auto &value : arrInit.values) {
+    value->accept(*this);
+  }
+  return {};
+}
+
 any AstVisitor::visit(VariableReference &var) { return {}; }
 
 any AstVisitor::visit(ArrayReference &arr) {

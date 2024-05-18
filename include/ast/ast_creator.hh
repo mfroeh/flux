@@ -73,6 +73,7 @@ public:
   shared_ptr<Expr> visitParenExpr(FP::ParenExprContext *ctx);
   shared_ptr<TernaryExpr> visitTernaryExpr(FP::TernaryExprContext *ctx);
   shared_ptr<Expr> visitLiteral(FP::LiteralContext *ctx);
+  shared_ptr<Expr> visitArrayLiteral(FP::ArrayLiteralContext *ctx);
 
   // misc
   vector<shared_ptr<Expr>> visitExpressionList(FP::ExpressionListContext *ctx);
