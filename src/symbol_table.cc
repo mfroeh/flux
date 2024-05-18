@@ -22,7 +22,7 @@ void SymbolTable::insert(shared_ptr<FunctionSymbol> function) {
 }
 
 shared_ptr<FunctionSymbol> SymbolTable::lookupFunction(string mangledName) {
-  if (!mangledName.starts_with("#"))
+  if (!mangledName.starts_with("#") && mangledName != "main")
     assert(false && "mangledName must start with #");
 
   if (functions.contains(mangledName)) {

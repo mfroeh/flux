@@ -4,6 +4,7 @@
 #include <format>
 #include <iostream>
 #include <ranges>
+#include <stdexcept>
 
 using namespace std;
 
@@ -19,8 +20,7 @@ Scope::Scope(shared_ptr<Scope> parent) : parent(std::move(parent)) {
 void Scope::addVariable(string name, shared_ptr<Type> type) {
   int count = variableCounts[name]++;
 
-  auto mangledName =
-      std::format("#d={}n={}misc={}:{}", depth, count, counter, name);
+  auto mangledName = std::format("#d{}n{}c{}:{}", depth, count, counter, name);
   auto variable = VariableSymbol(name, mangledName, type, depth, count);
   cout << "inserting " << variable << endl;
   variables.push_back(make_shared<VariableSymbol>(variable));
@@ -30,8 +30,13 @@ void Scope::addFunction(string name, shared_ptr<Type> returnType,
                         vector<Parameter> parameters) {
   int count = functionCounts[name]++;
 
-  auto mangledName =
-      std::format("#d={}n={}misc={}:{}", depth, count, counter, name);
+  if (name == "main" && count > 0)
+    throw runtime_error("main function can only be defined once");
+
+  auto mangledName = std::format("#d{}n{}c{}:{}", depth, count, counter, name);
+  if (name == "main")
+    mangledName = "main";
+
   auto function =
       FunctionSymbol(name, mangledName, returnType, parameters, depth, count);
   cout << "inserting " << function << endl;

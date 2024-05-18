@@ -22,7 +22,7 @@ void IRVisitor::visit(FunctionDefinition &function) {
       llvm::FunctionType::get(returnType, parameterTypes, false);
 
   // create a new function and attach to module
-  auto llvmFunction = Function::Create(functionType, Function::InternalLinkage,
+  auto llvmFunction = Function::Create(functionType, Function::ExternalLinkage,
                                        function.mangledName, *llvmModule);
   auto funcSymbol = symTab.lookupFunction(function.mangledName);
   funcSymbol->llvmFunction = llvmFunction;

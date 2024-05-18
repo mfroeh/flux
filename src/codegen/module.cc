@@ -1,19 +1,21 @@
 #include "ast/module.hh"
+#include "codegen/context.hh"
 #include "codegen/ir_visitor.hh"
+#include <llvm/IR/Module.h>
 #include <memory>
 
 using namespace std;
 using namespace llvm;
 
 IRVisitor::IRVisitor(ModuleContext &context, SymbolTable &symTab,
-                     unique_ptr<llvm::LLVMContext> llvmContext)
-    : context(context), symTab(symTab), llvmContext(std::move(llvmContext)),
-      llvmModule(std::make_unique<llvm::Module>("main", *this->llvmContext)),
-      builder(std::make_unique<llvm::IRBuilder<>>(*this->llvmContext)) {}
+                     CodegenContext &codegenContext)
+    : context(context), symTab(symTab), codegenContext(codegenContext),
+      llvmContext(codegenContext.context), builder(codegenContext.builder),
+      llvmModule(codegenContext.module) {}
 
-unique_ptr<llvm::Module> IRVisitor::visit(::Module &module) {
+shared_ptr<llvm::Module> IRVisitor::visit(::Module &module) {
   for (auto &function : module.functions) {
     function.codegen(*this);
   }
-  return std::move(llvmModule);
+  return llvmModule;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ast/expr.hh"
+#include "codegen/context.hh"
 #include "module_context.hh"
 #include "symbol_table.hh"
 #include <llvm/IR/IRBuilder.h>
@@ -13,11 +14,11 @@ using std::unique_ptr;
 class IRVisitor {
 public:
   IRVisitor(ModuleContext &context, SymbolTable &symTab,
-            unique_ptr<llvm::LLVMContext> llvmContext);
+            CodegenContext &codegenContext);
   ~IRVisitor() = default;
 
   // module
-  unique_ptr<llvm::Module> visit(struct Module &module);
+  shared_ptr<llvm::Module> visit(struct Module &module);
 
   // functions (might change to return llvm::Function*)
   void visit(struct FunctionDefinition &function);
@@ -54,9 +55,10 @@ public:
 public:
   ModuleContext &context;
   SymbolTable &symTab;
+  CodegenContext &codegenContext;
 
   // llvm
-  unique_ptr<llvm::LLVMContext> llvmContext;
-  unique_ptr<llvm::Module> llvmModule;
-  unique_ptr<llvm::IRBuilder<>> builder;
+  shared_ptr<llvm::LLVMContext> &llvmContext;
+  shared_ptr<llvm::Module> &llvmModule;
+  shared_ptr<llvm::IRBuilder<>> &builder;
 };

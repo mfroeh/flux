@@ -29,21 +29,11 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
+#include <llvm/TargetParser/Host.h>
+#include <system_error>
 
 using namespace std;
 using std::filesystem::path;
-
-void initializeTargets() {
-  // initialize the target registry etc.
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargets();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllAsmParsers();
-  llvm::InitializeAllAsmPrinters();
-
-  // interpreter
-  LLVMLinkInMCJIT();
-}
 
 int main(int argc, char *argv[]) {
   argparse::ArgumentParser program("flux");
@@ -110,33 +100,57 @@ int main(int argc, char *argv[]) {
     static_pointer_cast<AstVisitor>(typeChecker)->visit(module);
 
     cout << "Generating IR code" << file << endl;
-    initializeTargets();
-    auto irVisitor = make_shared<IRVisitor>(moduleContext, symTab,
-                                            make_unique<llvm::LLVMContext>());
+    auto codegenContext = make_shared<CodegenContext>();
+    auto irVisitor =
+        make_shared<IRVisitor>(moduleContext, symTab, *codegenContext);
     auto llvmModule = irVisitor->visit(module);
-
-    cout << "Optimizing IR code" << file << endl;
 
     llvm::outs() << *llvmModule;
 
-    string err;
-    auto ee =
-        llvm::EngineBuilder(std::move(llvmModule)).setErrorStr(&err).create();
+    cout << "Optimizing IR code" << file << endl;
 
-    if (!ee) {
-      cerr << "Failed to create ExecutionEngine: " << err << endl;
+    cout << "Creating object file" << file << endl;
+    llvm::legacy::PassManager pass;
+    auto fileType = llvm::CodeGenFileType::CGFT_ObjectFile;
+
+    auto mainFunctions = symTab.getFunctions("main");
+    if (mainFunctions.size() != 1) {
+      cerr << "Expected exactly one main function" << endl;
       return 1;
     }
+    auto mainFunction = mainFunctions.front();
+    // rename main function to "main" (this should be done whilst compiling if
+    // main is called recursively)
+    mainFunction->llvmFunction->setName("main");
 
-    auto main = symTab.getFunctions("main").front();
-    if (!main) {
-      cerr << "No main function found" << endl;
+    error_code ec;
+    auto outStream = llvm::raw_fd_ostream("a.out", ec, llvm::sys::fs::OF_None);
+    if (codegenContext->targetMachine->addPassesToEmitFile(pass, outStream,
+                                                           nullptr, fileType)) {
+      cerr << "TargetMachine can't emit a file of this type" << endl;
       return 1;
     }
+    pass.run(*llvmModule);
+    outStream.flush();
 
-    cout << "Executing main" << endl;
-    auto result = ee->runFunction(main->llvmFunction, {});
-    cout << "Result: " << result.IntVal.getSExtValue() << endl;
+    // string err;
+    // auto ee =
+    //     llvm::EngineBuilder(std::move(llvmModule)).setErrorStr(&err).create();
+
+    // if (!ee) {
+    //   cerr << "Failed to create ExecutionEngine: " << err << endl;
+    //   return 1;
+    // }
+
+    // auto main = symTab.getFunctions("main").front();
+    // if (!main) {
+    //   cerr << "No main function found" << endl;
+    //   return 1;
+    // }
+
+    // cout << "Executing main" << endl;
+    // auto result = ee->runFunction(main->llvmFunction, {});
+    // cout << "Result: " << result.IntVal.getSExtValue() << endl;
   }
   return 0;
 }
