@@ -3,7 +3,7 @@ func(arr: i64[3]) => arr[2];
 makeArray(arr: i64[200]) => [200, 2, 3, 4];
 
 main(): i64 {
-    let res = makeArray([1]);
-    let c = [2, 4, 5];
-    ret c[222];
+    let res: i64[4] = makeArray([1]);
+    let c: i64*[1] = [&res[0]];
+    ret *c[0];
 }

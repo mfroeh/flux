@@ -79,7 +79,6 @@ public:
   vector<shared_ptr<Expr>> visitExpressionList(FP::ExpressionListContext *ctx);
   shared_ptr<Type> visitType(FP::TypeContext *ctx);
   shared_ptr<PointerType> visitPointerType(FP::PointerTypeContext *ctx);
-  shared_ptr<Type> visitNonPointerType(FP::NonPointerTypeContext *ctx);
   shared_ptr<ArrayType> visitArrayType(FP::ArrayTypeContext *ctx);
   shared_ptr<Type> visitBuiltinType(FP::BuiltinTypeContext *ctx);
 

@@ -419,18 +419,25 @@ shared_ptr<Type> AstCreator::visitType(FluxParser::TypeContext *ctx) {
   if (!ctx)
     return InferType::get();
 
-  if (auto pointerType = ctx->pointerType()) {
+  if (auto builtin = ctx->builtinType())
+    return visitBuiltinType(builtin);
+  else if (auto arrayType = ctx->arrayType())
+    return visitArrayType(arrayType);
+  else if (auto pointerType = ctx->pointerType())
     return visitPointerType(pointerType);
-  } else if (auto nonPointerType = ctx->nonPointerType()) {
-    return visitNonPointerType(nonPointerType);
-  } else {
-    throw runtime_error("Unknown type");
-  }
+  else
+    assert(false && "unknown type");
 }
 
 shared_ptr<PointerType>
 AstCreator::visitPointerType(FluxParser::PointerTypeContext *ctx) {
-  auto pointee = visitNonPointerType(ctx->nonPointerType());
+  shared_ptr<Type> pointee;
+  if (auto builtin = ctx->builtinType())
+    pointee = visitBuiltinType(builtin);
+  else if (auto array = ctx->arrayType())
+    pointee = visitArrayType(array);
+  else
+    assert(false && "Unknown pointer type");
 
   shared_ptr<Type> type = pointee;
   for (unsigned i = 0; i < ctx->Mul().size(); i++) {
@@ -439,21 +446,15 @@ AstCreator::visitPointerType(FluxParser::PointerTypeContext *ctx) {
   return static_pointer_cast<PointerType>(type);
 }
 
-shared_ptr<Type>
-AstCreator::visitNonPointerType(FluxParser::NonPointerTypeContext *ctx) {
-  if (auto arrayType = ctx->arrayType())
-    return visitArrayType(arrayType);
-  else if (auto bultin = ctx->builtinType())
-    return visitBuiltinType(bultin);
-  else
-    assert(false);
-}
-
 shared_ptr<ArrayType>
 AstCreator::visitArrayType(FluxParser::ArrayTypeContext *ctx) {
-  auto elementType = visitBuiltinType(ctx->builtinType());
+  auto type = visitBuiltinType(ctx->builtinType());
+  for (unsigned i = 0; i < ctx->Mul().size(); i++) {
+    type = PointerType::get(type);
+  }
+
   long size = stol(ctx->IntLiteral()->getText());
-  return ArrayType::get(elementType, size);
+  return ArrayType::get(type, size);
 }
 
 shared_ptr<Type>

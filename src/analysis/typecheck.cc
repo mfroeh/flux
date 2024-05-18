@@ -135,7 +135,7 @@ any TypeChecker::visit(VariableDeclaration &varDecl) {
     return {};
 
   if (!varDecl.initializer->type->canImplicitlyConvertTo(varDecl.type)) {
-    throw runtime_error("Variable type does not match initializer type");
+    throw runtime_error("Can not implicitly convert initializer to variable");
   } else if (varDecl.initializer->type != varDecl.type) {
     cout << "Casting:" << *varDecl.initializer->type << " -> " << *varDecl.type
          << endl;

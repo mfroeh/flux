@@ -113,10 +113,6 @@ struct ArrayType : public Type {
 
   llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
 
-  void initializeArray(llvm::Value *array,
-                       const shared_ptr<struct ArrayLiteral> &initializer,
-                       class IRVisitor &visitor);
-
 private:
   ArrayType(shared_ptr<Type> elementType, long size);
 };

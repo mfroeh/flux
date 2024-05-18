@@ -81,13 +81,12 @@ expression:
 
 expressionList: expression (',' expression)*;
 
-type: pointerType | nonPointerType;
+// todo: parsing for arrays with pointer elements
+type: builtinType | pointerType | arrayType;
 
-pointerType: nonPointerType '*'+;
+pointerType: (builtinType | arrayType) '*'+;
 
-nonPointerType: builtinType | arrayType;
-
-arrayType: builtinType '[' IntLiteral ']';
+arrayType: builtinType '*'* '[' IntLiteral ']';
 
 builtinType:
 	KwInt64

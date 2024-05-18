@@ -164,6 +164,10 @@ bool ArrayType::canImplicitlyConvertTo(shared_ptr<Type> other) {
   if (otherArray->elementType != elementType)
     return false;
 
+  // if elements have to be added
+  if (size < otherArray->size)
+    return otherArray->elementType->canDefaultInitialize();
+
   return true;
 }
 
@@ -223,28 +227,6 @@ bool ArrayType::canDefaultInitialize() const {
 
 llvm::Value *ArrayType::getDefaultValue(IRVisitor &visitor) {
   assert(false && "Use ArrayType::initializeArray instead");
-}
-
-void ArrayType::initializeArray(llvm::Value *array,
-                                const shared_ptr<ArrayLiteral> &initializer,
-                                class IRVisitor &visitor) {
-  auto elemType = elementType->codegen(visitor);
-  auto elemDefault = elementType->getDefaultValue(visitor);
-
-  auto values = initializer ? initializer->values : vector<shared_ptr<Expr>>();
-  for (auto i : std::views::iota(0, size)) {
-    auto index = llvm::ConstantInt::get(
-        llvm::Type::getInt64Ty(*visitor.llvmContext), i, false);
-    auto elementPtr =
-        visitor.builder->CreateGEP(elemType, array, index, "arrayidx");
-
-    if (i < values.size()) {
-      auto value = values[i]->codegen(visitor);
-      visitor.builder->CreateStore(value, elementPtr);
-    } else {
-      visitor.builder->CreateStore(elemDefault, elementPtr);
-    }
-  }
 }
 
 IntType::IntType() : Type(INT) {}
