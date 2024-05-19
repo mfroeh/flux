@@ -19,6 +19,11 @@ public:
   // module
   virtual any visit(struct Module &module) = 0;
 
+  // classes
+  virtual any visit(struct ClassDefinition &classDef) = 0;
+  virtual any visit(struct FieldDeclaration &fieldDecl) = 0;
+  virtual any visit(struct MethodDefinition &methodDef) = 0;
+
   // functions
   virtual any visit(struct FunctionDefinition &function) = 0;
   virtual any visit(struct Parameter &parameter) = 0;
@@ -69,6 +74,11 @@ public:
 
   // module
   any visit(struct Module &module) override;
+
+  // classes
+  any visit(struct ClassDefinition &classDef) override;
+  any visit(struct FieldDeclaration &fieldDecl) override;
+  any visit(struct MethodDefinition &methodDef) override;
 
   // functions
   any visit(struct FunctionDefinition &function) override;

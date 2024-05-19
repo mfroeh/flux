@@ -1,15 +1,28 @@
 #include "ast/ast_creator.hh"
+#include "ast/class.hh"
 #include "ast/expr.hh"
 #include "ast/function.hh"
 #include "ast/module.hh"
 #include "ast/stmt.hh"
 #include "ast/sugar.hh"
 #include "ast/type.hh"
+#include <algorithm>
+#include <boost/algorithm/string/join.hpp>
 #include <memory>
 #include <ranges>
 
 using namespace std;
 using namespace ranges;
+
+vector<string> getMembers(FluxParser::MemberReferenceContext *ctx) {
+  vector<string> members;
+  if (!ctx)
+    return members;
+  ranges::copy(ctx->Identifier() |
+                   views::transform([](auto &id) { return id->getText(); }),
+               back_inserter(members));
+  return members;
+}
 
 // module
 Module AstCreator::visitModule(FluxParser::ModuleContext *ctx) {
@@ -19,6 +32,40 @@ Module AstCreator::visitModule(FluxParser::ModuleContext *ctx) {
                }),
                back_inserter(functions));
   return Module(Tokens(ctx), functions);
+}
+
+// classes
+ClassDefinition
+AstCreator::visitClassDefinition(FluxParser::ClassDefinitionContext *ctx) {
+  string name = ctx->Identifier()->getText();
+  vector<FieldDeclaration> fields;
+  ranges::copy(ctx->fieldDeclaration() | views::transform([this](auto &field) {
+                 return visitFieldDeclaration(field);
+               }),
+               back_inserter(fields));
+
+  vector<MethodDefinition> methods;
+  ranges::copy(ctx->functionDefinition() | views::transform([this](auto &func) {
+                 auto function = visitFunctionDefinition(func);
+                 return MethodDefinition(function.tokens, function.name,
+                                         function.parameters, function.body,
+                                         function.returnType);
+               }),
+               back_inserter(methods));
+
+  return ClassDefinition(Tokens(ctx), name, fields, methods);
+}
+
+FieldDeclaration
+AstCreator::visitFieldDeclaration(FluxParser::FieldDeclarationContext *ctx) {
+  assert(ctx->type());
+  string name = ctx->Identifier()->getText();
+  auto type = visitType(ctx->type());
+
+  // todo: default initializer for fields
+  // auto initializer =
+  //     ctx->expression() ? visitExpression(ctx->expression()) : nullptr;
+  return FieldDeclaration(Tokens(ctx), name, type);
 }
 
 // functions
@@ -254,8 +301,15 @@ AstCreator::visitArrayRefExpr(FluxParser::ArrayRefExprContext *ctx) {
 
 shared_ptr<VariableReference>
 AstCreator::visitIdentifierExpr(FluxParser::IdentifierExprContext *ctx) {
-  return make_shared<VariableReference>(Tokens(ctx),
-                                        ctx->Identifier()->getText());
+  string name;
+  if (ctx->Identifier())
+    name = ctx->Identifier()->getText();
+  else if (ctx->memberReference())
+    name = boost::algorithm::join(getMembers(ctx->memberReference()), ".");
+  else
+    throw runtime_error("Unknown call expression");
+
+  return make_shared<VariableReference>(Tokens(ctx), name);
 }
 
 shared_ptr<BinaryLogical>
@@ -346,7 +400,14 @@ AstCreator::visitLiteralExpr(FluxParser::LiteralExprContext *ctx) {
 
 shared_ptr<FunctionCall>
 AstCreator::visitCallExpr(FluxParser::CallExprContext *ctx) {
-  string name = ctx->Identifier()->getText();
+  string name;
+  if (ctx->Identifier())
+    name = ctx->Identifier()->getText();
+  else if (ctx->memberReference())
+    name = boost::algorithm::join(getMembers(ctx->memberReference()), ".");
+  else
+    throw runtime_error("Unknown call expression");
+
   auto args = visitExpressionList(ctx->expressionList());
   return make_shared<FunctionCall>(Tokens(ctx), name, args);
 }
@@ -415,12 +476,13 @@ AstCreator::visitExpressionList(FluxParser::ExpressionListContext *ctx) {
   return expressions;
 }
 
+// types
 shared_ptr<Type> AstCreator::visitType(FluxParser::TypeContext *ctx) {
   if (!ctx)
     return InferType::get();
 
-  if (auto builtin = ctx->builtinType())
-    return visitBuiltinType(builtin);
+  if (auto scalar = ctx->scalarType())
+    return visitScalarType(scalar);
   else if (auto arrayType = ctx->arrayType())
     return visitArrayType(arrayType);
   else if (auto pointerType = ctx->pointerType())
@@ -432,8 +494,8 @@ shared_ptr<Type> AstCreator::visitType(FluxParser::TypeContext *ctx) {
 shared_ptr<PointerType>
 AstCreator::visitPointerType(FluxParser::PointerTypeContext *ctx) {
   shared_ptr<Type> pointee;
-  if (auto builtin = ctx->builtinType())
-    pointee = visitBuiltinType(builtin);
+  if (auto scalar = ctx->scalarType())
+    pointee = visitScalarType(scalar);
   else if (auto array = ctx->arrayType())
     pointee = visitArrayType(array);
   else
@@ -448,7 +510,7 @@ AstCreator::visitPointerType(FluxParser::PointerTypeContext *ctx) {
 
 shared_ptr<ArrayType>
 AstCreator::visitArrayType(FluxParser::ArrayTypeContext *ctx) {
-  auto type = visitBuiltinType(ctx->builtinType());
+  auto type = visitScalarType(ctx->scalarType());
   for (unsigned i = 0; i < ctx->Mul().size(); i++) {
     type = PointerType::get(type);
   }
@@ -473,6 +535,16 @@ AstCreator::visitBuiltinType(FluxParser::BuiltinTypeContext *ctx) {
     assert(false && "Unknown builtin type");
 }
 
+shared_ptr<Type>
+AstCreator::visitScalarType(FluxParser::ScalarTypeContext *ctx) {
+  if (ctx->builtinType())
+    return visitBuiltinType(ctx->builtinType());
+  else if (ctx->Identifier())
+    return ClassType::get(ctx->Identifier()->getText());
+  else
+    assert(false && "Unknown scalar type");
+}
+
 Interval AstCreator::visitInterval(FluxParser::IntervalContext *ctx) {
   auto lower = visitExpression(ctx->expression(0));
   auto upper = visitExpression(ctx->expression(1));
@@ -489,14 +561,4 @@ Interval AstCreator::visitInterval(FluxParser::IntervalContext *ctx) {
   else
     throw runtime_error("Unknown interval kind");
   return Interval{lower, upper, kind};
-}
-
-// classes
-any AstCreator::visitClassDefinition(FluxParser::ClassDefinitionContext *ctx) {
-  throw runtime_error("Not implemented");
-}
-
-any AstCreator::visitFieldDeclaration(
-    FluxParser::FieldDeclarationContext *ctx) {
-  throw runtime_error("Not implemented");
 }

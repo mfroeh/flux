@@ -13,6 +13,11 @@ public:
   // module
   any visit(struct Module &module) override;
 
+  // classes
+  any visit(struct ClassDefinition &classDef) override;
+  any visit(struct FieldDeclaration &fieldDecl) override;
+  any visit(struct MethodDefinition &methodDef) override;
+
   // functions
   any visit(struct FunctionDefinition &function) override;
   any visit(struct Parameter &parameter) override;

@@ -17,3 +17,7 @@ class Rectangle {
             p.y >= topleft.y && p.y <= bottomright.y;
     }
 }
+
+main(): i64 {
+    ret 1;
+}

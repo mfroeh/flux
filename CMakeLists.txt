@@ -51,6 +51,7 @@ set(parser "")
 set(ast
     src/ast/ast_creator.cc
     src/ast/ast.cc
+    src/ast/class.cc
     src/ast/expr.cc
     src/ast/function.cc
     src/ast/module.cc

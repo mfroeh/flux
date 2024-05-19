@@ -2,6 +2,7 @@
 
 #include "FluxParser.h"
 #include "ast/ast.hh"
+#include "ast/class.hh"
 #include "ast/expr.hh"
 #include "ast/function.hh"
 #include "ast/module.hh"
@@ -25,6 +26,10 @@ class AstCreator {
 public:
   // module
   Module visitModule(FP::ModuleContext *ctx);
+
+  // classes
+  ClassDefinition visitClassDefinition(FP::ClassDefinitionContext *ctx);
+  FieldDeclaration visitFieldDeclaration(FP::FieldDeclarationContext *ctx);
 
   // functions
   FunctionDefinition
@@ -77,14 +82,13 @@ public:
 
   // misc
   vector<shared_ptr<Expr>> visitExpressionList(FP::ExpressionListContext *ctx);
+
+  // types
   shared_ptr<Type> visitType(FP::TypeContext *ctx);
   shared_ptr<PointerType> visitPointerType(FP::PointerTypeContext *ctx);
   shared_ptr<ArrayType> visitArrayType(FP::ArrayTypeContext *ctx);
+  shared_ptr<Type> visitScalarType(FP::ScalarTypeContext *ctx);
   shared_ptr<Type> visitBuiltinType(FP::BuiltinTypeContext *ctx);
 
   Interval visitInterval(FP::IntervalContext *ctx);
-
-  // classes
-  any visitClassDefinition(FP::ClassDefinitionContext *ctx);
-  any visitFieldDeclaration(FP::FieldDeclarationContext *ctx);
 };

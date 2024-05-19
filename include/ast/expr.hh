@@ -24,7 +24,7 @@ struct Expr : public Node {
   virtual shared_ptr<Expr> deepcopy() const = 0;
 
 protected:
-  // this can be true only for VariableReference and ArrayReference
+  // this can be true only for LValue expressions
   bool isLhs_ = false;
 };
 
@@ -119,6 +119,8 @@ struct VariableReference : public LValueExpr {
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
   shared_ptr<Expr> deepcopy() const override;
+
+  bool isMemberAccess() const { return name.contains("."); }
 };
 
 struct Dereference : public LValueExpr {
@@ -161,6 +163,8 @@ struct FunctionCall : public Expr {
   virtual any accept(class AbstractAstVisitor &visitor) override;
   shared_ptr<Expr> deepcopy() const override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+
+  bool isMethodCall() const { return callee.contains("."); }
 };
 
 struct UnaryPrefixOp : public Expr {

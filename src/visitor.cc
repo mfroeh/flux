@@ -1,6 +1,7 @@
 #include "visitor.hh"
 
 #include "ast/ast.hh"
+#include "ast/class.hh"
 #include "ast/expr.hh"
 #include "ast/module.hh"
 #include "ast/stmt.hh"
@@ -16,6 +17,27 @@ any AstVisitor::visit(Module &module) {
   }
   return {};
 }
+
+// classes
+any AstVisitor::visit(ClassDefinition &classDef) {
+  for (auto &field : classDef.fields) {
+    field.accept(*this);
+  }
+  for (auto &method : classDef.methods) {
+    method.accept(*this);
+  }
+  return {};
+}
+
+any AstVisitor::visit(MethodDefinition &method) {
+  for (auto &parameter : method.parameters) {
+    parameter.accept(*this);
+  }
+  method.body.accept(*this);
+  return {};
+}
+
+any AstVisitor::visit(FieldDeclaration &field) { return {}; }
 
 // functions
 any AstVisitor::visit(FunctionDefinition &function) {

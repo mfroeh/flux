@@ -7,8 +7,6 @@ makeArray(arr: i64*[4]*): void {
 }
 
 main(): i64 {
-    let a = [1, 2, 3, 4];
-    let b = [&a[0], &a[1], &a[2], &a[3]];
-    makeArray(&b);
-    ret *b[0];
+    for (let i = 0; i < 9; i += 1;) {}
+    ret 1;
 }

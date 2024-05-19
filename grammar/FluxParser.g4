@@ -4,11 +4,10 @@ options {
 	tokenVocab = FluxLexer;
 }
 
-// module: classDefinition* functionDefinition*;
-module: functionDefinition*;
+module: (classDefinition | functionDefinition)*;
 
 classDefinition:
-	KwClass Identifier '{' fieldDeclaration+ functionDefinition* '}';
+	KwClass Identifier '{' fieldDeclaration* functionDefinition* '}';
 
 fieldDeclaration: Identifier ':' type ';';
 
@@ -63,9 +62,9 @@ elseBlock: KwElse (block | '->' statement);
 expression:
 	'(' expression ')'												# ParenExpr
 	| literal														# LiteralExpr
-	| Identifier													# IdentifierExpr
+	| (Identifier | memberReference)								# IdentifierExpr
 	| expression '[' expression ']'									# ArrayRefExpr
-	| Identifier '(' expressionList? ')'							# CallExpr
+	| (Identifier | memberReference) '(' expressionList? ')'		# CallExpr
 	| '[' expressionList ']'										# ArrayLiteral
 	| ('-' | '!' | '&' | '*') expression							# PrefixUnaryExpr
 	| expression ('*' | '/' | '%') expression						# BinaryArithmeticExpr
@@ -79,14 +78,18 @@ expression:
 	| expression '=' expression									# AssignmentExpr
 	| expression ('+' | '-' | '*' | '/' | '%') '=' expression	# CompoundAssignmentExpr;
 
-expressionList: expression (',' expression)*;
+expressionList: expression (',' expression);
 
-// todo: parsing for arrays with pointer elements
-type: builtinType | pointerType | arrayType;
+// todo: for now no nesting memberReference: Identifier ('.' Identifier)*;
+memberReference: Identifier ('.' Identifier);
 
-pointerType: (builtinType | arrayType) '*'+;
+type: scalarType | pointerType | arrayType;
 
-arrayType: builtinType '*'* '[' IntLiteral ']';
+pointerType: (scalarType | arrayType) '*'+;
+
+arrayType: scalarType '*'* '[' IntLiteral ']';
+
+scalarType: builtinType | Identifier;
 
 builtinType:
 	KwInt64

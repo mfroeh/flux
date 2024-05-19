@@ -1,5 +1,6 @@
 #include "analysis/desugar.hh"
 #include "ast/ast.hh"
+#include "ast/class.hh"
 #include "ast/expr.hh"
 #include "ast/function.hh"
 #include "ast/module.hh"
@@ -17,6 +18,36 @@ any Desugarer::visit(Module &module) {
     if (res.has_value())
       function = any_cast<FunctionDefinition>(res);
   }
+  return {};
+}
+
+// classes
+any Desugarer::visit(ClassDefinition &classDef) {
+  for (auto &field : classDef.fields) {
+    any res = field.accept(*this);
+    if (res.has_value())
+      field = any_cast<FieldDeclaration>(res);
+  }
+
+  for (auto &method : classDef.methods) {
+    any res = method.accept(*this);
+    if (res.has_value())
+      method = any_cast<MethodDefinition>(res);
+  }
+  return {};
+}
+
+any Desugarer::visit(FieldDeclaration &field) { return {}; }
+
+any Desugarer::visit(MethodDefinition &method) {
+  for (auto &parameter : method.parameters) {
+    any res = parameter.accept(*this);
+    if (res.has_value())
+      parameter = any_cast<Parameter>(res);
+  }
+  any res = method.body.accept(*this);
+  if (res.has_value())
+    method.body = any_cast<Block>(res);
   return {};
 }
 
