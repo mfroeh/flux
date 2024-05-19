@@ -19,6 +19,7 @@ struct Type {
     BOOL,
     STRING,
     POINTER,
+    CLASS,
   } kind;
 
   Kind Void = VOID;
@@ -29,6 +30,7 @@ struct Type {
   Kind Bool = BOOL;
   Kind String = STRING;
   Kind Pointer = POINTER;
+  Kind Class = CLASS;
 
   Type(Kind kind);
   virtual ~Type() = default;
@@ -42,6 +44,7 @@ struct Type {
   bool isString() const;
   bool isArray() const;
   bool isPointer() const;
+  bool isClass() const;
 
   virtual bool canImplicitlyConvertTo(shared_ptr<Type> other) = 0;
 
@@ -172,4 +175,21 @@ struct StringType : public Type {
 
 private:
   StringType();
+};
+
+struct ClassType : public Type {
+  string name;
+
+  static shared_ptr<ClassType> get(string name);
+  llvm::Type *codegen(class IRVisitor &visitor) override;
+
+  bool canImplicitlyConvertTo(shared_ptr<Type> other) override;
+
+  virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
+                              class IRVisitor &visitor) override;
+  virtual bool canDefaultInitialize() const override;
+  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
+
+private:
+  ClassType(string name);
 };

@@ -27,9 +27,6 @@ public:
   // finds function call candidates
   any visit(struct FunctionCall &funcCall) override;
 
-  // sugar
-  any visit(struct sugar::ForLoop &forLoop) override;
-
 private:
   shared_ptr<Scope> currentScope;
 };

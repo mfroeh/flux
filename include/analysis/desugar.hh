@@ -52,3 +52,15 @@ public:
   any visit(struct sugar::InIntervalExpr &inIntervalExpr) override;
   any visit(struct sugar::CompoundAssignment &compoundAssignment) override;
 };
+
+class NonTypedDesugarer : public Desugarer {
+public:
+  NonTypedDesugarer(ModuleContext &context) : Desugarer(context) {}
+
+  // sugar
+  any visit(struct sugar::ElifStatement &elifStmt) override;
+  any visit(struct sugar::IfElifElseStatement &elifElseStmt) override;
+  any visit(struct sugar::ForLoop &forStmt) override;
+  any visit(struct sugar::InIntervalExpr &inIntervalExpr) override;
+  any visit(struct sugar::CompoundAssignment &compoundAssignment) override;
+};

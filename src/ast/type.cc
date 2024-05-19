@@ -18,6 +18,7 @@ bool Type::isBool() const { return kind == BOOL; }
 bool Type::isString() const { return kind == STRING; }
 bool Type::isArray() const { return kind == ARRAY; }
 bool Type::isPointer() const { return kind == POINTER; }
+bool Type::isClass() const { return kind == CLASS; }
 
 ostream &operator<<(ostream &os, const Type &type) {
   switch (type.kind) {
@@ -45,6 +46,9 @@ ostream &operator<<(ostream &os, const Type &type) {
     break;
   case Type::VOID:
     os << "void";
+    break;
+  case Type::CLASS:
+    os << "Class(" << static_cast<const ClassType &>(type).name << ")";
     break;
   }
   return os;
@@ -368,3 +372,27 @@ bool StringType::canDefaultInitialize() const {
 llvm::Value *StringType::getDefaultValue(IRVisitor &visitor) {
   throw std::runtime_error("String type not implemented");
 }
+
+ClassType::ClassType(string name) : Type(CLASS), name(std::move(name)) {}
+
+shared_ptr<ClassType> ClassType::get(string name) {
+  static std::unordered_map<string, shared_ptr<ClassType>> instances;
+
+  if (!instances.contains(name)) {
+    instances[name] = shared_ptr<ClassType>(new ClassType(name));
+  }
+  return instances[name];
+}
+
+llvm::Type *ClassType::codegen(IRVisitor &visitor) { assert(false); }
+
+bool ClassType::canImplicitlyConvertTo(shared_ptr<Type> other) { return false; }
+
+llvm::Value *ClassType::castTo(llvm::Value *value, shared_ptr<Type> to,
+                               IRVisitor &visitor) {
+  assert(false);
+}
+
+bool ClassType::canDefaultInitialize() const { return false; }
+
+llvm::Value *ClassType::getDefaultValue(IRVisitor &visitor) { assert(false); }

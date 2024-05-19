@@ -124,16 +124,3 @@ any VariableResolver::visit(FunctionCall &funcCall) {
 
   return {};
 }
-
-any VariableResolver::visit(sugar::ForLoop &forLoop) {
-  auto previousScope = currentScope;
-  currentScope = make_shared<Scope>(previousScope);
-
-  forLoop.initializer->accept(*this);
-  forLoop.condition->accept(*this);
-  forLoop.update->accept(*this);
-  forLoop.body.accept(*this);
-
-  currentScope = previousScope;
-  return {};
-}

@@ -37,11 +37,4 @@ public:
   any visit(struct TernaryExpr &ternaryOp) override;
   any visit(struct Pointer &pointer) override;
   any visit(struct Dereference &dereference) override;
-
-  // sugar
-  any visit(struct sugar::ElifStatement &elifStmt) override;
-  any visit(struct sugar::IfElifElseStatement &elifElseStmt) override;
-  any visit(struct sugar::ForLoop &forStmt) override;
-  any visit(struct sugar::InIntervalExpr &inIntervalExpr) override;
-  any visit(struct sugar::CompoundAssignment &compoundAssignment) override;
 };

@@ -87,6 +87,11 @@ int main(int argc, char *argv[]) {
 
     SymbolTable symTab;
 
+    cout << "Desugaring non-typed AST" << file << endl;
+    shared_ptr<Desugarer> desugarer =
+        make_shared<NonTypedDesugarer>(moduleContext);
+    desugarer->visit(module);
+
     cout << "Resolving variable references " << file << endl;
     auto resolver = make_shared<VariableResolver>(moduleContext, symTab);
     static_pointer_cast<AstVisitor>(resolver)->visit(module);
@@ -94,10 +99,6 @@ int main(int argc, char *argv[]) {
     cout << "Type checking and resolving function calls" << file << endl;
     auto typeChecker = make_shared<TypeChecker>(moduleContext, symTab);
     static_pointer_cast<AstVisitor>(typeChecker)->visit(module);
-
-    cout << "Desugaring " << file << endl;
-    auto desugarer = make_shared<Desugarer>(moduleContext);
-    desugarer->visit(module);
 
     cout << "Generating IR code" << file << endl;
     auto codegenContext = make_shared<CodegenContext>();

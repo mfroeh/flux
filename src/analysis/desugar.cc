@@ -231,19 +231,78 @@ any Desugarer::visit(sugar::ElifStatement &elifStmt) {
   if (res.has_value())
     elifStmt.thenBlock = any_cast<Block>(res);
 
-  return make_shared<IfElse>(elifStmt.tokens, elifStmt.condition,
-                             elifStmt.thenBlock, Block());
+  return {};
 }
 
 any Desugarer::visit(sugar::IfElifElseStatement &elifElseStmt) {
-  // first resolve all the other sugar
   any res = elifElseStmt.thenBlock.accept(*this);
   if (res.has_value())
     elifElseStmt.thenBlock = any_cast<Block>(res);
 
+  for (auto &elif : elifElseStmt.elseIfs) {
+    any res = elif->accept(*this);
+    if (res.has_value())
+      elif = any_cast<shared_ptr<sugar::ElifStatement>>(res);
+  }
+
   res = elifElseStmt.elseBlock.accept(*this);
   if (res.has_value())
     elifElseStmt.elseBlock = any_cast<Block>(res);
+
+  return {};
+}
+
+any Desugarer::visit(sugar::ForLoop &forStmt) {
+  any res = forStmt.initializer->accept(*this);
+  if (res.has_value())
+    forStmt.initializer = any_cast<shared_ptr<Statement>>(res);
+  res = forStmt.condition->accept(*this);
+  if (res.has_value())
+    forStmt.condition = any_cast<shared_ptr<Expr>>(res);
+  res = forStmt.update->accept(*this);
+  if (res.has_value())
+    forStmt.update = any_cast<shared_ptr<Statement>>(res);
+  res = forStmt.body.accept(*this);
+  if (res.has_value())
+    forStmt.body = any_cast<Block>(res);
+  return {};
+}
+
+any Desugarer::visit(sugar::InIntervalExpr &inIntervalExpr) {
+  any res = inIntervalExpr.value->accept(*this);
+  if (res.has_value())
+    inIntervalExpr.value = any_cast<shared_ptr<Expr>>(res);
+  res = inIntervalExpr.lower->accept(*this);
+  if (res.has_value())
+    inIntervalExpr.lower = any_cast<shared_ptr<Expr>>(res);
+  res = inIntervalExpr.upper->accept(*this);
+  if (res.has_value())
+    inIntervalExpr.upper = any_cast<shared_ptr<Expr>>(res);
+  return {};
+}
+
+any Desugarer::visit(sugar::CompoundAssignment &compoundAssignment) {
+  any res = compoundAssignment.target->accept(*this);
+  if (res.has_value())
+    compoundAssignment.target = any_cast<shared_ptr<Expr>>(res);
+  res = compoundAssignment.value->accept(*this);
+  if (res.has_value())
+    compoundAssignment.value = any_cast<shared_ptr<Expr>>(res);
+  return {};
+}
+
+// sugar
+any NonTypedDesugarer::visit(sugar::ElifStatement &elifStmt) {
+  // first resolve all the other sugar
+  Desugarer::visit(elifStmt);
+
+  return make_shared<IfElse>(elifStmt.tokens, elifStmt.condition,
+                             elifStmt.thenBlock, Block());
+}
+
+any NonTypedDesugarer::visit(sugar::IfElifElseStatement &elifElseStmt) {
+  // first resolve all the other sugar
+  Desugarer::visit(elifElseStmt);
 
   // then desugar itself
   auto toplevel =
@@ -260,20 +319,9 @@ any Desugarer::visit(sugar::IfElifElseStatement &elifElseStmt) {
   return static_pointer_cast<Statement>(toplevel);
 }
 
-any Desugarer::visit(sugar::ForLoop &forStmt) {
+any NonTypedDesugarer::visit(sugar::ForLoop &forStmt) {
   // first resolve all the other sugar
-  any res = forStmt.initializer->accept(*this);
-  if (res.has_value())
-    forStmt.initializer = any_cast<shared_ptr<Statement>>(res);
-  res = forStmt.condition->accept(*this);
-  if (res.has_value())
-    forStmt.condition = any_cast<shared_ptr<Expr>>(res);
-  res = forStmt.update->accept(*this);
-  if (res.has_value())
-    forStmt.update = any_cast<shared_ptr<Statement>>(res);
-  res = forStmt.body.accept(*this);
-  if (res.has_value())
-    forStmt.body = any_cast<Block>(res);
+  Desugarer::visit(forStmt);
 
   // then desugar itself
   forStmt.body.statements.push_back(forStmt.update);
@@ -285,17 +333,9 @@ any Desugarer::visit(sugar::ForLoop &forStmt) {
   return static_pointer_cast<Statement>(standalone);
 }
 
-any Desugarer::visit(sugar::InIntervalExpr &inIntervalExpr) {
+any NonTypedDesugarer::visit(sugar::InIntervalExpr &inIntervalExpr) {
   // first resolve all the other sugar
-  any res = inIntervalExpr.value->accept(*this);
-  if (res.has_value())
-    inIntervalExpr.value = any_cast<shared_ptr<Expr>>(res);
-  res = inIntervalExpr.lower->accept(*this);
-  if (res.has_value())
-    inIntervalExpr.lower = any_cast<shared_ptr<Expr>>(res);
-  res = inIntervalExpr.upper->accept(*this);
-  if (res.has_value())
-    inIntervalExpr.upper = any_cast<shared_ptr<Expr>>(res);
+  Desugarer::visit(inIntervalExpr);
 
   // then desugar itself
   // i in [0, 10] -> i >= 0 && i <= 10
@@ -327,14 +367,9 @@ any Desugarer::visit(sugar::InIntervalExpr &inIntervalExpr) {
   return static_pointer_cast<Expr>(logical);
 }
 
-any Desugarer::visit(sugar::CompoundAssignment &compoundAssignment) {
+any NonTypedDesugarer::visit(sugar::CompoundAssignment &compoundAssignment) {
   // first resolve all the other sugar
-  any res = compoundAssignment.target->accept(*this);
-  if (res.has_value())
-    compoundAssignment.target = any_cast<shared_ptr<Expr>>(res);
-  res = compoundAssignment.value->accept(*this);
-  if (res.has_value())
-    compoundAssignment.value = any_cast<shared_ptr<Expr>>(res);
+  Desugarer::visit(compoundAssignment);
 
   // then desugar itself
   // i += 1 -> i = i + 1
@@ -350,3 +385,5 @@ any Desugarer::visit(sugar::CompoundAssignment &compoundAssignment) {
       make_shared<Assignment>(compoundAssignment.tokens, lvalue, operation);
   return static_pointer_cast<Expr>(assignment);
 }
+
+// sugar
