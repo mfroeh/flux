@@ -81,5 +81,6 @@ Identifier: [a-zA-Z][a-zA-Z0-9]*[_]?;
 
 // hidden
 Comment: '//' ~[\r\n]* -> channel(HIDDEN);
+BlockComment: '/*' .*? '*/' -> channel(HIDDEN);
 Newline: ('\r\n' | [\r\n]) -> channel(HIDDEN);
 Whitespace: [\t ] -> channel(HIDDEN);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "symbol.hh"
+#include "symbol_table.hh"
 #include <boost/functional/hash.hpp>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Type.h>
@@ -190,6 +192,21 @@ struct ClassType : public Type {
   virtual bool canDefaultInitialize() const override;
   llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
 
+  llvm::Value *getFieldPtr(llvm::Value *object, string name,
+                           class IRVisitor &visitor);
+  llvm::Value *getFieldValue(llvm::Value *object, string name,
+                             class IRVisitor &visitor);
+
+  void addField(shared_ptr<VariableSymbol> field);
+  shared_ptr<VariableSymbol> getField(string name);
+  shared_ptr<Type> getFieldType(string name);
+
+  void addMethod(shared_ptr<FunctionSymbol> method);
+  vector<shared_ptr<FunctionSymbol>> getMethods(string name);
+
 private:
   ClassType(string name);
+
+  vector<shared_ptr<VariableSymbol>> fields;
+  vector<shared_ptr<FunctionSymbol>> methods;
 };

@@ -13,6 +13,12 @@ using namespace std;
 
 // module
 any Desugarer::visit(Module &module) {
+  for (auto &classDef : module.classes) {
+    any res = classDef.accept(*this);
+    if (res.has_value())
+      classDef = any_cast<ClassDefinition>(res);
+  }
+
   for (auto &function : module.functions) {
     any res = function.accept(*this);
     if (res.has_value())
@@ -32,24 +38,12 @@ any Desugarer::visit(ClassDefinition &classDef) {
   for (auto &method : classDef.methods) {
     any res = method.accept(*this);
     if (res.has_value())
-      method = any_cast<MethodDefinition>(res);
+      method = any_cast<FunctionDefinition>(res);
   }
   return {};
 }
 
 any Desugarer::visit(FieldDeclaration &field) { return {}; }
-
-any Desugarer::visit(MethodDefinition &method) {
-  for (auto &parameter : method.parameters) {
-    any res = parameter.accept(*this);
-    if (res.has_value())
-      parameter = any_cast<Parameter>(res);
-  }
-  any res = method.body.accept(*this);
-  if (res.has_value())
-    method.body = any_cast<Block>(res);
-  return {};
-}
 
 // functions
 any Desugarer::visit(FunctionDefinition &function) {
@@ -157,9 +151,16 @@ any Desugarer::visit(ArrayLiteral &arrInit) {
   return {};
 }
 
-any Desugarer::visit(VariableReference &var) { return {}; }
+any Desugarer::visit(VarRef &var) { return {}; }
 
-any Desugarer::visit(ArrayReference &arr) {
+any Desugarer::visit(FieldRef &fieldRef) {
+  any res = fieldRef.object->accept(*this);
+  if (res.has_value())
+    fieldRef.object = any_cast<shared_ptr<Expr>>(res);
+  return {};
+}
+
+any Desugarer::visit(ArrayRef &arr) {
   any res = arr.index->accept(*this);
   if (res.has_value())
     arr.index = any_cast<shared_ptr<Expr>>(res);
@@ -170,7 +171,20 @@ any Desugarer::visit(ArrayReference &arr) {
 }
 
 any Desugarer::visit(FunctionCall &funcCall) {
-  for (auto &arg : funcCall.arguments) {
+  for (auto &arg : funcCall.args) {
+    any res = arg->accept(*this);
+    if (res.has_value())
+      arg = any_cast<shared_ptr<Expr>>(res);
+  }
+  return {};
+}
+
+any Desugarer::visit(MethodCall &methodCall) {
+  any res = methodCall.object->accept(*this);
+  if (res.has_value())
+    methodCall.object = any_cast<shared_ptr<Expr>>(res);
+
+  for (auto &arg : methodCall.args) {
     any res = arg->accept(*this);
     if (res.has_value())
       arg = any_cast<shared_ptr<Expr>>(res);
@@ -417,4 +431,46 @@ any NonTypedDesugarer::visit(sugar::CompoundAssignment &compoundAssignment) {
   return static_pointer_cast<Expr>(assignment);
 }
 
-// sugar
+// typed
+any TypedDesugarer::visit(FunctionDefinition &method) {
+  // first resolve all the other sugar
+  Desugarer::visit(method);
+
+  bool isMethod = method.mangledName.starts_with("$");
+  if (!isMethod)
+    return {};
+
+  // a bit hacky but its fine
+  string className =
+      method.mangledName.substr(1, method.mangledName.find('.') - 1);
+
+  // then desugar itself
+  // add `this`
+  auto symbol = symTab.lookupFunction(method.mangledName);
+  auto this_ = Parameter(method.tokens, "this",
+                         PointerType::get(ClassType::get(className)));
+  symbol->parameters.insert(symbol->parameters.begin(), this_);
+
+  return {};
+}
+
+any TypedDesugarer::visit(MethodCall &methodCall) {
+  // first resolve all the other sugar
+  Desugarer::visit(methodCall);
+
+  // then desugar itself
+  // "$class.method_type_type_type..."
+  string &mangledName = methodCall.mangledName;
+  auto symbol = symTab.lookupFunction(mangledName);
+
+  // insert `this` (todo: force to pass as ptr works?)
+  methodCall.object->setLhs(true);
+  auto newArgs = methodCall.args;
+  newArgs.insert(newArgs.begin(), methodCall.object);
+
+  // a.b(c) -> b(a, c)
+  auto call =
+      make_shared<FunctionCall>(methodCall.tokens, methodCall.callee, newArgs);
+  call->mangledName = mangledName;
+  return static_pointer_cast<Expr>(call);
+}

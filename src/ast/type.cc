@@ -1,7 +1,11 @@
 #include "ast/type.hh"
 #include "ast/expr.hh"
 #include "codegen/ir_visitor.hh"
+#include "symbol.hh"
 #include <algorithm>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Type.h>
 #include <ostream>
 #include <ranges>
 
@@ -384,7 +388,11 @@ shared_ptr<ClassType> ClassType::get(string name) {
   return instances[name];
 }
 
-llvm::Type *ClassType::codegen(IRVisitor &visitor) { assert(false); }
+llvm::Type *ClassType::codegen(IRVisitor &visitor) {
+  auto type = llvm::StructType::getTypeByName(*visitor.llvmContext, name);
+  assert(type && "class type not found");
+  return type;
+}
 
 bool ClassType::canImplicitlyConvertTo(shared_ptr<Type> other) { return false; }
 
@@ -393,6 +401,88 @@ llvm::Value *ClassType::castTo(llvm::Value *value, shared_ptr<Type> to,
   assert(false);
 }
 
-bool ClassType::canDefaultInitialize() const { return false; }
+bool ClassType::canDefaultInitialize() const {
+  assert(fields.size() > 0);
+  for (auto &field : fields) {
+    if (!field->type->canDefaultInitialize())
+      return false;
+  }
+  return true;
+}
 
-llvm::Value *ClassType::getDefaultValue(IRVisitor &visitor) { assert(false); }
+llvm::Value *ClassType::getDefaultValue(IRVisitor &visitor) {
+  assert(canDefaultInitialize());
+
+  auto type = codegen(visitor);
+  auto alloca = visitor.builder->CreateAlloca(type, nullptr, "classDefault");
+
+  int fieldCount = type->getStructNumElements();
+  for (int i = 0; i < fieldCount; i++) {
+    auto index =
+        llvm::ConstantInt::get(*visitor.llvmContext, llvm::APInt(64, i));
+    auto fieldType = fields[i]->type->codegen(visitor);
+    auto typeDefault = fields[i]->type->getDefaultValue(visitor);
+
+    auto fieldPtr =
+        visitor.builder->CreateInBoundsGEP(type, alloca, {index}, "fieldPtr");
+    visitor.builder->CreateStore(typeDefault, fieldPtr);
+  }
+
+  // todo: maybe just return the alloca?
+  return visitor.builder->CreateLoad(type, alloca, "loadClass");
+}
+
+llvm::Value *ClassType::getFieldPtr(llvm::Value *object, string name,
+                                    IRVisitor &visitor) {
+  auto type = codegen(visitor);
+  auto fieldIndex = ranges::distance(
+      fields.begin(), ranges::find_if(fields, [name](const auto &field) {
+        return field->name == name;
+      }));
+
+  auto index =
+      llvm::ConstantInt::get(*visitor.llvmContext, llvm::APInt(64, fieldIndex));
+  return visitor.builder->CreateInBoundsGEP(type, object, {index}, "fieldPtr");
+}
+
+llvm::Value *ClassType::getFieldValue(llvm::Value *object, string name,
+                                      IRVisitor &visitor) {
+  auto type = codegen(visitor);
+  auto fieldIndex = ranges::distance(
+      fields.begin(), ranges::find_if(fields, [name](const auto &field) {
+        return field->name == name;
+      }));
+  return visitor.builder->CreateExtractValue(
+      object, {static_cast<unsigned int>(fieldIndex)}, "fieldValue");
+}
+
+void ClassType::addField(shared_ptr<VariableSymbol> field) {
+  auto existing = ranges::find_if(
+      fields, [field](const auto &f) { return f->name == field->name; });
+  assert(existing == fields.end());
+
+  fields.push_back(field);
+}
+
+shared_ptr<Type> ClassType::getFieldType(string name) {
+  return getField(name)->type;
+}
+
+shared_ptr<VariableSymbol> ClassType::getField(string name) {
+  auto existing = ranges::find_if(
+      fields, [name](const auto &f) { return f->name == name; });
+  assert(existing != fields.end());
+
+  return *existing;
+}
+
+void ClassType::addMethod(shared_ptr<FunctionSymbol> method) {
+  methods.push_back(method);
+}
+
+vector<shared_ptr<FunctionSymbol>> ClassType::getMethods(string name) {
+  vector<shared_ptr<FunctionSymbol>> result;
+  ranges::copy_if(methods, back_inserter(result),
+                  [name](const auto &method) { return method->name == name; });
+  return result;
+}

@@ -23,31 +23,14 @@ void IRVisitor::visit(VariableDeclaration &stmt) {
   assert(symbol);
 
   auto llvmType = symbol->type->codegen(*this);
+
   auto alloca = builder->CreateAlloca(llvmType, nullptr, stmt.name);
   symbol->alloc = alloca;
 
   auto value = stmt.initializer ? stmt.initializer->codegen(*this)
                                 : stmt.type->getDefaultValue(*this);
 
-  // if (auto ptr = value->getType()->isPointerTy()) {
-  //   value = builder->CreateLoad(stmt.type->codegen(*this), value, "load");
-  // }
   builder->CreateStore(value, alloca);
-
-  // // REMOVEAL LTHIS
-  // else {
-  //   auto arrayType = static_pointer_cast<::ArrayType>(stmt.type);
-
-  //   // handle initializer list seperately, as it may be smaller than the
-  //   array auto arrayLit =
-  //   dynamic_pointer_cast<::ArrayLiteral>(stmt.initializer); if (arrayLit ||
-  //   stmt.initializer == nullptr) {
-  //     arrayType->initializeArray(alloca, arrayLit, *this);
-  //   } else {
-  //     auto value = stmt.initializer->codegen(*this);
-  //     builder->CreateStore(value, alloca);
-  //   }
-  // }
 }
 
 void IRVisitor::visit(Return &stmt) {

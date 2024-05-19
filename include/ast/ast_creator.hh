@@ -58,30 +58,28 @@ public:
 
   // expressions
   shared_ptr<Expr> visitExpression(FP::ExpressionContext *ctx);
-  shared_ptr<Expr> visitPrefixUnaryExpr(FP::PrefixUnaryExprContext *ctx);
-  shared_ptr<sugar::InIntervalExpr>
-  visitInIntervalExpr(FP::InIntervalExprContext *ctx);
-  shared_ptr<ArrayReference> visitArrayRefExpr(FP::ArrayRefExprContext *ctx);
-  shared_ptr<VariableReference>
-  visitIdentifierExpr(FP::IdentifierExprContext *ctx);
-  shared_ptr<BinaryComparison>
-  visitBinaryCompExpr(FP::BinaryCompExprContext *ctx);
-  shared_ptr<BinaryLogical>
-  visitBinaryLogicalExpr(FP::BinaryLogicalExprContext *ctx);
+  shared_ptr<Expr> visitPrefixUnary(FP::PrefixUnaryContext *ctx);
+  shared_ptr<sugar::InIntervalExpr> visitInInterval(FP::InIntervalContext *ctx);
+  shared_ptr<ArrayRef> visitArrayRef(FP::ArrayRefContext *ctx);
+  shared_ptr<VarRef> visitVarRef(FP::VarRefContext *ctx);
+  shared_ptr<FieldRef> visitFieldRef(FP::FieldRefContext *ctx);
+  shared_ptr<BinaryComparison> visitBinaryComp(FP::BinaryCompContext *ctx);
+  shared_ptr<BinaryLogical> visitBinaryLogical(FP::BinaryLogicalContext *ctx);
   shared_ptr<BinaryArithmetic>
-  visitBinaryArithmeticExpr(FP::BinaryArithmeticExprContext *ctx);
+  visitBinaryArithmetic(FP::BinaryArithmeticContext *ctx);
   shared_ptr<sugar::CompoundAssignment>
-  visitCompoundAssignmentExpr(FP::CompoundAssignmentExprContext *ctx);
-  shared_ptr<Expr> visitLiteralExpr(FP::LiteralExprContext *ctx);
-  shared_ptr<FunctionCall> visitCallExpr(FP::CallExprContext *ctx);
-  shared_ptr<Assignment> visitAssignmentExpr(FP::AssignmentExprContext *ctx);
+  visitCompoundAssignment(FP::CompoundAssignmentContext *ctx);
+  shared_ptr<FunctionCall> visitFunctionCall(FP::FunctionCallContext *ctx);
+  shared_ptr<MethodCall> visitMethodCall(FP::MethodCallContext *ctx);
+  shared_ptr<Assignment> visitAssignment(FP::AssignmentContext *ctx);
   shared_ptr<Expr> visitParenExpr(FP::ParenExprContext *ctx);
-  shared_ptr<TernaryExpr> visitTernaryExpr(FP::TernaryExprContext *ctx);
-  shared_ptr<Expr> visitLiteral(FP::LiteralContext *ctx);
+  shared_ptr<TernaryExpr> visitTernary(FP::TernaryContext *ctx);
+  shared_ptr<Expr> visitLiteralExpr(FP::LiteralExprContext *ctx);
   shared_ptr<Expr> visitArrayLiteral(FP::ArrayLiteralContext *ctx);
 
   // misc
   vector<shared_ptr<Expr>> visitExpressionList(FP::ExpressionListContext *ctx);
+  shared_ptr<Expr> visitLiteral(FP::LiteralContext *ctx);
 
   // types
   shared_ptr<Type> visitType(FP::TypeContext *ctx);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ast/class.hh"
+#include "ast/expr.hh"
 #include "symbol_table.hh"
 #include "visitor.hh"
 
@@ -7,6 +9,10 @@ class TypeChecker : public AstVisitor {
 public:
   TypeChecker(ModuleContext &context, SymbolTable &symTab)
       : AstVisitor(context, symTab) {}
+
+  // classes
+  any visit(struct ClassDefinition &classDef) override;
+  any visit(struct FieldDeclaration &field) override;
 
   // functions
   any visit(struct FunctionDefinition &function) override;
@@ -26,9 +32,11 @@ public:
   any visit(struct BoolLiteral &boolLit) override;
   any visit(struct StringLiteral &stringLit) override;
   any visit(struct ArrayLiteral &arrInit) override;
-  any visit(struct VariableReference &var) override;
-  any visit(struct ArrayReference &arr) override;
+  any visit(struct VarRef &var) override;
+  any visit(struct FieldRef &fieldRef) override;
+  any visit(struct ArrayRef &arr) override;
   any visit(struct FunctionCall &funcCall) override;
+  any visit(struct MethodCall &methodCall) override;
   any visit(struct UnaryPrefixOp &unaryOp) override;
   any visit(struct BinaryArithmetic &binaryOp) override;
   any visit(struct BinaryComparison &binaryOp) override;

@@ -108,19 +108,29 @@ struct Pointer : public Expr {
   shared_ptr<Expr> deepcopy() const override;
 };
 
-struct VariableReference : public LValueExpr {
+struct VarRef : public LValueExpr {
   string name;
 
-  // set during name resolution
+  // set during name resolution for variables
   string mangledName;
 
-  VariableReference(Tokens tokens, string name);
+  VarRef(Tokens tokens, string name);
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
   shared_ptr<Expr> deepcopy() const override;
+};
 
-  bool isMemberAccess() const { return name.contains("."); }
+struct FieldRef : public LValueExpr {
+  shared_ptr<Expr> object;
+  string field;
+
+  FieldRef(Tokens tokens, shared_ptr<Expr> object, string member);
+
+  virtual any accept(class AbstractAstVisitor &visitor) override;
+  llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
+  void setLhs(bool isLhs) override;
 };
 
 struct Dereference : public LValueExpr {
@@ -134,12 +144,11 @@ struct Dereference : public LValueExpr {
   void setLhs(bool isLhs) override;
 };
 
-struct ArrayReference : public LValueExpr {
+struct ArrayRef : public LValueExpr {
   shared_ptr<Expr> arrayExpr;
   shared_ptr<Expr> index;
 
-  ArrayReference(Tokens tokens, shared_ptr<Expr> arrayExpr,
-                 shared_ptr<Expr> indices);
+  ArrayRef(Tokens tokens, shared_ptr<Expr> arrayExpr, shared_ptr<Expr> indices);
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
@@ -149,12 +158,12 @@ struct ArrayReference : public LValueExpr {
 
 struct FunctionCall : public Expr {
   string callee;
-  vector<shared_ptr<Expr>> arguments;
+  vector<shared_ptr<Expr>> args;
 
-  // set during variable resolution, used for call resolution (mangledNames)
+  // set during name resolution used for call resolution (mangledNames)
   vector<string> callCandidates;
 
-  // set during TODO
+  // set during typechecking once the call was resolved
   string mangledName;
 
   FunctionCall(Tokens tokens, string callee,
@@ -163,8 +172,17 @@ struct FunctionCall : public Expr {
   virtual any accept(class AbstractAstVisitor &visitor) override;
   shared_ptr<Expr> deepcopy() const override;
   llvm::Value *codegen(IRVisitor &visitor) override;
+};
 
-  bool isMethodCall() const { return callee.contains("."); }
+struct MethodCall : public FunctionCall {
+  shared_ptr<Expr> object;
+
+  MethodCall(Tokens tokens, shared_ptr<Expr> object, string method,
+             vector<shared_ptr<Expr>> arguments);
+
+  virtual any accept(class AbstractAstVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
+  llvm::Value *codegen(IRVisitor &visitor) override;
 };
 
 struct UnaryPrefixOp : public Expr {

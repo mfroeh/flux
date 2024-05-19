@@ -1,10 +1,11 @@
 #pragma once
 
-#include "ast/function.hh"
-#include "ast/type.hh"
 #include <llvm/IR/Instructions.h>
+#include <memory>
 #include <ostream>
 #include <string>
+
+using std::shared_ptr;
 using std::string;
 using std::vector;
 
@@ -19,7 +20,7 @@ struct Symbol {
 struct VariableSymbol : public Symbol {
   string name;
   string mangledName;
-  shared_ptr<Type> type;
+  shared_ptr<struct Type> type;
 
   // set during codegen
   llvm::AllocaInst *alloc = nullptr;
@@ -30,37 +31,24 @@ struct VariableSymbol : public Symbol {
         mangledName(std::move(mangledName)), type(std::move(type)) {}
 
   friend std::ostream &operator<<(std::ostream &os,
-                                  const VariableSymbol &symbol) {
-    os << "VariableSymbol(" << symbol.name << ", " << symbol.mangledName << ", "
-       << *symbol.type << ")";
-    return os;
-  }
+                                  const VariableSymbol &symbol);
 };
 
 struct FunctionSymbol : public Symbol {
   string name;
   string mangledName;
-  shared_ptr<Type> returnType;
-  vector<Parameter> parameters;
+  shared_ptr<struct Type> returnType;
+  vector<struct Parameter> &parameters;
 
   // set during codegen
   llvm::Function *llvmFunction = nullptr;
 
   FunctionSymbol(string name, string mangledName, shared_ptr<Type> returnType,
-                 vector<Parameter> parameters, int depth, int count)
+                 vector<struct Parameter> &parameters, int depth, int count)
       : Symbol(depth, count), name(std::move(name)),
         mangledName(std::move(mangledName)), returnType(std::move(returnType)),
-        parameters(std::move(parameters)) {}
+        parameters(parameters) {}
 
   friend std::ostream &operator<<(std::ostream &os,
-                                  const FunctionSymbol &symbol) {
-    os << "FunctionSymbol(" << symbol.name << ", " << symbol.mangledName << ", "
-       << *symbol.returnType << ", [";
-    for (auto &param : symbol.parameters) {
-      os << param.name << ": " << *param.type << ", ";
-    }
-    os << "], "
-       << "-> " << *symbol.returnType << ")";
-    return os;
-  }
+                                  const FunctionSymbol &symbol);
 };

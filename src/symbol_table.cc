@@ -1,6 +1,7 @@
 #include "symbol_table.hh"
 #include <cassert>
 #include <format>
+#include <iostream>
 
 using namespace std;
 

@@ -5,6 +5,7 @@ compile_commands.json
 .vscode
 .antlr
 std
+*.out
 
 include-old
 src-old

@@ -1,15 +1,8 @@
 #include "ast/class.hh"
+#include "ast/function.hh"
 
+#include "codegen/ir_visitor.hh"
 #include "visitor.hh"
-
-MethodDefinition::MethodDefinition(Tokens tokens, string name,
-                                   vector<Parameter> parameters, Block body,
-                                   shared_ptr<Type> returnType)
-    : FunctionDefinition(tokens, name, parameters, returnType, body) {}
-
-any MethodDefinition::accept(AbstractAstVisitor &visitor) {
-  return visitor.visit(*this);
-}
 
 FieldDeclaration::FieldDeclaration(Tokens tokens, string name,
                                    shared_ptr<Type> type)
@@ -21,18 +14,12 @@ any FieldDeclaration::accept(AbstractAstVisitor &visitor) {
 
 ClassDefinition::ClassDefinition(Tokens tokens, string name,
                                  vector<FieldDeclaration> fields,
-                                 vector<MethodDefinition> methods)
-    : Node(std::move(tokens)), name(std::move(name)), fields(std::move(fields)),
-      methods(std::move(methods)) {
-  for (auto &field : this->fields) {
-    field.klass = shared_from_this();
-  }
-
-  for (auto &method : this->methods) {
-    method.klass = shared_from_this();
-  }
-}
+                                 vector<FunctionDefinition> methods)
+    : Node(tokens), name(name), fields(fields), methods(std::move(methods)),
+      type(ClassType::get(name)) {}
 
 any ClassDefinition::accept(AbstractAstVisitor &visitor) {
   return visitor.visit(*this);
 }
+
+void ClassDefinition::codegen(IRVisitor &visitor) { visitor.visit(*this); }

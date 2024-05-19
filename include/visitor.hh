@@ -22,7 +22,6 @@ public:
   // classes
   virtual any visit(struct ClassDefinition &classDef) = 0;
   virtual any visit(struct FieldDeclaration &fieldDecl) = 0;
-  virtual any visit(struct MethodDefinition &methodDef) = 0;
 
   // functions
   virtual any visit(struct FunctionDefinition &function) = 0;
@@ -44,9 +43,11 @@ public:
   virtual any visit(struct BoolLiteral &boolLit) = 0;
   virtual any visit(struct StringLiteral &stringLit) = 0;
   virtual any visit(struct ArrayLiteral &arrInit) = 0;
-  virtual any visit(struct VariableReference &var) = 0;
-  virtual any visit(struct ArrayReference &arr) = 0;
+  virtual any visit(struct VarRef &var) = 0;
+  virtual any visit(struct FieldRef &fieldRef) = 0;
+  virtual any visit(struct ArrayRef &arr) = 0;
   virtual any visit(struct FunctionCall &funcCall) = 0;
+  virtual any visit(struct MethodCall &methodCall) = 0;
   virtual any visit(struct UnaryPrefixOp &unaryOp) = 0;
   virtual any visit(struct BinaryArithmetic &binaryOp) = 0;
   virtual any visit(struct BinaryComparison &binaryOp) = 0;
@@ -78,7 +79,6 @@ public:
   // classes
   any visit(struct ClassDefinition &classDef) override;
   any visit(struct FieldDeclaration &fieldDecl) override;
-  any visit(struct MethodDefinition &methodDef) override;
 
   // functions
   any visit(struct FunctionDefinition &function) override;
@@ -100,9 +100,11 @@ public:
   any visit(struct BoolLiteral &boolLit) override;
   any visit(struct StringLiteral &stringLit) override;
   any visit(struct ArrayLiteral &arrInit) override;
-  any visit(struct VariableReference &var) override;
-  any visit(struct ArrayReference &arr) override;
+  any visit(struct VarRef &var) override;
+  any visit(struct FieldRef &fieldRef) override;
+  any visit(struct ArrayRef &arr) override;
   any visit(struct FunctionCall &funcCall) override;
+  any visit(struct MethodCall &methodCall) override;
   any visit(struct UnaryPrefixOp &unaryOp) override;
   any visit(struct BinaryArithmetic &binaryOp) override;
   any visit(struct BinaryComparison &binaryOp) override;

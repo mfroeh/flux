@@ -100,6 +100,11 @@ int main(int argc, char *argv[]) {
     auto typeChecker = make_shared<TypeChecker>(moduleContext, symTab);
     static_pointer_cast<AstVisitor>(typeChecker)->visit(module);
 
+    cout << "Desugaring typed AST" << file << endl;
+    shared_ptr<Desugarer> typedDesugarer =
+        make_shared<TypedDesugarer>(moduleContext, symTab);
+    typedDesugarer->visit(module);
+
     cout << "Generating IR code" << file << endl;
     auto codegenContext = make_shared<CodegenContext>();
     auto irVisitor =

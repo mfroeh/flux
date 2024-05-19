@@ -1,14 +1,56 @@
 #include "analysis/variable_resolver.hh"
+#include "ast/class.hh"
 #include "ast/expr.hh"
 #include "ast/stmt.hh"
 #include "symbol_table.hh"
 #include "visitor.hh"
+#include <format>
+#include <sstream>
 
 using namespace std;
 
 VariableResolver::VariableResolver(ModuleContext &context, SymbolTable &symTab)
     : AstVisitor(context, symTab) {
   currentScope = make_shared<Scope>(nullptr);
+}
+
+any VariableResolver::visit(ClassDefinition &classDefinition) {
+  auto previousScope = currentScope;
+  currentScope = make_shared<Scope>(previousScope);
+
+  AstVisitor::visit(classDefinition);
+
+  cout << "Adding class " << classDefinition.type->name << endl;
+  for (auto &field : classDefinition.fields) {
+    // we are in the class scope here
+    auto symbol = currentScope->getVariableNonRecursive(field.name);
+
+    string mangledName =
+        std::format("${}.{}", classDefinition.type->name, field.name);
+
+    symbol->mangledName = mangledName;
+    field.mangledName = mangledName;
+
+    cout << "Added field" << field.name << endl;
+    classDefinition.type->addField(symbol);
+  }
+
+  for (auto &method : classDefinition.methods) {
+    auto symbol = symTab.lookupFunction(method.mangledName);
+
+    stringstream ss;
+    ss << "$" << classDefinition.type->name << "." << method.name << "#";
+    for (auto &param : method.parameters)
+      ss << *param.type << "?";
+
+    symbol->mangledName = ss.str();
+    method.mangledName = ss.str();
+
+    classDefinition.type->addMethod(symbol);
+  }
+
+  currentScope = previousScope;
+  return {};
 }
 
 any VariableResolver::visit(FunctionDefinition &functionDefinition) {
@@ -84,7 +126,18 @@ any VariableResolver::visit(VariableDeclaration &variableDeclaration) {
   return {};
 }
 
-any VariableResolver::visit(VariableReference &var) {
+any VariableResolver::visit(FieldDeclaration &fieldDeclaration) {
+  if (currentScope->getVariableNonRecursive(fieldDeclaration.name) != nullptr)
+    throw runtime_error("Field " + fieldDeclaration.name + " already declared");
+
+  currentScope->addVariable(fieldDeclaration.name, fieldDeclaration.type);
+  auto variable = currentScope->getVariable(fieldDeclaration.name);
+  symTab.insert(variable);
+
+  return {};
+}
+
+any VariableResolver::visit(VarRef &var) {
   cout << "Visiting " << var.name << " " << &var << endl;
   auto variable = currentScope->getVariable(var.name);
   if (!variable)
@@ -94,7 +147,7 @@ any VariableResolver::visit(VariableReference &var) {
   return {};
 }
 
-any VariableResolver::visit(ArrayReference &arr) {
+any VariableResolver::visit(ArrayRef &arr) {
   AstVisitor::visit(arr);
   // TODO: but we shouldn't need this
   // arr.index->accept(*this);

@@ -12,9 +12,12 @@ using namespace std;
 
 // module
 any AstVisitor::visit(Module &module) {
-  for (auto &function : module.functions) {
+  for (auto &classDef : module.classes)
+    classDef.accept(*this);
+
+  for (auto &function : module.functions)
     function.accept(*this);
-  }
+
   return {};
 }
 
@@ -26,14 +29,6 @@ any AstVisitor::visit(ClassDefinition &classDef) {
   for (auto &method : classDef.methods) {
     method.accept(*this);
   }
-  return {};
-}
-
-any AstVisitor::visit(MethodDefinition &method) {
-  for (auto &parameter : method.parameters) {
-    parameter.accept(*this);
-  }
-  method.body.accept(*this);
   return {};
 }
 
@@ -115,16 +110,28 @@ any AstVisitor::visit(ArrayLiteral &arrInit) {
   return {};
 }
 
-any AstVisitor::visit(VariableReference &var) { return {}; }
+any AstVisitor::visit(VarRef &var) { return {}; }
 
-any AstVisitor::visit(ArrayReference &arr) {
+any AstVisitor::visit(FieldRef &fieldRef) {
+  fieldRef.object->accept(*this);
+  return {};
+}
+
+any AstVisitor::visit(ArrayRef &arr) {
   arr.index->accept(*this);
   arr.arrayExpr->accept(*this);
   return {};
 }
 
 any AstVisitor::visit(FunctionCall &funcCall) {
-  for (auto &arg : funcCall.arguments) {
+  for (auto &arg : funcCall.args) {
+    arg->accept(*this);
+  }
+  return {};
+}
+
+any AstVisitor::visit(MethodCall &methodCall) {
+  for (auto &arg : methodCall.args) {
     arg->accept(*this);
   }
   return {};

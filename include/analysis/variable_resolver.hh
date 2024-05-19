@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ast/class.hh"
 #include "scope.hh"
 #include "symbol_table.hh"
 #include "visitor.hh"
@@ -11,6 +12,7 @@ public:
   VariableResolver(ModuleContext &context, SymbolTable &symTab);
 
   // opens new scope
+  any visit(struct ClassDefinition &classDefinition) override;
   any visit(struct FunctionDefinition &functionDefinition) override;
   any visit(struct IfElse &ifElse) override;
   any visit(struct While &whileLoop) override;
@@ -19,10 +21,11 @@ public:
   // creates variable in current scope
   any visit(struct Parameter &parameter) override;
   any visit(struct VariableDeclaration &variableDeclaration) override;
+  any visit(struct FieldDeclaration &fieldDeclaration) override;
 
   // resolves variable references
-  any visit(struct VariableReference &var) override;
-  any visit(struct ArrayReference &arr) override;
+  any visit(struct VarRef &var) override;
+  any visit(struct ArrayRef &arr) override;
 
   // finds function call candidates
   any visit(struct FunctionCall &funcCall) override;

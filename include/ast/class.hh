@@ -9,34 +9,28 @@
 using std::string;
 using std::vector;
 
-struct MethodDefinition : public FunctionDefinition {
-  shared_ptr<struct ClassDefinition> klass;
-
-  MethodDefinition(Tokens tokens, string name, vector<Parameter> parameters,
-                   Block body, shared_ptr<Type> returnType);
-
-  any accept(class AbstractAstVisitor &visitor) override;
-};
-
 struct FieldDeclaration : public Node {
   string name;
   shared_ptr<Type> type;
 
-  shared_ptr<struct ClassDefinition> klass;
+  // assigned during name resolution
+  string mangledName;
 
   FieldDeclaration(Tokens tokens, string name, shared_ptr<Type> type);
 
   any accept(class AbstractAstVisitor &visitor) override;
 };
 
-struct ClassDefinition : public Node,
-                         public std::enable_shared_from_this<ClassDefinition> {
+struct ClassDefinition : public Node {
   string name;
   vector<FieldDeclaration> fields;
-  vector<MethodDefinition> methods;
+  vector<FunctionDefinition> methods;
+
+  shared_ptr<ClassType> type;
 
   ClassDefinition(Tokens tokens, string name, vector<FieldDeclaration> fields,
-                  vector<MethodDefinition> methods);
+                  vector<FunctionDefinition> methods);
 
   any accept(class AbstractAstVisitor &visitor) override;
+  void codegen(class IRVisitor &visitor);
 };

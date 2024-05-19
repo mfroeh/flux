@@ -62,26 +62,24 @@ elseBlock: KwElse (block | '->' statement);
 expression:
 	'(' expression ')'												# ParenExpr
 	| literal														# LiteralExpr
-	| (Identifier | memberReference)								# IdentifierExpr
-	| expression '[' expression ']'									# ArrayRefExpr
-	| (Identifier | memberReference) '(' expressionList? ')'		# CallExpr
+	| Identifier													# VarRef
+	| expression '.' Identifier										# FieldRef
+	| expression '[' expression ']'									# ArrayRef
+	| Identifier '(' expressionList? ')'							# FunctionCall
+	| expression '.' Identifier '(' expressionList? ')'				# MethodCall
 	| '[' expressionList ']'										# ArrayLiteral
-	| ('-' | '!' | '&' | '*') expression							# PrefixUnaryExpr
-	| expression ('*' | '/' | '%') expression						# BinaryArithmeticExpr
-	| expression ('+' | '-') expression								# BinaryArithmeticExpr
-	| expression ('<' | '<=' | '==' | '!=' | '>' | '>=') expression	# BinaryCompExpr
-	| expression '&&' expression									# BinaryLogicalExpr
-	| expression '||' expression									# BinaryLogicalExpr
-	| expression '?' expression ':' expression						# TernaryExpr
-	| expression KwIn interval										# InIntervalExpr
-	// must be IdentifierExpr or ArrayRefExpr
-	| expression '=' expression									# AssignmentExpr
-	| expression ('+' | '-' | '*' | '/' | '%') '=' expression	# CompoundAssignmentExpr;
+	| ('-' | '!' | '&' | '*') expression							# PrefixUnary
+	| expression ('*' | '/' | '%') expression						# BinaryArithmetic
+	| expression ('+' | '-') expression								# BinaryArithmetic
+	| expression ('<' | '<=' | '==' | '!=' | '>' | '>=') expression	# BinaryComp
+	| expression '&&' expression									# BinaryLogical
+	| expression '||' expression									# BinaryLogical
+	| expression '?' expression ':' expression						# Ternary
+	| expression KwIn interval										# InInterval
+	| expression '=' expression										# Assignment
+	| expression ('+' | '-' | '*' | '/' | '%') '=' expression		# CompoundAssignment;
 
 expressionList: expression (',' expression);
-
-// todo: for now no nesting memberReference: Identifier ('.' Identifier)*;
-memberReference: Identifier ('.' Identifier);
 
 type: scalarType | pointerType | arrayType;
 

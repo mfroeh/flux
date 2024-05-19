@@ -119,22 +119,43 @@ shared_ptr<Expr> ArrayLiteral::deepcopy() const {
   return copy;
 }
 
-VariableReference::VariableReference(Tokens tokens, string name)
+VarRef::VarRef(Tokens tokens, string name)
     : LValueExpr(std::move(tokens), InferType::get()), name(name) {}
 
-any VariableReference::accept(AbstractAstVisitor &visitor) {
+any VarRef::accept(AbstractAstVisitor &visitor) { return visitor.visit(*this); }
+
+llvm::Value *VarRef::codegen(IRVisitor &visitor) {
   return visitor.visit(*this);
 }
 
-llvm::Value *VariableReference::codegen(IRVisitor &visitor) {
-  return visitor.visit(*this);
-}
-
-shared_ptr<Expr> VariableReference::deepcopy() const {
-  auto copy = make_shared<VariableReference>(tokens, name);
+shared_ptr<Expr> VarRef::deepcopy() const {
+  auto copy = make_shared<VarRef>(tokens, name);
   copy->mangledName = mangledName;
   copy->type = type;
   return copy;
+}
+
+FieldRef::FieldRef(Tokens tokens, shared_ptr<Expr> object, string field)
+    : LValueExpr(std::move(tokens), InferType::get()),
+      object(std::move(object)), field(std::move(field)) {}
+
+any FieldRef::accept(AbstractAstVisitor &visitor) {
+  return visitor.visit(*this);
+}
+
+llvm::Value *FieldRef::codegen(IRVisitor &visitor) {
+  return visitor.visit(*this);
+}
+
+shared_ptr<Expr> FieldRef::deepcopy() const {
+  auto copy = make_shared<FieldRef>(tokens, object->deepcopy(), field);
+  copy->type = type;
+  return copy;
+}
+
+void FieldRef::setLhs(bool isLhs) {
+  this->isLhs_ = isLhs;
+  object->setLhs(isLhs);
 }
 
 Pointer::Pointer(Tokens tokens, shared_ptr<Expr> lvalue)
@@ -178,27 +199,27 @@ void Dereference::setLhs(bool isLhs) {
   pointer->setLhs(isLhs);
 }
 
-ArrayReference::ArrayReference(Tokens tokens, shared_ptr<Expr> arrayExpr,
-                               shared_ptr<Expr> index)
+ArrayRef::ArrayRef(Tokens tokens, shared_ptr<Expr> arrayExpr,
+                   shared_ptr<Expr> index)
     : LValueExpr(std::move(tokens), InferType::get()),
       arrayExpr(std::move(arrayExpr)), index(std::move(index)) {}
 
-any ArrayReference::accept(AbstractAstVisitor &visitor) {
+any ArrayRef::accept(AbstractAstVisitor &visitor) {
   return visitor.visit(*this);
 }
 
-llvm::Value *ArrayReference::codegen(IRVisitor &visitor) {
+llvm::Value *ArrayRef::codegen(IRVisitor &visitor) {
   return visitor.visit(*this);
 }
 
-shared_ptr<Expr> ArrayReference::deepcopy() const {
-  auto copy = make_shared<ArrayReference>(tokens, arrayExpr->deepcopy(),
-                                          index->deepcopy());
+shared_ptr<Expr> ArrayRef::deepcopy() const {
+  auto copy =
+      make_shared<ArrayRef>(tokens, arrayExpr->deepcopy(), index->deepcopy());
   copy->type = type;
   return copy;
 }
 
-void ArrayReference::setLhs(bool isLhs) {
+void ArrayRef::setLhs(bool isLhs) {
   this->isLhs_ = isLhs;
   arrayExpr->setLhs(isLhs);
 }
@@ -206,7 +227,7 @@ void ArrayReference::setLhs(bool isLhs) {
 FunctionCall::FunctionCall(Tokens tokens, string callee,
                            vector<shared_ptr<Expr>> arguments)
     : Expr(std::move(tokens), InferType::get()), callee(std::move(callee)),
-      arguments(std::move(arguments)) {}
+      args(std::move(arguments)) {}
 
 any FunctionCall::accept(AbstractAstVisitor &visitor) {
   return visitor.visit(*this);
@@ -218,10 +239,34 @@ llvm::Value *FunctionCall::codegen(IRVisitor &visitor) {
 
 shared_ptr<Expr> FunctionCall::deepcopy() const {
   vector<shared_ptr<Expr>> args;
-  for (auto &arg : arguments) {
+  for (auto &arg : args) {
     args.push_back(arg->deepcopy());
   }
   auto copy = make_shared<FunctionCall>(tokens, callee, args);
+  copy->mangledName = mangledName;
+  copy->type = type;
+  return copy;
+}
+
+MethodCall::MethodCall(Tokens tokens, shared_ptr<Expr> object, string callee,
+                       vector<shared_ptr<Expr>> arguments)
+    : FunctionCall(std::move(tokens), std::move(callee), std::move(arguments)),
+      object(std::move(object)) {}
+
+any MethodCall::accept(AbstractAstVisitor &visitor) {
+  return visitor.visit(*this);
+}
+
+llvm::Value *MethodCall::codegen(IRVisitor &visitor) {
+  assert(false && "should've been removed by typed desugarer");
+}
+
+shared_ptr<Expr> MethodCall::deepcopy() const {
+  vector<shared_ptr<Expr>> args;
+  for (auto &arg : args) {
+    args.push_back(arg->deepcopy());
+  }
+  auto copy = make_shared<MethodCall>(tokens, object->deepcopy(), callee, args);
   copy->mangledName = mangledName;
   copy->type = type;
   return copy;

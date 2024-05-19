@@ -14,29 +14,27 @@
 using namespace std;
 using namespace ranges;
 
-vector<string> getMembers(FluxParser::MemberReferenceContext *ctx) {
-  vector<string> members;
-  if (!ctx)
-    return members;
-  ranges::copy(ctx->Identifier() |
-                   views::transform([](auto &id) { return id->getText(); }),
-               back_inserter(members));
-  return members;
-}
-
 // module
-Module AstCreator::visitModule(FluxParser::ModuleContext *ctx) {
+Module AstCreator::visitModule(FP::ModuleContext *ctx) {
+  vector<ClassDefinition> classes;
+  ranges::copy(ctx->classDefinition() |
+                   views::transform([this](auto &classDef) {
+                     return visitClassDefinition(classDef);
+                   }),
+               back_inserter(classes));
+
   vector<FunctionDefinition> functions;
   ranges::copy(ctx->functionDefinition() | views::transform([this](auto &func) {
                  return visitFunctionDefinition(func);
                }),
                back_inserter(functions));
-  return Module(Tokens(ctx), functions);
+
+  return Module(Tokens(ctx), classes, functions);
 }
 
 // classes
 ClassDefinition
-AstCreator::visitClassDefinition(FluxParser::ClassDefinitionContext *ctx) {
+AstCreator::visitClassDefinition(FP::ClassDefinitionContext *ctx) {
   string name = ctx->Identifier()->getText();
   vector<FieldDeclaration> fields;
   ranges::copy(ctx->fieldDeclaration() | views::transform([this](auto &field) {
@@ -44,12 +42,9 @@ AstCreator::visitClassDefinition(FluxParser::ClassDefinitionContext *ctx) {
                }),
                back_inserter(fields));
 
-  vector<MethodDefinition> methods;
+  vector<FunctionDefinition> methods;
   ranges::copy(ctx->functionDefinition() | views::transform([this](auto &func) {
-                 auto function = visitFunctionDefinition(func);
-                 return MethodDefinition(function.tokens, function.name,
-                                         function.parameters, function.body,
-                                         function.returnType);
+                 return visitFunctionDefinition(func);
                }),
                back_inserter(methods));
 
@@ -57,7 +52,7 @@ AstCreator::visitClassDefinition(FluxParser::ClassDefinitionContext *ctx) {
 }
 
 FieldDeclaration
-AstCreator::visitFieldDeclaration(FluxParser::FieldDeclarationContext *ctx) {
+AstCreator::visitFieldDeclaration(FP::FieldDeclarationContext *ctx) {
   assert(ctx->type());
   string name = ctx->Identifier()->getText();
   auto type = visitType(ctx->type());
@@ -69,8 +64,8 @@ AstCreator::visitFieldDeclaration(FluxParser::FieldDeclarationContext *ctx) {
 }
 
 // functions
-FunctionDefinition AstCreator::visitFunctionDefinition(
-    FluxParser::FunctionDefinitionContext *ctx) {
+FunctionDefinition
+AstCreator::visitFunctionDefinition(FP::FunctionDefinitionContext *ctx) {
   bool isLambda = ctx->expression() != nullptr;
   string name = ctx->Identifier()->getText();
   auto parameters = visitParameterList(ctx->parameterList());
@@ -91,7 +86,7 @@ FunctionDefinition AstCreator::visitFunctionDefinition(
 }
 
 vector<Parameter>
-AstCreator::visitParameterList(FluxParser::ParameterListContext *ctx) {
+AstCreator::visitParameterList(FP::ParameterListContext *ctx) {
   vector<Parameter> parameters;
   if (!ctx)
     return parameters;
@@ -101,14 +96,14 @@ AstCreator::visitParameterList(FluxParser::ParameterListContext *ctx) {
                back_inserter(parameters));
   return parameters;
 }
-Parameter AstCreator::visitParameter(FluxParser::ParameterContext *ctx) {
+Parameter AstCreator::visitParameter(FP::ParameterContext *ctx) {
   string name = ctx->Identifier()->getText();
   auto type = visitType(ctx->type());
   return Parameter(Tokens(ctx), name, type);
 }
 
 // statements
-Block AstCreator::visitBlock(FluxParser::BlockContext *ctx) {
+Block AstCreator::visitBlock(FP::BlockContext *ctx) {
   vector<shared_ptr<Statement>> statements;
   if (!ctx)
     return Block();
@@ -123,14 +118,13 @@ Block AstCreator::visitBlock(FluxParser::BlockContext *ctx) {
   return Block(Tokens(ctx), statements, isStandalone);
 }
 
-Block AstCreator::visitSingleLineBody(FluxParser::StatementContext *ctx) {
+Block AstCreator::visitSingleLineBody(FP::StatementContext *ctx) {
   auto statement = visitStatement(ctx);
   return Block(statement->tokens, vector<shared_ptr<Statement>>{statement},
                false);
 }
 
-shared_ptr<Statement>
-AstCreator::visitStatement(FluxParser::StatementContext *ctx) {
+shared_ptr<Statement> AstCreator::visitStatement(FP::StatementContext *ctx) {
   if (auto exprStmt = ctx->expressionStatement())
     return visitExpressionStatement(exprStmt);
   else if (auto varDecl = ctx->variableDeclaration())
@@ -151,14 +145,14 @@ AstCreator::visitStatement(FluxParser::StatementContext *ctx) {
     throw runtime_error("Unknown statement type");
 }
 
-shared_ptr<ExpressionStatement> AstCreator::visitExpressionStatement(
-    FluxParser::ExpressionStatementContext *ctx) {
+shared_ptr<ExpressionStatement>
+AstCreator::visitExpressionStatement(FP::ExpressionStatementContext *ctx) {
   return make_shared<ExpressionStatement>(Tokens(ctx),
                                           visitExpression(ctx->expression()));
 }
 
-shared_ptr<VariableDeclaration> AstCreator::visitVariableDeclaration(
-    FluxParser::VariableDeclarationContext *ctx) {
+shared_ptr<VariableDeclaration>
+AstCreator::visitVariableDeclaration(FP::VariableDeclarationContext *ctx) {
   string name = ctx->Identifier()->getText();
   auto type = visitType(ctx->type());
   shared_ptr<Expr> initializer;
@@ -168,12 +162,11 @@ shared_ptr<VariableDeclaration> AstCreator::visitVariableDeclaration(
 }
 
 shared_ptr<Return>
-AstCreator::visitReturnStatement(FluxParser::ReturnStatementContext *ctx) {
+AstCreator::visitReturnStatement(FP::ReturnStatementContext *ctx) {
   return make_shared<Return>(Tokens(ctx), visitExpression(ctx->expression()));
 }
 
-shared_ptr<While>
-AstCreator::visitWhileLoop(FluxParser::WhileLoopContext *ctx) {
+shared_ptr<While> AstCreator::visitWhileLoop(FP::WhileLoopContext *ctx) {
   auto condition = visitExpression(ctx->expression());
   auto body = ctx->block() ? visitBlock(ctx->block())
                            : visitSingleLineBody(ctx->statement());
@@ -182,12 +175,11 @@ AstCreator::visitWhileLoop(FluxParser::WhileLoopContext *ctx) {
 }
 
 shared_ptr<StandaloneBlock>
-AstCreator::visitStandaloneBlock(FluxParser::StandaloneBlockContext *ctx) {
+AstCreator::visitStandaloneBlock(FP::StandaloneBlockContext *ctx) {
   return make_shared<StandaloneBlock>(Tokens(ctx), visitBlock(ctx->block()));
 }
 
-shared_ptr<sugar::ForLoop>
-AstCreator::visitForLoop(FluxParser::ForLoopContext *ctx) {
+shared_ptr<sugar::ForLoop> AstCreator::visitForLoop(FP::ForLoopContext *ctx) {
   auto init = visitStatement(ctx->statement(0)); // let i = 0;
   auto conditionStatement =
       visitExpressionStatement(ctx->expressionStatement()); // i < N;
@@ -201,7 +193,7 @@ AstCreator::visitForLoop(FluxParser::ForLoopContext *ctx) {
 }
 
 shared_ptr<sugar::IfElifElseStatement>
-AstCreator::visitIfStatement(FluxParser::IfStatementContext *ctx) {
+AstCreator::visitIfStatement(FP::IfStatementContext *ctx) {
   auto condition = visitExpression(ctx->expression());
   auto thenBlock = ctx->block() ? visitBlock(ctx->block())
                                 : visitSingleLineBody(ctx->statement());
@@ -221,59 +213,61 @@ AstCreator::visitIfStatement(FluxParser::IfStatementContext *ctx) {
 }
 
 shared_ptr<sugar::ElifStatement>
-AstCreator::visitElseIfStatement(FluxParser::ElseIfStatementContext *ctx) {
+AstCreator::visitElseIfStatement(FP::ElseIfStatementContext *ctx) {
   auto condition = visitExpression(ctx->expression());
   auto thenBlock = ctx->block() ? visitBlock(ctx->block())
                                 : visitSingleLineBody(ctx->statement());
   return make_shared<sugar::ElifStatement>(Tokens(ctx), condition, thenBlock);
 }
 
-Block AstCreator::visitElseBlock(FluxParser::ElseBlockContext *ctx) {
+Block AstCreator::visitElseBlock(FP::ElseBlockContext *ctx) {
   return visitBlock(ctx->block());
 }
 
 // expressions
-shared_ptr<Expr>
-AstCreator::visitExpression(FluxParser::ExpressionContext *ctx) {
+shared_ptr<Expr> AstCreator::visitExpression(FP::ExpressionContext *ctx) {
   // E.g. ret;
   if (!ctx)
     return make_shared<VoidExpr>(Tokens());
 
-  using FP = FluxParser;
+  using FP = FP;
   if (auto expr = dynamic_cast<FP::ParenExprContext *>(ctx))
     return visitParenExpr(expr);
   else if (auto expr = dynamic_cast<FP::LiteralExprContext *>(ctx))
     return visitLiteralExpr(expr);
-  else if (auto expr = dynamic_cast<FP::IdentifierExprContext *>(ctx))
-    return visitIdentifierExpr(expr);
-  else if (auto expr = dynamic_cast<FP::ArrayRefExprContext *>(ctx))
-    return visitArrayRefExpr(expr);
-  else if (auto expr = dynamic_cast<FP::CallExprContext *>(ctx))
-    return visitCallExpr(expr);
-  else if (auto expr = dynamic_cast<FP::PrefixUnaryExprContext *>(ctx))
-    return visitPrefixUnaryExpr(expr);
-  else if (auto expr = dynamic_cast<FP::BinaryLogicalExprContext *>(ctx))
-    return visitBinaryLogicalExpr(expr);
-  else if (auto expr = dynamic_cast<FP::BinaryArithmeticExprContext *>(ctx))
-    return visitBinaryArithmeticExpr(expr);
-  else if (auto expr = dynamic_cast<FP::BinaryCompExprContext *>(ctx))
-    return visitBinaryCompExpr(expr);
-  else if (auto expr = dynamic_cast<FP::TernaryExprContext *>(ctx))
-    return visitTernaryExpr(expr);
-  else if (auto expr = dynamic_cast<FP::InIntervalExprContext *>(ctx))
-    return visitInIntervalExpr(expr);
-  else if (auto expr = dynamic_cast<FP::CompoundAssignmentExprContext *>(ctx))
-    return visitCompoundAssignmentExpr(expr);
-  else if (auto expr = dynamic_cast<FP::AssignmentExprContext *>(ctx))
-    return visitAssignmentExpr(expr);
+  else if (auto expr = dynamic_cast<FP::VarRefContext *>(ctx))
+    return visitVarRef(expr);
+  else if (auto expr = dynamic_cast<FP::FieldRefContext *>(ctx))
+    return visitFieldRef(expr);
+  else if (auto expr = dynamic_cast<FP::ArrayRefContext *>(ctx))
+    return visitArrayRef(expr);
+  else if (auto expr = dynamic_cast<FP::FunctionCallContext *>(ctx))
+    return visitFunctionCall(expr);
+  else if (auto expr = dynamic_cast<FP::MethodCallContext *>(ctx))
+    return visitMethodCall(expr);
+  else if (auto expr = dynamic_cast<FP::PrefixUnaryContext *>(ctx))
+    return visitPrefixUnary(expr);
+  else if (auto expr = dynamic_cast<FP::BinaryLogicalContext *>(ctx))
+    return visitBinaryLogical(expr);
+  else if (auto expr = dynamic_cast<FP::BinaryArithmeticContext *>(ctx))
+    return visitBinaryArithmetic(expr);
+  else if (auto expr = dynamic_cast<FP::BinaryCompContext *>(ctx))
+    return visitBinaryComp(expr);
+  else if (auto expr = dynamic_cast<FP::TernaryContext *>(ctx))
+    return visitTernary(expr);
+  else if (auto expr = dynamic_cast<FP::InIntervalContext *>(ctx))
+    return visitInInterval(expr);
+  else if (auto expr = dynamic_cast<FP::CompoundAssignmentContext *>(ctx))
+    return visitCompoundAssignment(expr);
+  else if (auto expr = dynamic_cast<FP::AssignmentContext *>(ctx))
+    return visitAssignment(expr);
   else if (auto arrayInit = dynamic_cast<FP::ArrayLiteralContext *>(ctx))
     return visitArrayLiteral(arrayInit);
   else
     throw runtime_error("Unknown expression type");
 }
 
-shared_ptr<Expr>
-AstCreator::visitPrefixUnaryExpr(FluxParser::PrefixUnaryExprContext *ctx) {
+shared_ptr<Expr> AstCreator::visitPrefixUnary(FP::PrefixUnaryContext *ctx) {
   UnaryPrefixOp::Operator op;
   if (ctx->Minus())
     op = UnaryPrefixOp::Operator::Negate;
@@ -292,28 +286,23 @@ AstCreator::visitPrefixUnaryExpr(FluxParser::PrefixUnaryExprContext *ctx) {
   return make_shared<UnaryPrefixOp>(Tokens(ctx), op, expr);
 }
 
-shared_ptr<ArrayReference>
-AstCreator::visitArrayRefExpr(FluxParser::ArrayRefExprContext *ctx) {
+shared_ptr<ArrayRef> AstCreator::visitArrayRef(FP::ArrayRefContext *ctx) {
   auto target = visitExpression(ctx->expression(0));
   auto index = visitExpression(ctx->expression(1));
-  return make_shared<ArrayReference>(Tokens(ctx), target, index);
+  return make_shared<ArrayRef>(Tokens(ctx), target, index);
 }
 
-shared_ptr<VariableReference>
-AstCreator::visitIdentifierExpr(FluxParser::IdentifierExprContext *ctx) {
-  string name;
-  if (ctx->Identifier())
-    name = ctx->Identifier()->getText();
-  else if (ctx->memberReference())
-    name = boost::algorithm::join(getMembers(ctx->memberReference()), ".");
-  else
-    throw runtime_error("Unknown call expression");
+shared_ptr<VarRef> AstCreator::visitVarRef(FP::VarRefContext *ctx) {
+  return make_shared<VarRef>(Tokens(ctx), ctx->Identifier()->getText());
+}
 
-  return make_shared<VariableReference>(Tokens(ctx), name);
+shared_ptr<FieldRef> AstCreator::visitFieldRef(FP::FieldRefContext *ctx) {
+  auto obj = visitExpression(ctx->expression());
+  return make_shared<FieldRef>(Tokens(ctx), obj, ctx->Identifier()->getText());
 }
 
 shared_ptr<BinaryLogical>
-AstCreator::visitBinaryLogicalExpr(FluxParser::BinaryLogicalExprContext *ctx) {
+AstCreator::visitBinaryLogical(FP::BinaryLogicalContext *ctx) {
   BinaryLogical::Operator op;
   if (ctx->LogicalAnd())
     op = BinaryLogical::Operator::And;
@@ -327,8 +316,8 @@ AstCreator::visitBinaryLogicalExpr(FluxParser::BinaryLogicalExprContext *ctx) {
   return make_shared<BinaryLogical>(Tokens(ctx), lhs, op, rhs);
 }
 
-shared_ptr<BinaryArithmetic> AstCreator::visitBinaryArithmeticExpr(
-    FluxParser::BinaryArithmeticExprContext *ctx) {
+shared_ptr<BinaryArithmetic>
+AstCreator::visitBinaryArithmetic(FP::BinaryArithmeticContext *ctx) {
   BinaryArithmetic::Operator op;
   if (ctx->Plus())
     op = BinaryArithmetic::Operator::Add;
@@ -349,7 +338,7 @@ shared_ptr<BinaryArithmetic> AstCreator::visitBinaryArithmeticExpr(
 }
 
 shared_ptr<BinaryComparison>
-AstCreator::visitBinaryCompExpr(FluxParser::BinaryCompExprContext *ctx) {
+AstCreator::visitBinaryComp(FP::BinaryCompContext *ctx) {
   BinaryComparison::Operator op;
   if (ctx->Eq())
     op = BinaryComparison::Operator::Eq;
@@ -371,8 +360,8 @@ AstCreator::visitBinaryCompExpr(FluxParser::BinaryCompExprContext *ctx) {
   return make_shared<BinaryComparison>(Tokens(ctx), lhs, op, rhs);
 }
 
-shared_ptr<sugar::CompoundAssignment> AstCreator::visitCompoundAssignmentExpr(
-    FluxParser::CompoundAssignmentExprContext *ctx) {
+shared_ptr<sugar::CompoundAssignment>
+AstCreator::visitCompoundAssignment(FP::CompoundAssignmentContext *ctx) {
   BinaryArithmetic::Operator op;
   if (ctx->Plus())
     op = BinaryArithmetic::Operator::Add;
@@ -393,39 +382,36 @@ shared_ptr<sugar::CompoundAssignment> AstCreator::visitCompoundAssignmentExpr(
   return make_shared<sugar::CompoundAssignment>(Tokens(ctx), lhs, op, rhs);
 }
 
-shared_ptr<Expr>
-AstCreator::visitLiteralExpr(FluxParser::LiteralExprContext *ctx) {
+shared_ptr<Expr> AstCreator::visitLiteralExpr(FP::LiteralExprContext *ctx) {
   return visitLiteral(ctx->literal());
 }
 
 shared_ptr<FunctionCall>
-AstCreator::visitCallExpr(FluxParser::CallExprContext *ctx) {
-  string name;
-  if (ctx->Identifier())
-    name = ctx->Identifier()->getText();
-  else if (ctx->memberReference())
-    name = boost::algorithm::join(getMembers(ctx->memberReference()), ".");
-  else
-    throw runtime_error("Unknown call expression");
-
+AstCreator::visitFunctionCall(FP::FunctionCallContext *ctx) {
   auto args = visitExpressionList(ctx->expressionList());
-  return make_shared<FunctionCall>(Tokens(ctx), name, args);
+  return make_shared<FunctionCall>(Tokens(ctx), ctx->Identifier()->getText(),
+                                   args);
 }
 
-shared_ptr<Assignment>
-AstCreator::visitAssignmentExpr(FluxParser::AssignmentExprContext *ctx) {
+shared_ptr<MethodCall> AstCreator::visitMethodCall(FP::MethodCallContext *ctx) {
+  auto object = visitExpression(ctx->expression());
+  auto args = visitExpressionList(ctx->expressionList());
+  return make_shared<MethodCall>(Tokens(ctx), object,
+                                 ctx->Identifier()->getText(), args);
+}
+
+shared_ptr<Assignment> AstCreator::visitAssignment(FP::AssignmentContext *ctx) {
   auto target = visitExpression(ctx->expression(0));
   target->setLhs(true);
   auto value = visitExpression(ctx->expression(1));
   return make_shared<Assignment>(Tokens(ctx), target, value);
 }
 
-shared_ptr<Expr> AstCreator::visitParenExpr(FluxParser::ParenExprContext *ctx) {
+shared_ptr<Expr> AstCreator::visitParenExpr(FP::ParenExprContext *ctx) {
   return visitExpression(ctx->expression());
 }
 
-shared_ptr<TernaryExpr>
-AstCreator::visitTernaryExpr(FluxParser::TernaryExprContext *ctx) {
+shared_ptr<TernaryExpr> AstCreator::visitTernary(FP::TernaryContext *ctx) {
   auto condition = visitExpression(ctx->expression(0));
   auto thenExpr = visitExpression(ctx->expression(1));
   auto elseExpr = visitExpression(ctx->expression(2));
@@ -433,7 +419,7 @@ AstCreator::visitTernaryExpr(FluxParser::TernaryExprContext *ctx) {
 }
 
 shared_ptr<sugar::InIntervalExpr>
-AstCreator::visitInIntervalExpr(FluxParser::InIntervalExprContext *ctx) {
+AstCreator::visitInInterval(FP::InIntervalContext *ctx) {
   auto value = visitExpression(ctx->expression());
   auto interval = visitInterval(ctx->interval());
 
@@ -441,7 +427,7 @@ AstCreator::visitInIntervalExpr(FluxParser::InIntervalExprContext *ctx) {
                                             interval.upper, interval.kind);
 }
 
-shared_ptr<Expr> AstCreator::visitLiteral(FluxParser::LiteralContext *ctx) {
+shared_ptr<Expr> AstCreator::visitLiteral(FP::LiteralContext *ctx) {
   if (auto intLit = ctx->IntLiteral())
     return static_pointer_cast<Expr>(
         make_shared<IntLiteral>(Tokens(ctx), stol(intLit->getText())));
@@ -465,7 +451,7 @@ shared_ptr<Expr> AstCreator::visitArrayLiteral(FP::ArrayLiteralContext *ctx) {
 
 // misc
 vector<shared_ptr<Expr>>
-AstCreator::visitExpressionList(FluxParser::ExpressionListContext *ctx) {
+AstCreator::visitExpressionList(FP::ExpressionListContext *ctx) {
   vector<shared_ptr<Expr>> expressions;
   if (!ctx)
     return expressions;
@@ -477,7 +463,7 @@ AstCreator::visitExpressionList(FluxParser::ExpressionListContext *ctx) {
 }
 
 // types
-shared_ptr<Type> AstCreator::visitType(FluxParser::TypeContext *ctx) {
+shared_ptr<Type> AstCreator::visitType(FP::TypeContext *ctx) {
   if (!ctx)
     return InferType::get();
 
@@ -492,7 +478,7 @@ shared_ptr<Type> AstCreator::visitType(FluxParser::TypeContext *ctx) {
 }
 
 shared_ptr<PointerType>
-AstCreator::visitPointerType(FluxParser::PointerTypeContext *ctx) {
+AstCreator::visitPointerType(FP::PointerTypeContext *ctx) {
   shared_ptr<Type> pointee;
   if (auto scalar = ctx->scalarType())
     pointee = visitScalarType(scalar);
@@ -508,8 +494,7 @@ AstCreator::visitPointerType(FluxParser::PointerTypeContext *ctx) {
   return static_pointer_cast<PointerType>(type);
 }
 
-shared_ptr<ArrayType>
-AstCreator::visitArrayType(FluxParser::ArrayTypeContext *ctx) {
+shared_ptr<ArrayType> AstCreator::visitArrayType(FP::ArrayTypeContext *ctx) {
   auto type = visitScalarType(ctx->scalarType());
   for (unsigned i = 0; i < ctx->Mul().size(); i++) {
     type = PointerType::get(type);
@@ -519,8 +504,7 @@ AstCreator::visitArrayType(FluxParser::ArrayTypeContext *ctx) {
   return ArrayType::get(type, size);
 }
 
-shared_ptr<Type>
-AstCreator::visitBuiltinType(FluxParser::BuiltinTypeContext *ctx) {
+shared_ptr<Type> AstCreator::visitBuiltinType(FP::BuiltinTypeContext *ctx) {
   if (ctx->KwInt32() || ctx->KwInt64())
     return IntType::get();
   else if (ctx->KwFloat32() || ctx->KwFloat64())
@@ -535,8 +519,7 @@ AstCreator::visitBuiltinType(FluxParser::BuiltinTypeContext *ctx) {
     assert(false && "Unknown builtin type");
 }
 
-shared_ptr<Type>
-AstCreator::visitScalarType(FluxParser::ScalarTypeContext *ctx) {
+shared_ptr<Type> AstCreator::visitScalarType(FP::ScalarTypeContext *ctx) {
   if (ctx->builtinType())
     return visitBuiltinType(ctx->builtinType());
   else if (ctx->Identifier())
@@ -545,7 +528,7 @@ AstCreator::visitScalarType(FluxParser::ScalarTypeContext *ctx) {
     assert(false && "Unknown scalar type");
 }
 
-Interval AstCreator::visitInterval(FluxParser::IntervalContext *ctx) {
+Interval AstCreator::visitInterval(FP::IntervalContext *ctx) {
   auto lower = visitExpression(ctx->expression(0));
   auto upper = visitExpression(ctx->expression(1));
 

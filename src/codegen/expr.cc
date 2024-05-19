@@ -52,7 +52,7 @@ Value *IRVisitor::visit(ArrayLiteral &literal) {
   return builder->CreateLoad(arrType, alloca, "arrayLiteral");
 }
 
-Value *IRVisitor::visit(VariableReference &variable) {
+Value *IRVisitor::visit(VarRef &variable) {
   auto symbol = symTab.lookupVariable(variable.mangledName);
   assert(symbol);
 
@@ -62,6 +62,19 @@ Value *IRVisitor::visit(VariableReference &variable) {
 
   return builder->CreateLoad(symbol->type->codegen(*this), symbol->alloc,
                              symbol->name);
+}
+
+Value *IRVisitor::visit(FieldRef &field) {
+  // force to return address
+  field.object->setLhs(true);
+  auto obj = field.object->codegen(*this);
+  assert(field.object->type->isClass());
+  auto classType = static_pointer_cast<ClassType>(field.object->type);
+
+  auto elemPtr = classType->getFieldPtr(obj, field.field, *this);
+  return field.isLhs() ? elemPtr
+                       : builder->CreateLoad(field.type->codegen(*this),
+                                             elemPtr, "fieldRef");
 }
 
 // &x
@@ -88,7 +101,7 @@ Value *IRVisitor::visit(Dereference &dereference) {
              : builder->CreateLoad(derefType, ptr, "deref");
 }
 
-Value *IRVisitor::visit(ArrayReference &ref) {
+Value *IRVisitor::visit(::ArrayRef &ref) {
   auto index = ref.index->codegen(*this);
 
   // force to return address
@@ -106,7 +119,7 @@ Value *IRVisitor::visit(FunctionCall &call) {
   assert(function);
 
   vector<Value *> args;
-  for (auto &arg : call.arguments) {
+  for (auto &arg : call.args) {
     args.push_back(arg->codegen(*this));
   }
 

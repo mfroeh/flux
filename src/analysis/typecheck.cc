@@ -1,4 +1,5 @@
 #include "analysis/typecheck.hh"
+#include "ast/class.hh"
 #include "ast/expr.hh"
 #include "ast/function.hh"
 #include "ast/stmt.hh"
@@ -6,6 +7,7 @@
 #include "ast/type.hh"
 #include "symbol.hh"
 #include "visitor.hh"
+#include <iterator>
 #include <memory>
 #include <ranges>
 #include <sstream>
@@ -13,21 +15,25 @@
 
 using namespace std;
 
-// functions
-
 stack<shared_ptr<FunctionSymbol>> functionSymbolStack;
 stack<FunctionDefinition *> functionStack;
 
+// classes
+any TypeChecker::visit(ClassDefinition &classDef) {
+  return AstVisitor::visit(classDef);
+}
+
+any TypeChecker::visit(FieldDeclaration &field) {
+  return AstVisitor::visit(field);
+}
+
+// functions
 any TypeChecker::visit(FunctionDefinition &function) {
   auto symbol = symTab.lookupFunction(function.mangledName);
   functionSymbolStack.push(symbol);
   functionStack.push(&function);
 
   AstVisitor::visit(function);
-
-  // if (function.returnType->isArray()) {
-  //   throw runtime_error("Function cannot return an array");
-  // }
 
   int returnCount = 0;
   for (auto &stmt : function.body.statements) {
@@ -199,7 +205,7 @@ any TypeChecker::visit(ArrayLiteral &arrLiteral) {
   return {};
 }
 
-any TypeChecker::visit(VariableReference &var) {
+any TypeChecker::visit(VarRef &var) {
   auto symbol = symTab.lookupVariable(var.mangledName);
   assert(symbol != nullptr);
   var.type = symbol->type;
@@ -207,7 +213,23 @@ any TypeChecker::visit(VariableReference &var) {
   return {};
 }
 
-any TypeChecker::visit(ArrayReference &arr) {
+any TypeChecker::visit(FieldRef &fieldRef) {
+  AstVisitor::visit(fieldRef);
+
+  if (!fieldRef.object->type->isClass()) {
+    throw runtime_error("Field reference must be applied to a class");
+  }
+
+  auto structType = static_pointer_cast<ClassType>(fieldRef.object->type);
+  auto fieldType = structType->getFieldType(fieldRef.field);
+  if (!fieldType)
+    throw runtime_error("Field " + fieldRef.field + " not found in class");
+
+  fieldRef.type = fieldType;
+  return {};
+}
+
+any TypeChecker::visit(ArrayRef &arr) {
   AstVisitor::visit(arr);
 
   if (!arr.index->type->isInt()) {
@@ -232,14 +254,14 @@ any TypeChecker::visit(FunctionCall &funcCall) {
   // now we resolve the candidates by checking the argument types
   for (auto &candidate : funcCall.callCandidates) {
     auto functionSymbol = symTab.lookupFunction(candidate);
-    if (functionSymbol->parameters.size() != funcCall.arguments.size()) {
+    if (functionSymbol->parameters.size() != funcCall.args.size()) {
       continue;
     }
 
     bool match = true;
     for (int i = 0; i < functionSymbol->parameters.size(); i++) {
       auto &param = functionSymbol->parameters[i];
-      auto &arg = funcCall.arguments[i];
+      auto &arg = funcCall.args[i];
       if (!arg->type->canImplicitlyConvertTo(param.type)) {
         match = false;
         break;
@@ -262,8 +284,9 @@ any TypeChecker::visit(FunctionCall &funcCall) {
   }
 
   // favor by scope depth, then by definition depth
-  // TODO: we could also make it illegal to have multiple possible functions in
-  // the same scope
+  // TODO: we could also make it illegal to have multiple possible candidate
+  // functions in the same scope. Currenlty we favor the one that was defined
+  // last.
   ranges::sort(candidates, [](auto &a, auto &b) {
     if (a->depth > b->depth)
       return true;
@@ -271,16 +294,73 @@ any TypeChecker::visit(FunctionCall &funcCall) {
   });
 
   auto symbol = candidates[0];
-  for (int i = 0; i < funcCall.arguments.size(); i++) {
-    auto &arg = funcCall.arguments[i];
+  for (int i = 0; i < funcCall.args.size(); i++) {
+    auto &arg = funcCall.args[i];
     auto &param = symbol->parameters[i];
     if (arg->type != param.type) {
-      funcCall.arguments[i] = make_shared<Cast>(arg, param.type);
+      funcCall.args[i] = make_shared<Cast>(arg, param.type);
     }
   }
 
   funcCall.mangledName = remainingCandidates[0];
   funcCall.type = symbol->returnType;
+  return {};
+}
+
+any TypeChecker::visit(MethodCall &methodCall) {
+  AstVisitor::visit(methodCall);
+
+  if (!methodCall.object->type->isClass())
+    throw runtime_error("Method call must be applied to a class");
+
+  auto classType = static_pointer_cast<ClassType>(methodCall.object->type);
+
+  auto candidates = classType->getMethods(methodCall.callee);
+  if (candidates.empty())
+    throw runtime_error("Method " + methodCall.callee + " not found in class");
+
+  // filter out candidates that don't match the number of arguments
+  ranges::copy_if(
+      candidates, back_inserter(candidates), [methodCall](auto &candidate) {
+        return methodCall.args.size() == candidate->parameters.size();
+      });
+  if (candidates.empty())
+    throw runtime_error("No matching method found for call to " +
+                        methodCall.callee);
+
+  // filter out candidates that don't match the argument types
+  ranges::copy_if(candidates, back_inserter(candidates),
+                  [methodCall](const shared_ptr<FunctionSymbol> &candidate) {
+                    for (int i = 0; i < methodCall.args.size(); i++) {
+                      auto &arg = methodCall.args[i];
+                      auto &param = candidate->parameters[i];
+                      if (!arg->type->canImplicitlyConvertTo(param.type)) {
+                        return false;
+                      }
+                    }
+                    return true;
+                  });
+
+  if (candidates.empty())
+    throw runtime_error("No matching method found for call to " +
+                        methodCall.callee);
+
+  if (candidates.size() > 1)
+    throw runtime_error("Ambiguous method call to " + methodCall.callee);
+
+  // cast parameters to match the method signature
+  auto symbol = candidates[0];
+  for (int i = 0; i < methodCall.args.size(); i++) {
+    auto &arg = methodCall.args[i];
+    auto &param = symbol->parameters[i];
+    if (arg->type != param.type) {
+      methodCall.args[i] = make_shared<Cast>(arg, param.type);
+    }
+  }
+
+  methodCall.type = symbol->returnType;
+  methodCall.mangledName = symbol->mangledName;
+
   return {};
 }
 

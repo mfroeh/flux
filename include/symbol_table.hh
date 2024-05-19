@@ -18,6 +18,9 @@ public:
 
   vector<shared_ptr<FunctionSymbol>> getFunctions(string name);
 
+  // when replacing method calls with function calls
+  void removeFunction(string mangledName);
+
   friend std::ostream &operator<<(std::ostream &os, const SymbolTable &table);
 
 protected:

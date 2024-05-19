@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ast/class.hh"
 #include "ast/expr.hh"
 #include "codegen/context.hh"
 #include "module_context.hh"
@@ -19,6 +20,9 @@ public:
 
   // module
   shared_ptr<llvm::Module> visit(struct Module &module);
+
+  // classes
+  void visit(struct ClassDefinition &classDef);
 
   // functions (might change to return llvm::Function*)
   void visit(struct FunctionDefinition &function);
@@ -40,8 +44,9 @@ public:
   llvm::Value *visit(struct StringLiteral &literal);
   llvm::Value *visit(struct ArrayLiteral &literal);
 
-  llvm::Value *visit(struct VariableReference &var);
-  llvm::Value *visit(struct ArrayReference &array);
+  llvm::Value *visit(struct VarRef &var);
+  llvm::Value *visit(struct FieldRef &field);
+  llvm::Value *visit(struct ArrayRef &array);
   llvm::Value *visit(struct FunctionCall &call);
   llvm::Value *visit(struct UnaryPrefixOp &operation);
   llvm::Value *visit(struct BinaryArithmetic &operation);

@@ -62,7 +62,7 @@ set(ast
 
 set(analysis src/analysis/desugar.cc src/analysis/scope.cc src/analysis/variable_resolver.cc src/analysis/typecheck.cc)
 
-set(codegen src/codegen/context.cc src/codegen/expr.cc src/codegen/function.cc src/codegen/module.cc src/codegen/stmt.cc)
+set(codegen src/codegen/context.cc src/codegen/class.cc src/codegen/expr.cc src/codegen/function.cc src/codegen/module.cc src/codegen/stmt.cc)
 
 set(toplevel "")
 
@@ -71,6 +71,7 @@ add_executable(
   src/main.cc
   src/visitor.cc
   src/symbol_table.cc
+  src/symbol.cc
   ${toplevel}
   ${parser}
   ${ast}
