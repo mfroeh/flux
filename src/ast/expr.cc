@@ -23,7 +23,9 @@ Cast::Cast(shared_ptr<Expr> expr, shared_ptr<Type> type)
 any Cast::accept(AbstractAstVisitor &visitor) { return visitor.visit(*this); }
 
 shared_ptr<Expr> Cast::deepcopy() const {
-  return make_shared<Cast>(tokens, expr->deepcopy(), type);
+  auto copy = make_shared<Cast>(tokens, expr->deepcopy(), type);
+  copy->type = type;
+  return copy;
 }
 
 llvm::Value *Cast::codegen(IRVisitor &visitor) { return visitor.visit(*this); }
@@ -36,7 +38,9 @@ any IntLiteral::accept(AbstractAstVisitor &visitor) {
 }
 
 shared_ptr<Expr> IntLiteral::deepcopy() const {
-  return make_shared<IntLiteral>(tokens, value);
+  auto copy = make_shared<IntLiteral>(tokens, value);
+  copy->type = type;
+  return copy;
 }
 
 llvm::Value *IntLiteral::codegen(IRVisitor &visitor) {
@@ -55,7 +59,9 @@ llvm::Value *FloatLiteral::codegen(IRVisitor &visitor) {
 }
 
 shared_ptr<Expr> FloatLiteral::deepcopy() const {
-  return make_shared<FloatLiteral>(tokens, value);
+  auto copy = make_shared<FloatLiteral>(tokens, value);
+  copy->type = type;
+  return copy;
 }
 
 BoolLiteral::BoolLiteral(Tokens tokens, bool value)
@@ -70,7 +76,9 @@ llvm::Value *BoolLiteral::codegen(IRVisitor &visitor) {
 }
 
 shared_ptr<Expr> BoolLiteral::deepcopy() const {
-  return make_shared<BoolLiteral>(tokens, value);
+  auto copy = make_shared<BoolLiteral>(tokens, value);
+  copy->type = type;
+  return copy;
 }
 
 StringLiteral::StringLiteral(Tokens tokens, string value)
@@ -81,7 +89,9 @@ any StringLiteral::accept(AbstractAstVisitor &visitor) {
 }
 
 shared_ptr<Expr> StringLiteral::deepcopy() const {
-  return make_shared<StringLiteral>(tokens, value);
+  auto copy = make_shared<StringLiteral>(tokens, value);
+  copy->type = type;
+  return copy;
 }
 
 llvm::Value *StringLiteral::codegen(IRVisitor &visitor) {
@@ -104,7 +114,9 @@ shared_ptr<Expr> ArrayLiteral::deepcopy() const {
   for (auto &value : values) {
     newValues.push_back(value->deepcopy());
   }
-  return make_shared<ArrayLiteral>(tokens, newValues);
+  auto copy = make_shared<ArrayLiteral>(tokens, newValues);
+  copy->type = type;
+  return copy;
 }
 
 VariableReference::VariableReference(Tokens tokens, string name)
@@ -119,7 +131,10 @@ llvm::Value *VariableReference::codegen(IRVisitor &visitor) {
 }
 
 shared_ptr<Expr> VariableReference::deepcopy() const {
-  return make_shared<VariableReference>(tokens, name);
+  auto copy = make_shared<VariableReference>(tokens, name);
+  copy->mangledName = mangledName;
+  copy->type = type;
+  return copy;
 }
 
 Pointer::Pointer(Tokens tokens, shared_ptr<Expr> lvalue)
@@ -134,7 +149,9 @@ llvm::Value *Pointer::codegen(IRVisitor &visitor) {
 }
 
 shared_ptr<Expr> Pointer::deepcopy() const {
-  return make_shared<Pointer>(tokens, lvalue->deepcopy());
+  auto copy = make_shared<Pointer>(tokens, lvalue->deepcopy());
+  copy->type = type;
+  return copy;
 }
 
 Dereference::Dereference(Tokens tokens, shared_ptr<Expr> expr)
@@ -150,7 +167,9 @@ llvm::Value *Dereference::codegen(IRVisitor &visitor) {
 }
 
 shared_ptr<Expr> Dereference::deepcopy() const {
-  return make_shared<Dereference>(tokens, pointer->deepcopy());
+  auto copy = make_shared<Dereference>(tokens, pointer->deepcopy());
+  copy->type = type;
+  return copy;
 }
 
 void Dereference::setLhs(bool isLhs) {
@@ -173,8 +192,10 @@ llvm::Value *ArrayReference::codegen(IRVisitor &visitor) {
 }
 
 shared_ptr<Expr> ArrayReference::deepcopy() const {
-  return make_shared<ArrayReference>(tokens, arrayExpr->deepcopy(),
-                                     index->deepcopy());
+  auto copy = make_shared<ArrayReference>(tokens, arrayExpr->deepcopy(),
+                                          index->deepcopy());
+  copy->type = type;
+  return copy;
 }
 
 void ArrayReference::setLhs(bool isLhs) {
@@ -200,7 +221,10 @@ shared_ptr<Expr> FunctionCall::deepcopy() const {
   for (auto &arg : arguments) {
     args.push_back(arg->deepcopy());
   }
-  return make_shared<FunctionCall>(tokens, callee, args);
+  auto copy = make_shared<FunctionCall>(tokens, callee, args);
+  copy->mangledName = mangledName;
+  copy->type = type;
+  return copy;
 }
 
 UnaryPrefixOp::UnaryPrefixOp(Tokens tokens, Operator op, shared_ptr<Expr> expr)
@@ -216,7 +240,9 @@ llvm::Value *UnaryPrefixOp::codegen(IRVisitor &visitor) {
 }
 
 shared_ptr<Expr> UnaryPrefixOp::deepcopy() const {
-  return make_shared<UnaryPrefixOp>(tokens, op, operand->deepcopy());
+  auto copy = make_shared<UnaryPrefixOp>(tokens, op, operand->deepcopy());
+  copy->type = type;
+  return copy;
 }
 
 BinaryComparison::BinaryComparison(Tokens tokens, shared_ptr<Expr> lhs,
@@ -233,8 +259,10 @@ llvm::Value *BinaryComparison::codegen(IRVisitor &visitor) {
 }
 
 shared_ptr<Expr> BinaryComparison::deepcopy() const {
-  return make_shared<BinaryComparison>(tokens, lhs->deepcopy(), op,
-                                       rhs->deepcopy());
+  auto copy = make_shared<BinaryComparison>(tokens, lhs->deepcopy(), op,
+                                            rhs->deepcopy());
+  copy->type = type;
+  return copy;
 }
 
 BinaryArithmetic::BinaryArithmetic(Tokens tokens, shared_ptr<Expr> lhs,
@@ -251,8 +279,10 @@ llvm::Value *BinaryArithmetic::codegen(IRVisitor &visitor) {
 }
 
 shared_ptr<Expr> BinaryArithmetic::deepcopy() const {
-  return make_shared<BinaryArithmetic>(tokens, lhs->deepcopy(), op,
-                                       rhs->deepcopy());
+  auto copy = make_shared<BinaryArithmetic>(tokens, lhs->deepcopy(), op,
+                                            rhs->deepcopy());
+  copy->type = type;
+  return copy;
 }
 
 BinaryLogical::BinaryLogical(Tokens tokens, shared_ptr<Expr> lhs, Operator op,
@@ -270,8 +300,10 @@ llvm::Value *BinaryLogical::codegen(IRVisitor &visitor) {
 }
 
 shared_ptr<Expr> BinaryLogical::deepcopy() const {
-  return make_shared<BinaryLogical>(tokens, lhs->deepcopy(), op,
-                                    rhs->deepcopy());
+  auto copy =
+      make_shared<BinaryLogical>(tokens, lhs->deepcopy(), op, rhs->deepcopy());
+  copy->type = type;
+  return copy;
 }
 
 Assignment::Assignment(Tokens tokens, shared_ptr<Expr> lhs,
@@ -288,7 +320,10 @@ llvm::Value *Assignment::codegen(IRVisitor &visitor) {
 }
 
 shared_ptr<Expr> Assignment::deepcopy() const {
-  return make_shared<Assignment>(tokens, target->deepcopy(), value->deepcopy());
+  auto copy =
+      make_shared<Assignment>(tokens, target->deepcopy(), value->deepcopy());
+  copy->type = type;
+  return copy;
 }
 
 TernaryExpr::TernaryExpr(Tokens tokens, shared_ptr<Expr> condition,
@@ -306,8 +341,11 @@ llvm::Value *TernaryExpr::codegen(IRVisitor &visitor) {
 }
 
 shared_ptr<Expr> TernaryExpr::deepcopy() const {
-  return make_shared<TernaryExpr>(tokens, condition->deepcopy(),
-                                  thenExpr->deepcopy(), elseExpr->deepcopy());
+  auto copy =
+      make_shared<TernaryExpr>(tokens, condition->deepcopy(),
+                               thenExpr->deepcopy(), elseExpr->deepcopy());
+  copy->type = type;
+  return copy;
 }
 
 VoidExpr::VoidExpr(Tokens tokens) : Expr(std::move(tokens), VoidType::get()) {}
@@ -317,5 +355,7 @@ any VoidExpr::accept(AbstractAstVisitor &visitor) { return {}; }
 llvm::Value *VoidExpr::codegen(IRVisitor &visitor) { return nullptr; }
 
 shared_ptr<Expr> VoidExpr::deepcopy() const {
-  return make_shared<VoidExpr>(tokens);
+  auto copy = make_shared<VoidExpr>(tokens);
+  copy->type = type;
+  return copy;
 }

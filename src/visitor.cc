@@ -158,21 +158,37 @@ any AstVisitor::visit(Dereference &dereference) {
 
 // sugar
 any AstVisitor::visit(sugar::ElifStatement &elifStmt) {
-  throw std::runtime_error("found sugar!");
+  elifStmt.condition->accept(*this);
+  elifStmt.thenBlock.accept(*this);
+  return {};
 }
 
 any AstVisitor::visit(sugar::IfElifElseStatement &elifElseStmt) {
-  throw std::runtime_error("found sugar!");
+  elifElseStmt.condition->accept(*this);
+  for (auto &elif : elifElseStmt.elseIfs) {
+    elif->accept(*this);
+  }
+  elifElseStmt.thenBlock.accept(*this);
+  return {};
 }
 
 any AstVisitor::visit(sugar::ForLoop &forStmt) {
-  throw std::runtime_error("found sugar!");
+  forStmt.initializer->accept(*this);
+  forStmt.condition->accept(*this);
+  forStmt.update->accept(*this);
+  forStmt.body.accept(*this);
+  return {};
 }
 
 any AstVisitor::visit(sugar::InIntervalExpr &inIntervalExpr) {
-  throw std::runtime_error("found sugar!");
+  inIntervalExpr.value->accept(*this);
+  inIntervalExpr.lower->accept(*this);
+  inIntervalExpr.upper->accept(*this);
+  return {};
 }
 
 any AstVisitor::visit(sugar::CompoundAssignment &compoundAssignment) {
-  throw std::runtime_error("found sugar!");
+  compoundAssignment.value->accept(*this);
+  compoundAssignment.target->accept(*this);
+  return {};
 }

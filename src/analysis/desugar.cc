@@ -314,17 +314,7 @@ any Desugarer::visit(sugar::InIntervalExpr &inIntervalExpr) {
           ? BinaryComparison::Operator::Lt
           : BinaryComparison::Operator::Le;
 
-  shared_ptr<Expr> valueCopy;
-  if (auto var =
-          dynamic_pointer_cast<VariableReference>(inIntervalExpr.value)) {
-    valueCopy = make_shared<VariableReference>(*var);
-  } else if (auto arr =
-                 dynamic_pointer_cast<ArrayReference>(inIntervalExpr.value)) {
-    valueCopy = make_shared<ArrayReference>(*arr);
-  } else {
-    throw runtime_error("Only variables and array references are allowed for "
-                        "in interval expressions");
-  }
+  shared_ptr<Expr> valueCopy = inIntervalExpr.value->deepcopy();
 
   auto lowerComparison = make_shared<BinaryComparison>(
       inIntervalExpr.tokens, inIntervalExpr.value, lowerOperator, lower);

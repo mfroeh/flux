@@ -18,6 +18,8 @@ public:
 
   vector<shared_ptr<FunctionSymbol>> getFunctions(string name);
 
+  friend std::ostream &operator<<(std::ostream &os, const SymbolTable &table);
+
 protected:
   // mangledName, symbol
   unordered_map<string, shared_ptr<VariableSymbol>> variables;

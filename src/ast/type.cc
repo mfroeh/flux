@@ -226,7 +226,16 @@ bool ArrayType::canDefaultInitialize() const {
 }
 
 llvm::Value *ArrayType::getDefaultValue(IRVisitor &visitor) {
-  assert(false && "Use ArrayType::initializeArray instead");
+  auto &builder = visitor.builder;
+  auto alloca = builder->CreateAlloca(codegen(visitor), nullptr, "tmpArray");
+  for (unsigned i = 0; i < size; i++) {
+    auto index =
+        llvm::ConstantInt::get(*visitor.llvmContext, llvm::APInt(64, i));
+    auto elemPtr = builder->CreateInBoundsGEP(elementType->codegen(visitor),
+                                              alloca, index, "elemPtr");
+    builder->CreateStore(elementType->getDefaultValue(visitor), elemPtr);
+  }
+  return builder->CreateLoad(codegen(visitor), alloca, "tmpArray");
 }
 
 IntType::IntType() : Type(INT) {}

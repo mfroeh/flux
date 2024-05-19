@@ -1,8 +1,5 @@
 #pragma once
 
-#include "ast/expr.hh"
-#include "ast/function.hh"
-#include "ast/stmt.hh"
 #include "scope.hh"
 #include "symbol_table.hh"
 #include "visitor.hh"
@@ -29,6 +26,9 @@ public:
 
   // finds function call candidates
   any visit(struct FunctionCall &funcCall) override;
+
+  // sugar
+  any visit(struct sugar::ForLoop &forLoop) override;
 
 private:
   shared_ptr<Scope> currentScope;

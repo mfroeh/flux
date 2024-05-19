@@ -47,6 +47,13 @@ any InIntervalExpr::accept(AbstractAstVisitor &visitor) {
   return visitor.visit(*this);
 }
 
+shared_ptr<Expr> InIntervalExpr::deepcopy() const {
+  auto copy = make_shared<InIntervalExpr>(
+      tokens, value->deepcopy(), lower->deepcopy(), upper->deepcopy(), kind);
+  copy->type = type;
+  return copy;
+}
+
 CompoundAssignment::CompoundAssignment(Tokens tokens, shared_ptr<Expr> lhs,
                                        BinaryArithmetic::Operator op,
                                        shared_ptr<Expr> rhs)
@@ -55,4 +62,11 @@ CompoundAssignment::CompoundAssignment(Tokens tokens, shared_ptr<Expr> lhs,
 
 any CompoundAssignment::accept(AbstractAstVisitor &visitor) {
   return visitor.visit(*this);
+}
+
+shared_ptr<Expr> CompoundAssignment::deepcopy() const {
+  auto copy = make_shared<CompoundAssignment>(tokens, target->deepcopy(), op,
+                                              value->deepcopy());
+  copy->type = type;
+  return copy;
 }
