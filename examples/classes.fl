@@ -3,6 +3,14 @@ class Point { x: i64; y: i64; }
 class Rectangle {
     topleft: Point;
     bottomright: Point;
+    x: i64;
+
+    height(): i64 {
+        // fine for now :), Make nice later
+        ret *this.x;
+    }
+
+    test(x: i64) => x + *this.x;
 }
 
 
@@ -27,7 +35,10 @@ main(): i64 {
     let p = Point { x: 11, y: 2};
     let rect: Rectangle = Rectangle {
         topleft: p,
-        bottomright: Point { x: 10, y: 10 }
+        bottomright: Point { x: 10, y: 10 },
+        x: 222,
     };
-    ret rect.topleft.x;
+    let res = rect.topleft.x;
+    let height = rect.height();
+    ret rect.test(20);
 }

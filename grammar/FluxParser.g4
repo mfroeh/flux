@@ -63,6 +63,7 @@ expression:
 	'(' expression ')'									# ParenExpr
 	| literal											# LiteralExpr
 	| Identifier										# VarRef
+	| ('-' | '!' | '&' | '*') expression				# PrefixUnary
 	| expression '.' Identifier							# FieldRef
 	| expression '[' expression ']'						# ArrayRef
 	| Identifier '(' expressionList? ')'				# FunctionCall
@@ -71,7 +72,6 @@ expression:
 	| Identifier '{' (Identifier ':' expression) (
 		',' Identifier ':' expression
 	)* '}'															# StructLiteral
-	| ('-' | '!' | '&' | '*') expression							# PrefixUnary
 	| expression ('*' | '/' | '%') expression						# BinaryArithmetic
 	| expression ('+' | '-') expression								# BinaryArithmetic
 	| expression ('<' | '<=' | '==' | '!=' | '>' | '>=') expression	# BinaryComp

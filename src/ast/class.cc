@@ -16,7 +16,16 @@ ClassDefinition::ClassDefinition(Tokens tokens, string name,
                                  vector<FieldDeclaration> fields,
                                  vector<FunctionDefinition> methods)
     : Node(tokens), name(name), fields(fields), methods(std::move(methods)),
-      type(ClassType::get(name)) {}
+      type(ClassType::get(name)) {
+
+  for (auto &field : this->fields) {
+    field.classType = type;
+  }
+
+  for (auto &method : this->methods) {
+    method.classType = type;
+  }
+}
 
 any ClassDefinition::accept(AbstractAstVisitor &visitor) {
   return visitor.visit(*this);

@@ -24,9 +24,10 @@ any VariableResolver::visit(ClassDefinition &classDefinition) {
   for (auto &field : classDefinition.fields) {
     // we are in the class scope here
     auto symbol = currentScope->getVariableNonRecursive(field.name);
+    assert(symbol);
 
     string mangledName =
-        std::format("${}.{}", classDefinition.type->name, field.name);
+        std::format("#{}.${}", classDefinition.type->name, field.name);
 
     symbol->mangledName = mangledName;
     field.mangledName = mangledName;
@@ -37,14 +38,22 @@ any VariableResolver::visit(ClassDefinition &classDefinition) {
 
   for (auto &method : classDefinition.methods) {
     auto symbol = symTab.lookupFunction(method.mangledName);
+    assert(symbol);
+    string oldMangledName = symbol->mangledName;
 
+    // Make mangled name
     stringstream ss;
-    ss << "$" << classDefinition.type->name << "." << method.name << "#";
+    ss << "#" << classDefinition.type->name << ".$" << method.name << "?";
     for (auto &param : method.parameters)
       ss << *param.type << "?";
-
     symbol->mangledName = ss.str();
     method.mangledName = ss.str();
+
+    // Readd the new function with the correctly mangledName
+    symTab.removeFunction(oldMangledName);
+    symTab.insert(symbol);
+
+    cout << symTab << endl;
 
     classDefinition.type->addMethod(symbol);
   }
@@ -135,6 +144,8 @@ any VariableResolver::visit(FieldDeclaration &fieldDeclaration) {
     throw runtime_error("Field " + fieldDeclaration.name + " already declared");
 
   currentScope->addVariable(fieldDeclaration.name, fieldDeclaration.type);
+
+  // TODO: probably don't need this
   auto variable = currentScope->getVariable(fieldDeclaration.name);
   symTab.insert(variable);
 

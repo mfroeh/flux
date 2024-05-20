@@ -48,6 +48,7 @@ any TypeChecker::visit(FieldDeclaration &field) {
 // functions
 any TypeChecker::visit(FunctionDefinition &function) {
   auto symbol = symTab.lookupFunction(function.mangledName);
+  assert(symbol);
   functionSymbolStack.push(symbol);
   functionStack.push(&function);
 
@@ -132,6 +133,9 @@ any TypeChecker::visit(ExpressionStatement &exprStmt) {
 any TypeChecker::visit(VariableDeclaration &varDecl) {
   AstVisitor::visit(varDecl);
 
+  cout << "Checking variable declaration " << varDecl.mangledName << endl;
+  cout << "Current type is " << *varDecl.type << endl;
+
   if (varDecl.type->isVoid())
     throw runtime_error("Variable cannot have void type");
 
@@ -144,6 +148,9 @@ any TypeChecker::visit(VariableDeclaration &varDecl) {
     cout << varDecl.mangledName << endl;
     assert(symbol != nullptr);
     symbol->type = varDecl.type;
+
+    cout << "Inferred " << *varDecl.type << "for " << varDecl.mangledName
+         << endl;
   }
 
   // if it was inferred to be void
@@ -306,7 +313,7 @@ any TypeChecker::visit(FunctionCall &funcCall) {
     for (int i = 0; i < functionSymbol->parameters.size(); i++) {
       auto &param = functionSymbol->parameters[i];
       auto &arg = funcCall.args[i];
-      if (!arg->type->canImplicitlyConvertTo(param.type)) {
+      if (!arg->type->canImplicitlyConvertTo(param->type)) {
         match = false;
         break;
       }
@@ -341,8 +348,8 @@ any TypeChecker::visit(FunctionCall &funcCall) {
   for (int i = 0; i < funcCall.args.size(); i++) {
     auto &arg = funcCall.args[i];
     auto &param = symbol->parameters[i];
-    if (arg->type != param.type) {
-      funcCall.args[i] = make_shared<Cast>(arg, param.type);
+    if (arg->type != param->type) {
+      funcCall.args[i] = make_shared<Cast>(arg, param->type);
     }
   }
 
@@ -354,6 +361,10 @@ any TypeChecker::visit(FunctionCall &funcCall) {
 any TypeChecker::visit(MethodCall &methodCall) {
   AstVisitor::visit(methodCall);
 
+  // TODO: this is super ugly
+  cout << *methodCall.object->type << endl;
+  cout << *methodCall.object << endl;
+
   if (!methodCall.object->type->isClass())
     throw runtime_error("Method call must be applied to a class");
 
@@ -364,41 +375,48 @@ any TypeChecker::visit(MethodCall &methodCall) {
     throw runtime_error("Method " + methodCall.callee + " not found in class");
 
   // filter out candidates that don't match the number of arguments
+  vector<shared_ptr<FunctionSymbol>> newCandidates;
   ranges::copy_if(
-      candidates, back_inserter(candidates), [methodCall](auto &candidate) {
-        return methodCall.args.size() == candidate->parameters.size();
+      candidates, back_inserter(newCandidates), [methodCall](auto &candidate) {
+        return methodCall.args.size() == candidate->parameters.size() - 1;
       });
+  candidates = newCandidates;
   if (candidates.empty())
     throw runtime_error("No matching method found for call to " +
                         methodCall.callee);
 
   // filter out candidates that don't match the argument types
-  ranges::copy_if(candidates, back_inserter(candidates),
+  vector<shared_ptr<FunctionSymbol>> newCandidates2;
+  ranges::copy_if(candidates, back_inserter(newCandidates2),
                   [methodCall](const shared_ptr<FunctionSymbol> &candidate) {
                     for (int i = 0; i < methodCall.args.size(); i++) {
                       auto &arg = methodCall.args[i];
-                      auto &param = candidate->parameters[i];
-                      if (!arg->type->canImplicitlyConvertTo(param.type)) {
+                      auto &param = candidate->parameters[i + 1];
+                      if (!arg->type->canImplicitlyConvertTo(param->type)) {
                         return false;
                       }
                     }
                     return true;
                   });
-
+  candidates = newCandidates2;
   if (candidates.empty())
     throw runtime_error("No matching method found for call to " +
                         methodCall.callee);
 
-  if (candidates.size() > 1)
+  if (candidates.size() > 1) {
+    for (auto &candidate : candidates) {
+      cout << candidate->mangledName << endl;
+    }
     throw runtime_error("Ambiguous method call to " + methodCall.callee);
+  }
 
   // cast parameters to match the method signature
   auto symbol = candidates[0];
   for (int i = 0; i < methodCall.args.size(); i++) {
     auto &arg = methodCall.args[i];
-    auto &param = symbol->parameters[i];
-    if (arg->type != param.type) {
-      methodCall.args[i] = make_shared<Cast>(arg, param.type);
+    auto &param = symbol->parameters[i + 1];
+    if (arg->type != param->type) {
+      methodCall.args[i] = make_shared<Cast>(arg, param->type);
     }
   }
 

@@ -138,6 +138,7 @@ any AstVisitor::visit(FunctionCall &funcCall) {
 }
 
 any AstVisitor::visit(MethodCall &methodCall) {
+  methodCall.object->accept(*this);
   for (auto &arg : methodCall.args) {
     arg->accept(*this);
   }

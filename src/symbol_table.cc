@@ -55,6 +55,11 @@ shared_ptr<FunctionSymbol> SymbolTable::lookupFunction(string mangledName) {
   return nullptr;
 }
 
+void SymbolTable::removeFunction(string mangledName) {
+  assert(functions.contains(mangledName));
+  functions.erase(mangledName);
+}
+
 shared_ptr<ClassSymbol> SymbolTable::lookupClass(string name) {
   return classes.contains(name) ? classes[name] : nullptr;
 }

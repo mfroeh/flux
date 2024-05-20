@@ -31,6 +31,9 @@ struct FunctionDefinition : public Statement {
   // set during name resolution
   string mangledName;
 
+  // only set if function is method
+  shared_ptr<ClassType> classType;
+
   FunctionDefinition(Tokens tokens, string name, vector<Parameter> parameters,
                      shared_ptr<Type> returnType, Block body);
 

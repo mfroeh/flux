@@ -75,6 +75,8 @@ public:
   any visit(struct sugar::ForLoop &forStmt) override;
   any visit(struct sugar::InIntervalExpr &inIntervalExpr) override;
   any visit(struct sugar::CompoundAssignment &compoundAssignment) override;
+
+  any visit(struct FunctionDefinition &method) override;
 };
 
 class TypedDesugarer : public Desugarer {
@@ -82,7 +84,6 @@ public:
   TypedDesugarer(ModuleContext &context, SymbolTable &symTab)
       : Desugarer(context), symTab(symTab) {}
 
-  any visit(struct FunctionDefinition &function) override;
   any visit(struct MethodCall &methodCall) override;
 
 private:

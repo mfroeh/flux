@@ -27,9 +27,7 @@ struct VariableSymbol : public Symbol {
   llvm::AllocaInst *alloc = nullptr;
 
   VariableSymbol(string name, string mangledName, shared_ptr<Type> type,
-                 int depth, int count)
-      : Symbol(depth, count), name(std::move(name)),
-        mangledName(std::move(mangledName)), type(std::move(type)) {}
+                 int depth, int count);
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const VariableSymbol &symbol);
@@ -39,16 +37,13 @@ struct FunctionSymbol : public Symbol {
   string name;
   string mangledName;
   shared_ptr<struct Type> returnType;
-  vector<struct Parameter> &parameters;
+  vector<shared_ptr<struct Parameter>> parameters;
 
   // set during codegen
   llvm::Function *llvmFunction = nullptr;
 
   FunctionSymbol(string name, string mangledName, shared_ptr<Type> returnType,
-                 vector<struct Parameter> &parameters, int depth, int count)
-      : Symbol(depth, count), name(std::move(name)),
-        mangledName(std::move(mangledName)), returnType(std::move(returnType)),
-        parameters(parameters) {}
+                 const vector<Parameter> &parameters, int depth, int count);
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const FunctionSymbol &symbol);
@@ -61,6 +56,5 @@ struct ClassSymbol : public Symbol {
   // set during codegen
   llvm::StructType *llvmType = nullptr;
 
-  ClassSymbol(string name, shared_ptr<Type> type)
-      : Symbol(0, 0), name(name), type(std::move(type)) {}
+  ClassSymbol(string name, shared_ptr<Type> type);
 };

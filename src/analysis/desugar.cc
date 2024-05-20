@@ -6,6 +6,7 @@
 #include "ast/module.hh"
 #include "ast/stmt.hh"
 #include "ast/sugar.hh"
+#include "ast/type.hh"
 #include <any>
 #include <memory>
 
@@ -440,35 +441,28 @@ any NonTypedDesugarer::visit(sugar::CompoundAssignment &compoundAssignment) {
   return static_pointer_cast<Expr>(assignment);
 }
 
-// typed
-any TypedDesugarer::visit(FunctionDefinition &method) {
+any NonTypedDesugarer::visit(FunctionDefinition &method) {
   // first resolve all the other sugar
   Desugarer::visit(method);
 
-  bool isMethod = method.mangledName.starts_with("$");
-  if (!isMethod)
+  if (!method.classType)
     return {};
-
-  // a bit hacky but its fine
-  string className =
-      method.mangledName.substr(1, method.mangledName.find('.') - 1);
-  cout << className << endl;
-  cout << method.mangledName << endl;
-  exit(1);
 
   // then desugar itself
   // add `this`
-  auto symbol = symTab.lookupFunction(method.mangledName);
-  auto this_ = Parameter(method.tokens, "this",
-                         PointerType::get(ClassType::get(className)));
-  symbol->parameters.insert(symbol->parameters.begin(), this_);
+  auto this_ =
+      Parameter(method.tokens, "this", PointerType::get(method.classType));
+  method.parameters.insert(method.parameters.begin(), this_);
 
   return {};
 }
 
+// typed
 any TypedDesugarer::visit(MethodCall &methodCall) {
   // first resolve all the other sugar
   Desugarer::visit(methodCall);
+
+  cout << "Desugaring method call!" << endl;
 
   // then desugar itself
   // "$class.method_type_type_type..."

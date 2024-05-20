@@ -14,4 +14,13 @@ void IRVisitor::visit(ClassDefinition &classDef) {
   auto symbol = symTab.lookupClass(classDef.name);
   assert(symbol);
   symbol->llvmType = classType;
+
+  for (auto &method : classDef.methods) {
+    // TODO: remove only dbg
+    auto symbol = symTab.lookupFunction(method.mangledName);
+    assert(symbol->parameters.size() >= 1);
+    assert(symbol->parameters.size() == method.parameters.size());
+
+    method.codegen(*this);
+  }
 }
