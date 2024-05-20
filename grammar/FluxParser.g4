@@ -61,9 +61,9 @@ elseBlock: KwElse (block | '->' statement);
 
 expression:
 	'(' expression ')'									# ParenExpr
+	| ('-' | '!' | '&' | '*') expression				# PrefixUnary
 	| literal											# LiteralExpr
 	| Identifier										# VarRef
-	| ('-' | '!' | '&' | '*') expression				# PrefixUnary
 	| expression '.' Identifier							# FieldRef
 	| expression '[' expression ']'						# ArrayRef
 	| Identifier '(' expressionList? ')'				# FunctionCall
@@ -82,7 +82,7 @@ expression:
 	| expression '=' expression										# Assignment
 	| expression ('+' | '-' | '*' | '/' | '%') '=' expression		# CompoundAssignment;
 
-expressionList: expression (',' expression);
+expressionList: expression (',' expression)*;
 
 type: scalarType | pointerType | arrayType;
 

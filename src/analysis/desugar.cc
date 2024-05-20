@@ -477,6 +477,7 @@ any TypedDesugarer::visit(MethodCall &methodCall) {
   // a.b(c) -> b(a, c)
   auto call =
       make_shared<FunctionCall>(methodCall.tokens, methodCall.callee, newArgs);
+  call->type = methodCall.type;
   call->mangledName = mangledName;
   return static_pointer_cast<Expr>(call);
 }

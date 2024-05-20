@@ -22,7 +22,6 @@ void Scope::addVariable(string name, shared_ptr<Type> type) {
 
   auto mangledName = std::format("#d{}n{}c{}:{}", depth, count, counter, name);
   auto variable = VariableSymbol(name, mangledName, type, depth, count);
-  cout << "inserting " << variable << endl;
   variables.push_back(make_shared<VariableSymbol>(variable));
 }
 
@@ -39,7 +38,6 @@ void Scope::addFunction(string name, shared_ptr<Type> returnType,
 
   auto function =
       FunctionSymbol(name, mangledName, returnType, parameters, depth, count);
-  cout << "inserting " << function << endl;
   functions.push_back(make_shared<FunctionSymbol>(function));
 }
 

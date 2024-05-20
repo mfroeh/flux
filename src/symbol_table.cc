@@ -46,6 +46,7 @@ void SymbolTable::insert(shared_ptr<FunctionSymbol> function) {
 shared_ptr<FunctionSymbol> SymbolTable::lookupFunction(string mangledName) {
   if (!mangledName.starts_with("#") && mangledName != "main") {
     cout << *this << endl;
+    cout << "mangledName: " << mangledName << endl;
     assert(false && "mangledName must start with #");
   }
 

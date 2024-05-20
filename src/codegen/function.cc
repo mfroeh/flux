@@ -61,6 +61,7 @@ void IRVisitor::visit(FunctionDefinition &function) {
     outs() << *llvmFunction;
     throw runtime_error("Function verification failed");
   }
+
   cout << "Function verified: " << function.mangledName << endl;
   outs() << *llvmFunction;
 

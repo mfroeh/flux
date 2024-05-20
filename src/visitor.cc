@@ -48,7 +48,6 @@ any AstVisitor::visit(Parameter &parameter) { return {}; }
 // statements
 any AstVisitor::visit(Block &block) {
   for (auto &stmt : block.statements) {
-    cout << *stmt << endl;
     stmt->accept(*this);
   }
   return {};
@@ -153,8 +152,6 @@ any AstVisitor::visit(UnaryPrefixOp &unaryOp) {
 any AstVisitor::visit(BinaryArithmetic &binaryOp) {
   binaryOp.lhs->accept(*this);
   binaryOp.rhs->accept(*this);
-  cout << "visited binary arithmetic at " << binaryOp.tokens.getStart().line
-       << endl;
   return {};
 }
 

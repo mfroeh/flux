@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ast/class.hh"
 #include "scope.hh"
 #include "symbol_table.hh"
 #include "visitor.hh"

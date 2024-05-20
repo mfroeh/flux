@@ -53,8 +53,6 @@ any VariableResolver::visit(ClassDefinition &classDefinition) {
     symTab.removeFunction(oldMangledName);
     symTab.insert(symbol);
 
-    cout << symTab << endl;
-
     classDefinition.type->addMethod(symbol);
   }
 
@@ -108,9 +106,7 @@ any VariableResolver::visit(StandaloneBlock &block) {
   auto previousScope = currentScope;
   currentScope = make_shared<Scope>(previousScope);
 
-  cout << "Visiting standalone block" << endl;
   AstVisitor::visit(block);
-  cout << "Leaving standalone block" << endl;
 
   currentScope = previousScope;
   return {};
@@ -153,7 +149,6 @@ any VariableResolver::visit(FieldDeclaration &fieldDeclaration) {
 }
 
 any VariableResolver::visit(VarRef &var) {
-  cout << "Visiting " << var.name << " " << &var << endl;
   auto variable = currentScope->getVariable(var.name);
   if (!variable)
     throw runtime_error("Variable " + var.name + " not found");

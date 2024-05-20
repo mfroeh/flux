@@ -14,7 +14,6 @@ IRVisitor::IRVisitor(ModuleContext &context, SymbolTable &symTab,
       llvmModule(codegenContext.module) {}
 
 shared_ptr<llvm::Module> IRVisitor::visit(::Module &module) {
-  cout << "codegen module" << endl;
   for (auto &classDef : module.classes) {
     classDef.codegen(*this);
   }

@@ -102,8 +102,6 @@ Value *IRVisitor::visit(Pointer &pointer) {
 Value *IRVisitor::visit(Dereference &dereference) {
   // force to return address
   assert(dereference.pointer->type->isPointer());
-  cout << dereference.isLhs() << endl;
-  cout << dereference.pointer->isLhs() << endl;
 
   auto ptr = dereference.pointer->codegen(*this);
   auto derefType = dereference.type->codegen(*this);
@@ -158,6 +156,8 @@ Value *IRVisitor::visit(BinaryArithmetic &operation) {
   auto rhs = operation.rhs->codegen(*this);
 
   auto operandType = operation.lhs->type;
+  cout << "Binary arithmetic: " << *operation.lhs->type << " "
+       << *operation.rhs->type << endl;
   switch (operation.op) {
   case BinaryArithmetic::Operator::Add:
     return operandType->isInt() ? builder->CreateAdd(lhs, rhs)

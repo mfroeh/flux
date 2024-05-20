@@ -21,6 +21,8 @@ stack<FunctionDefinition *> functionStack;
 
 // classes
 any TypeChecker::visit(ClassDefinition &classDef) {
+  AstVisitor::visit(classDef);
+
   auto symbol = symTab.lookupClass(classDef.name);
   assert(symbol);
 
@@ -33,10 +35,6 @@ any TypeChecker::visit(ClassDefinition &classDef) {
         throw runtime_error(
             "Array element type cannot be the same as the class type");
     }
-  }
-
-  for (auto &method : classDef.methods) {
-    method.accept(*this);
   }
   return {};
 }
@@ -133,9 +131,6 @@ any TypeChecker::visit(ExpressionStatement &exprStmt) {
 any TypeChecker::visit(VariableDeclaration &varDecl) {
   AstVisitor::visit(varDecl);
 
-  cout << "Checking variable declaration " << varDecl.mangledName << endl;
-  cout << "Current type is " << *varDecl.type << endl;
-
   if (varDecl.type->isVoid())
     throw runtime_error("Variable cannot have void type");
 
@@ -145,12 +140,8 @@ any TypeChecker::visit(VariableDeclaration &varDecl) {
   if (varDecl.type->isInfer()) {
     varDecl.type = varDecl.initializer->type;
     auto symbol = symTab.lookupVariable(varDecl.mangledName);
-    cout << varDecl.mangledName << endl;
     assert(symbol != nullptr);
     symbol->type = varDecl.type;
-
-    cout << "Inferred " << *varDecl.type << "for " << varDecl.mangledName
-         << endl;
   }
 
   // if it was inferred to be void
@@ -169,8 +160,6 @@ any TypeChecker::visit(VariableDeclaration &varDecl) {
   if (!varDecl.initializer->type->canImplicitlyConvertTo(varDecl.type)) {
     throw runtime_error("Can not implicitly convert initializer to variable");
   } else if (varDecl.initializer->type != varDecl.type) {
-    cout << "Casting:" << *varDecl.initializer->type << " -> " << *varDecl.type
-         << endl;
     varDecl.initializer = make_shared<Cast>(varDecl.initializer, varDecl.type);
   }
 
@@ -288,7 +277,6 @@ any TypeChecker::visit(ArrayRef &arr) {
   }
 
   if (!arr.arrayExpr->type->isArray()) {
-    cout << *arr.arrayExpr->type << endl;
     throw runtime_error("Array reference must be an array");
   }
 
@@ -362,8 +350,8 @@ any TypeChecker::visit(MethodCall &methodCall) {
   AstVisitor::visit(methodCall);
 
   // TODO: this is super ugly
+  cout << "Resolving method call " << methodCall << endl;
   cout << *methodCall.object->type << endl;
-  cout << *methodCall.object << endl;
 
   if (!methodCall.object->type->isClass())
     throw runtime_error("Method call must be applied to a class");
@@ -404,9 +392,6 @@ any TypeChecker::visit(MethodCall &methodCall) {
                         methodCall.callee);
 
   if (candidates.size() > 1) {
-    for (auto &candidate : candidates) {
-      cout << candidate->mangledName << endl;
-    }
     throw runtime_error("Ambiguous method call to " + methodCall.callee);
   }
 
@@ -419,6 +404,9 @@ any TypeChecker::visit(MethodCall &methodCall) {
       methodCall.args[i] = make_shared<Cast>(arg, param->type);
     }
   }
+
+  cout << "Resolved method call " << methodCall << endl;
+  cout << *symbol->returnType << endl;
 
   methodCall.type = symbol->returnType;
   methodCall.mangledName = symbol->mangledName;
@@ -451,6 +439,9 @@ any TypeChecker::visit(UnaryPrefixOp &unaryOp) {
 any TypeChecker::visit(BinaryArithmetic &binaryOp) {
   AstVisitor::visit(binaryOp);
 
+  cout << "Binary arithmetic" << *binaryOp.lhs << endl;
+  cout << "Binary arithmetic" << *binaryOp.rhs << endl;
+
   if (!binaryOp.lhs->type->isNumber() || !binaryOp.rhs->type->isNumber()) {
     throw runtime_error(
         "Binary arithmetic operator must be applied to numbers");
@@ -469,6 +460,10 @@ any TypeChecker::visit(BinaryArithmetic &binaryOp) {
   }
 
   binaryOp.type = binaryOp.lhs->type;
+
+  cout << "Binary arithmetic: " << *binaryOp.lhs->type << " "
+       << *binaryOp.rhs->type << endl;
+  cout << *binaryOp.lhs << endl;
 
   return {};
 }

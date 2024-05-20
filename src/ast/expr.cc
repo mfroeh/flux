@@ -223,7 +223,6 @@ shared_ptr<Expr> Dereference::deepcopy() const {
 }
 
 void Dereference::setLhs(bool isLhs) {
-  cout << "dereference setLhs with " << isLhs << endl;
   this->isLhs_ = isLhs;
   pointer->setLhs(isLhs);
 }
