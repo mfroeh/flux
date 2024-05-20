@@ -9,7 +9,7 @@ swapptr(a: i64**, b: i64**): void {
 }
 
 setarr(ptr: i64[200]*, val: i64): i64 {
-    (*ptr)[0] = val;
+    *ptr[0] = val;
     ret 1;
 }
 
@@ -35,8 +35,8 @@ main() : i64 {
     let i: i64;
     let a: i64[200];
     let size = 200;
-    for (let i = 0; i in [0, size); i += 1;) -> set(&a[i], &i);
-    // for (let i = 0; i in [0, size); i += 1;) -> a[i] *= i;
+    for (let i = 0; i in [0, size); i += 1;) -> set(&(a[i]), &i);
+    for (let i = 0; i in [0, size); i += 1;) -> a[i] *= i;
 
     let b = &a;
     let b: i64[200]* = &a;

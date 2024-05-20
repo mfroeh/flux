@@ -5,10 +5,10 @@ add(lhs: i64, rhs: i64): i64 {
 }
 
 main(): i64 {
-    let classA: MyClass = MyClass(a : 1);
-    let classB = MyClass(a : 2);
+    let classA: MyClass = MyClass { a : 1};
+    let classB = MyClass { a: 2 };
     let resA: i64 = add(classA.a, classB.a);
     let resB = add(classA.a, add(resA, classB.a));
 
-    ret 0;
+    ret resB;
 }

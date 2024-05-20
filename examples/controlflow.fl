@@ -10,14 +10,14 @@ main(): i64 {
     } elif (b) {
         ret 2;
     } else {
-        ret 3;
+        ret 37;
     }
 
     // single-statement if-elif-else (note the difference in the arrow syntax: -> instead of =>)
     // -> indicates that a statement follows, => demands that an expression follows
     if (a) -> ret 1;
     elif (b) -> ret 2;
-    else -> ret 3;
+    else -> ret 37;
 
     // combined (ugly but up to you)
     if (a) {

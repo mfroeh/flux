@@ -357,7 +357,13 @@ any NonTypedDesugarer::visit(sugar::ElifStatement &elifStmt) {
 
 any NonTypedDesugarer::visit(sugar::IfElifElseStatement &elifElseStmt) {
   // first resolve all the other sugar
-  Desugarer::visit(elifElseStmt);
+  any res = elifElseStmt.thenBlock.accept(*this);
+  if (res.has_value())
+    elifElseStmt.thenBlock = any_cast<Block>(res);
+
+  res = elifElseStmt.elseBlock.accept(*this);
+  if (res.has_value())
+    elifElseStmt.elseBlock = any_cast<Block>(res);
 
   // then desugar itself
   auto toplevel =
