@@ -52,6 +52,20 @@ Value *IRVisitor::visit(ArrayLiteral &literal) {
   return builder->CreateLoad(arrType, alloca, "arrayLiteral");
 }
 
+Value *IRVisitor::visit(StructLiteral &literal) {
+  auto structType = literal.type->codegen(*this);
+  auto alloca = builder->CreateAlloca(structType, nullptr, "structLiteral");
+
+  auto classType = static_pointer_cast<ClassType>(literal.type);
+  for (auto &[name, value] : literal.fields) {
+    auto fieldPtr = classType->getFieldPtr(alloca, name, *this);
+    auto fieldValue = value->codegen(*this);
+    builder->CreateStore(fieldValue, fieldPtr);
+  }
+
+  return builder->CreateLoad(structType, alloca, "structLiteral");
+}
+
 Value *IRVisitor::visit(VarRef &variable) {
   auto symbol = symTab.lookupVariable(variable.mangledName);
   assert(symbol);

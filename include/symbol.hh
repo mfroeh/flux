@@ -1,5 +1,6 @@
 #pragma once
 
+#include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Instructions.h>
 #include <memory>
 #include <ostream>
@@ -51,4 +52,15 @@ struct FunctionSymbol : public Symbol {
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const FunctionSymbol &symbol);
+};
+
+struct ClassSymbol : public Symbol {
+  string name;
+  shared_ptr<Type> type;
+
+  // set during codegen
+  llvm::StructType *llvmType = nullptr;
+
+  ClassSymbol(string name, shared_ptr<Type> type)
+      : Symbol(0, 0), name(name), type(std::move(type)) {}
 };

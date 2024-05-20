@@ -49,6 +49,10 @@ any VariableResolver::visit(ClassDefinition &classDefinition) {
     classDefinition.type->addMethod(symbol);
   }
 
+  auto symbol = make_shared<ClassSymbol>(classDefinition.type->name,
+                                         classDefinition.type);
+  symTab.insert(symbol);
+
   currentScope = previousScope;
   return {};
 }

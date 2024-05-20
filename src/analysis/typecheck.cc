@@ -6,6 +6,7 @@
 #include "ast/sugar.hh"
 #include "ast/type.hh"
 #include "symbol.hh"
+#include "symbol_table.hh"
 #include "visitor.hh"
 #include <iterator>
 #include <memory>
@@ -20,7 +21,24 @@ stack<FunctionDefinition *> functionStack;
 
 // classes
 any TypeChecker::visit(ClassDefinition &classDef) {
-  return AstVisitor::visit(classDef);
+  auto symbol = symTab.lookupClass(classDef.name);
+  assert(symbol);
+
+  for (auto &field : classDef.fields) {
+    if (field.type == classDef.type) {
+      throw runtime_error("Field type cannot be the same as the class type");
+    } else if (field.type->isArray()) {
+      auto arrType = static_pointer_cast<ArrayType>(field.type);
+      if (arrType->elementType == classDef.type)
+        throw runtime_error(
+            "Array element type cannot be the same as the class type");
+    }
+  }
+
+  for (auto &method : classDef.methods) {
+    method.accept(*this);
+  }
+  return {};
 }
 
 any TypeChecker::visit(FieldDeclaration &field) {
@@ -136,8 +154,8 @@ any TypeChecker::visit(VariableDeclaration &varDecl) {
     throw runtime_error("Variable must be initialized");
   }
 
-  // if there is no initializer, and we can default initialize, no need to check
-  // the type
+  // if there is no initializer, and we can default initialize, no need to
+  // check the type
   if (varDecl.initializer == nullptr)
     return {};
 
@@ -201,6 +219,32 @@ any TypeChecker::visit(ArrayLiteral &arrLiteral) {
   }
 
   arrLiteral.type = ArrayType::get(elemType, arrLiteral.values.size());
+
+  return {};
+}
+
+any TypeChecker::visit(StructLiteral &structLit) {
+  AstVisitor::visit(structLit);
+
+  auto classSymbol = symTab.lookupClass(structLit.name);
+  if (!classSymbol)
+    throw runtime_error("Class " + structLit.name + " not found");
+
+  auto classType = static_pointer_cast<ClassType>(structLit.type);
+  if (classType->fieldCount() != structLit.fields.size())
+    throw runtime_error("Struct initializer field count does not match class");
+
+  for (auto &[fieldName, value] : structLit.fields) {
+    auto fieldType = classType->getFieldType(fieldName);
+    if (!fieldType)
+      throw runtime_error("Field " + fieldName + " not found in class");
+
+    if (!value->type->canImplicitlyConvertTo(fieldType)) {
+      throw runtime_error("Struct initializer value does not match field type");
+    } else if (value->type != fieldType) {
+      value = make_shared<Cast>(value, fieldType);
+    }
+  }
 
   return {};
 }

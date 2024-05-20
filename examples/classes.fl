@@ -1,10 +1,12 @@
 class Point { x: i64; y: i64; }
 
-/* 
 class Rectangle {
     topleft: Point;
     bottomright: Point;
+}
 
+
+/*
     height() : i64 {
         ret bottomright.y - topleft.y;
     }
@@ -17,10 +19,15 @@ class Rectangle {
         ret p.x >= topleft.x && p.x <= bottomright.x &&
             p.y >= topleft.y && p.y <= bottomright.y;
     }
-} 
-*/
+}  */
+
+something(): void { ret; }
 
 main(): i64 {
-    let p: Point;
-    ret 10;
+    let p = Point { x: 11, y: 2};
+    let rect: Rectangle = Rectangle {
+        topleft: p,
+        bottomright: Point { x: 10, y: 10 }
+    };
+    ret rect.topleft.x;
 }

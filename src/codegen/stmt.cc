@@ -27,10 +27,12 @@ void IRVisitor::visit(VariableDeclaration &stmt) {
   auto alloca = builder->CreateAlloca(llvmType, nullptr, stmt.name);
   symbol->alloc = alloca;
 
-  auto value = stmt.initializer ? stmt.initializer->codegen(*this)
-                                : stmt.type->getDefaultValue(*this);
-
-  builder->CreateStore(value, alloca);
+  if (!stmt.initializer) {
+    symbol->type->defaultInitialize(alloca, *this);
+  } else {
+    auto value = stmt.initializer->codegen(*this);
+    builder->CreateStore(value, alloca);
+  }
 }
 
 void IRVisitor::visit(Return &stmt) {

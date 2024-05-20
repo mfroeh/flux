@@ -119,6 +119,35 @@ shared_ptr<Expr> ArrayLiteral::deepcopy() const {
   return copy;
 }
 
+StructLiteral::StructLiteral(Tokens tokens, string name,
+                             vector<string> fieldNames,
+                             vector<shared_ptr<Expr>> values)
+    : Expr(std::move(tokens), ClassType::get(name)), name(std::move(name)) {
+  for (int i = 0; i < fieldNames.size(); i++) {
+    fields.push_back({std::move(fieldNames[i]), std::move(values[i])});
+  }
+}
+
+any StructLiteral::accept(AbstractAstVisitor &visitor) {
+  return visitor.visit(*this);
+}
+
+llvm::Value *StructLiteral::codegen(IRVisitor &visitor) {
+  return visitor.visit(*this);
+}
+
+shared_ptr<Expr> StructLiteral::deepcopy() const {
+  vector<string> fieldNames;
+  vector<shared_ptr<Expr>> newValues;
+  for (auto &[name, value] : fields) {
+    fieldNames.push_back(name);
+    newValues.push_back(value->deepcopy());
+  }
+  auto copy = make_shared<StructLiteral>(tokens, name, fieldNames, newValues);
+  copy->type = type;
+  return copy;
+}
+
 VarRef::VarRef(Tokens tokens, string name)
     : LValueExpr(std::move(tokens), InferType::get()), name(name) {}
 

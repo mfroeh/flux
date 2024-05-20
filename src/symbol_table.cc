@@ -55,6 +55,15 @@ shared_ptr<FunctionSymbol> SymbolTable::lookupFunction(string mangledName) {
   return nullptr;
 }
 
+shared_ptr<ClassSymbol> SymbolTable::lookupClass(string name) {
+  return classes.contains(name) ? classes[name] : nullptr;
+}
+
+void SymbolTable::insert(shared_ptr<ClassSymbol> classSymbol) {
+  assert(!classes.contains(classSymbol->name));
+  classes[classSymbol->name] = classSymbol;
+}
+
 vector<shared_ptr<FunctionSymbol>> SymbolTable::getFunctions(string name) {
   vector<shared_ptr<FunctionSymbol>> result;
   for (auto &[mangledName, function] : functions) {

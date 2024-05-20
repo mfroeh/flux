@@ -60,14 +60,17 @@ elseIfStatement:
 elseBlock: KwElse (block | '->' statement);
 
 expression:
-	'(' expression ')'												# ParenExpr
-	| literal														# LiteralExpr
-	| Identifier													# VarRef
-	| expression '.' Identifier										# FieldRef
-	| expression '[' expression ']'									# ArrayRef
-	| Identifier '(' expressionList? ')'							# FunctionCall
-	| expression '.' Identifier '(' expressionList? ')'				# MethodCall
-	| '[' expressionList ']'										# ArrayLiteral
+	'(' expression ')'									# ParenExpr
+	| literal											# LiteralExpr
+	| Identifier										# VarRef
+	| expression '.' Identifier							# FieldRef
+	| expression '[' expression ']'						# ArrayRef
+	| Identifier '(' expressionList? ')'				# FunctionCall
+	| expression '.' Identifier '(' expressionList? ')'	# MethodCall
+	| '[' expressionList ']'							# ArrayLiteral
+	| Identifier '{' (Identifier ':' expression) (
+		',' Identifier ':' expression
+	)* '}'															# StructLiteral
 	| ('-' | '!' | '&' | '*') expression							# PrefixUnary
 	| expression ('*' | '/' | '%') expression						# BinaryArithmetic
 	| expression ('+' | '-') expression								# BinaryArithmetic

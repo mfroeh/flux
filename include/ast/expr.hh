@@ -88,10 +88,27 @@ struct StringLiteral : public Expr {
 struct ArrayLiteral : public Expr {
   vector<shared_ptr<Expr>> values;
 
+  // todo: not sure about this
   // set after allocation during codegen
   llvm::AllocaInst *alloca;
 
   ArrayLiteral(Tokens tokens, vector<shared_ptr<Expr>> values);
+
+  virtual any accept(class AbstractAstVisitor &visitor) override;
+  llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
+};
+
+struct StructLiteral : public Expr {
+  string name;
+  vector<std::pair<string, shared_ptr<Expr>>> fields;
+
+  // todo: not sure about this
+  // set after allocation during codegen
+  llvm::AllocaInst *alloca;
+
+  StructLiteral(Tokens tokens, string name, vector<string> fieldNames,
+                vector<shared_ptr<Expr>> values);
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;

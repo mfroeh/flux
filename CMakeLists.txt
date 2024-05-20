@@ -57,12 +57,15 @@ set(ast
     src/ast/module.cc
     src/ast/stmt.cc
     src/ast/sugar.cc
-    src/ast/type.cc
-    )
+    src/ast/types/type.cc
+    src/ast/types/array.cc
+    src/ast/types/class.cc)
 
-set(analysis src/analysis/desugar.cc src/analysis/scope.cc src/analysis/variable_resolver.cc src/analysis/typecheck.cc)
+set(analysis src/analysis/desugar.cc src/analysis/scope.cc
+             src/analysis/variable_resolver.cc src/analysis/typecheck.cc)
 
-set(codegen src/codegen/context.cc src/codegen/class.cc src/codegen/expr.cc src/codegen/function.cc src/codegen/module.cc src/codegen/stmt.cc)
+set(codegen src/codegen/context.cc src/codegen/class.cc src/codegen/expr.cc
+            src/codegen/function.cc src/codegen/module.cc src/codegen/stmt.cc)
 
 set(toplevel "")
 

@@ -43,6 +43,8 @@ public:
   virtual any visit(struct BoolLiteral &boolLit) = 0;
   virtual any visit(struct StringLiteral &stringLit) = 0;
   virtual any visit(struct ArrayLiteral &arrInit) = 0;
+  virtual any visit(struct StructLiteral &structLit) = 0;
+
   virtual any visit(struct VarRef &var) = 0;
   virtual any visit(struct FieldRef &fieldRef) = 0;
   virtual any visit(struct ArrayRef &arr) = 0;
@@ -100,6 +102,8 @@ public:
   any visit(struct BoolLiteral &boolLit) override;
   any visit(struct StringLiteral &stringLit) override;
   any visit(struct ArrayLiteral &arrInit) override;
+  any visit(struct StructLiteral &structLit) override;
+
   any visit(struct VarRef &var) override;
   any visit(struct FieldRef &fieldRef) override;
   any visit(struct ArrayRef &arr) override;

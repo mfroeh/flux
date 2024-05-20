@@ -16,6 +16,9 @@ public:
   void insert(shared_ptr<FunctionSymbol> function);
   shared_ptr<FunctionSymbol> lookupFunction(string mangledName);
 
+  void insert(shared_ptr<ClassSymbol> classSymbol);
+  shared_ptr<ClassSymbol> lookupClass(string name);
+
   vector<shared_ptr<FunctionSymbol>> getFunctions(string name);
 
   // when replacing method calls with function calls
@@ -28,4 +31,6 @@ protected:
   unordered_map<string, shared_ptr<VariableSymbol>> variables;
   // mangledName, symbol
   unordered_map<string, shared_ptr<FunctionSymbol>> functions;
+  // name, class
+  unordered_map<string, shared_ptr<ClassSymbol>> classes;
 };

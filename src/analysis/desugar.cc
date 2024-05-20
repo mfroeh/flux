@@ -151,6 +151,15 @@ any Desugarer::visit(ArrayLiteral &arrInit) {
   return {};
 }
 
+any Desugarer::visit(StructLiteral &structLit) {
+  for (auto &[name, value] : structLit.fields) {
+    any res = value->accept(*this);
+    if (res.has_value())
+      value = any_cast<shared_ptr<Expr>>(res);
+  }
+  return {};
+}
+
 any Desugarer::visit(VarRef &var) { return {}; }
 
 any Desugarer::visit(FieldRef &fieldRef) {
@@ -443,6 +452,9 @@ any TypedDesugarer::visit(FunctionDefinition &method) {
   // a bit hacky but its fine
   string className =
       method.mangledName.substr(1, method.mangledName.find('.') - 1);
+  cout << className << endl;
+  cout << method.mangledName << endl;
+  exit(1);
 
   // then desugar itself
   // add `this`

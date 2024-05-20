@@ -4,6 +4,7 @@
 #include "symbol_table.hh"
 #include <boost/functional/hash.hpp>
 #include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Instructions.h>
 #include <llvm/IR/Type.h>
 #include <ostream>
 
@@ -55,7 +56,9 @@ struct Type {
                               class IRVisitor &visitor) = 0;
 
   virtual bool canDefaultInitialize() const = 0;
-  virtual llvm::Value *getDefaultValue(class IRVisitor &visitor) = 0;
+
+  virtual llvm::Value *defaultInitialize(llvm::Value *alloca,
+                                         class IRVisitor &visitor) = 0;
 };
 
 std::ostream &operator<<(std::ostream &os, const Type &type);
@@ -68,7 +71,9 @@ struct VoidType : public Type {
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
   virtual bool canDefaultInitialize() const override;
-  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
+
+  llvm::Value *defaultInitialize(llvm::Value *alloca,
+                                 class IRVisitor &visitor) override;
 
 private:
   VoidType();
@@ -82,7 +87,9 @@ struct InferType : public Type {
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
   virtual bool canDefaultInitialize() const override;
-  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
+
+  llvm::Value *defaultInitialize(llvm::Value *alloca,
+                                 class IRVisitor &visitor) override;
 
 private:
   InferType();
@@ -98,7 +105,8 @@ struct PointerType : public Type {
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
   virtual bool canDefaultInitialize() const override;
-  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
+  llvm::Value *defaultInitialize(llvm::Value *alloca,
+                                 class IRVisitor &visitor) override;
 
 private:
   PointerType(shared_ptr<Type> pointee);
@@ -116,7 +124,8 @@ struct ArrayType : public Type {
                               class IRVisitor &visitor) override;
   virtual bool canDefaultInitialize() const override;
 
-  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
+  llvm::Value *defaultInitialize(llvm::Value *alloca,
+                                 class IRVisitor &visitor) override;
 
 private:
   ArrayType(shared_ptr<Type> elementType, long size);
@@ -130,7 +139,9 @@ struct IntType : public Type {
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
   virtual bool canDefaultInitialize() const override;
-  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
+
+  llvm::Value *defaultInitialize(llvm::Value *alloca,
+                                 class IRVisitor &visitor) override;
 
 private:
   IntType();
@@ -144,7 +155,9 @@ struct FloatType : public Type {
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
   virtual bool canDefaultInitialize() const override;
-  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
+
+  llvm::Value *defaultInitialize(llvm::Value *alloca,
+                                 class IRVisitor &visitor) override;
 
 private:
   FloatType();
@@ -158,7 +171,8 @@ struct BoolType : public Type {
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
   virtual bool canDefaultInitialize() const override;
-  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
+  llvm::Value *defaultInitialize(llvm::Value *alloca,
+                                 class IRVisitor &visitor) override;
 
 private:
   BoolType();
@@ -173,7 +187,9 @@ struct StringType : public Type {
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
   virtual bool canDefaultInitialize() const override;
-  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
+
+  llvm::Value *defaultInitialize(llvm::Value *alloca,
+                                 class IRVisitor &visitor) override;
 
 private:
   StringType();
@@ -189,12 +205,14 @@ struct ClassType : public Type {
 
   virtual llvm::Value *castTo(llvm::Value *value, shared_ptr<Type> to,
                               class IRVisitor &visitor) override;
+
   virtual bool canDefaultInitialize() const override;
-  llvm::Value *getDefaultValue(class IRVisitor &visitor) override;
+  llvm::Value *defaultInitialize(llvm::Value *alloca,
+                                 class IRVisitor &visitor) override;
 
   llvm::Value *getFieldPtr(llvm::Value *object, string name,
                            class IRVisitor &visitor);
-  llvm::Value *getFieldValue(llvm::Value *object, string name,
+  llvm::Value *getFieldValue(llvm::Value *alloca, string name,
                              class IRVisitor &visitor);
 
   void addField(shared_ptr<VariableSymbol> field);
@@ -204,9 +222,12 @@ struct ClassType : public Type {
   void addMethod(shared_ptr<FunctionSymbol> method);
   vector<shared_ptr<FunctionSymbol>> getMethods(string name);
 
+  size_t fieldCount() const { return fields.size(); }
+
 private:
   ClassType(string name);
 
-  vector<shared_ptr<VariableSymbol>> fields;
+  unordered_map<string, shared_ptr<VariableSymbol>> fields;
+  unordered_map<string, int> fieldIndexMap;
   vector<shared_ptr<FunctionSymbol>> methods;
 };

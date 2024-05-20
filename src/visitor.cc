@@ -110,6 +110,13 @@ any AstVisitor::visit(ArrayLiteral &arrInit) {
   return {};
 }
 
+any AstVisitor::visit(StructLiteral &structLit) {
+  for (auto &[name, value] : structLit.fields) {
+    value->accept(*this);
+  }
+  return {};
+}
+
 any AstVisitor::visit(VarRef &var) { return {}; }
 
 any AstVisitor::visit(FieldRef &fieldRef) {

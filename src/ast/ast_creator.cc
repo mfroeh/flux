@@ -263,6 +263,8 @@ shared_ptr<Expr> AstCreator::visitExpression(FP::ExpressionContext *ctx) {
     return visitAssignment(expr);
   else if (auto arrayInit = dynamic_cast<FP::ArrayLiteralContext *>(ctx))
     return visitArrayLiteral(arrayInit);
+  else if (auto structLit = dynamic_cast<FP::StructLiteralContext *>(ctx))
+    return visitStructLiteral(structLit);
   else
     throw runtime_error("Unknown expression type");
 }
@@ -447,6 +449,25 @@ shared_ptr<Expr> AstCreator::visitLiteral(FP::LiteralContext *ctx) {
 shared_ptr<Expr> AstCreator::visitArrayLiteral(FP::ArrayLiteralContext *ctx) {
   return make_shared<ArrayLiteral>(Tokens(ctx),
                                    visitExpressionList(ctx->expressionList()));
+}
+
+shared_ptr<Expr> AstCreator::visitStructLiteral(FP::StructLiteralContext *ctx) {
+  string type = ctx->Identifier(0)->getText();
+
+  vector<string> names;
+  ranges::copy(ctx->Identifier() |
+                   views::transform([](auto &id) { return id->getText(); }),
+               back_inserter(names));
+  // remove type
+  names.erase(names.begin());
+
+  vector<shared_ptr<Expr>> values;
+  ranges::copy(ctx->expression() | views::transform([this](auto &expr) {
+                 return visitExpression(expr);
+               }),
+               back_inserter(values));
+
+  return make_shared<StructLiteral>(Tokens(ctx), type, names, values);
 }
 
 // misc

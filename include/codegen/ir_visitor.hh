@@ -43,6 +43,7 @@ public:
   llvm::Value *visit(struct BoolLiteral &literal);
   llvm::Value *visit(struct StringLiteral &literal);
   llvm::Value *visit(struct ArrayLiteral &literal);
+  llvm::Value *visit(struct StructLiteral &structLit);
 
   llvm::Value *visit(struct VarRef &var);
   llvm::Value *visit(struct FieldRef &field);

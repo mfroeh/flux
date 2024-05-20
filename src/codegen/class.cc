@@ -11,4 +11,7 @@ void IRVisitor::visit(ClassDefinition &classDef) {
     fieldTypes.push_back(field.type->codegen(*this));
   }
   auto classType = StructType::create(*llvmContext, fieldTypes, classDef.name);
+  auto symbol = symTab.lookupClass(classDef.name);
+  assert(symbol);
+  symbol->llvmType = classType;
 }
