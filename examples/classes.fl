@@ -18,13 +18,11 @@ class Rectangle {
 
     area() => *this.height() * *this.width();
 
-    contains(p: Point): bool {
-        ret p.x >= *this.topleft.x && p.x <= *this.bottomright.x &&
-            p.y >= *this.topleft.y && p.y <= *this.bottomright.y;
+    contains(p: Point*): bool {
+        ret *p.x >= *this.topleft.x && *p.x <= *this.bottomright.x &&
+            *p.y >= *this.topleft.y && *p.y <= *this.bottomright.y;
     }
 }
-
-something(): void { ret; }
 
 main(): i64 {
     let rect: Rectangle = Rectangle {
@@ -35,6 +33,14 @@ main(): i64 {
     let width = rect.width();
     let area = rect.area();
     let p: Point = Point { x: 0, y: 0 };
-    let contains = rect.contains(Point { x: 0, y: 0 });
-    ret height * width == area ? 37 : 73;
+    let contains = rect.contains(&p);
+
+    let pointDist = rect.topleft.distance(rect.bottomright);
+
+    let arr: i64[5] = [55, 55];
+    let ptrs = [&(rect.topleft), &(rect.bottomright)];
+    /* ret *(ptrs[1]).x; */
+    let ptrs: Rectangle*[1] = [&rect];
+    ret *(ptrs[0]).height();
+    /* ret height * width == area ? 37 : 73; */
 }
