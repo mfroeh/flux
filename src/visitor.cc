@@ -226,3 +226,9 @@ any AstVisitor::visit(sugar::CompoundAssignment &compoundAssignment) {
   compoundAssignment.target->accept(*this);
   return {};
 }
+
+any AstVisitor::visit(Halloc &halloc) {
+  if (halloc.init)
+    halloc.init->accept(*this);
+  return {};
+}

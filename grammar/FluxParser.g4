@@ -80,7 +80,8 @@ expression:
 	| expression '?' expression ':' expression						# Ternary
 	| expression KwIn interval										# InInterval
 	| expression '=' expression										# Assignment
-	| expression ('+' | '-' | '*' | '/' | '%') '=' expression		# CompoundAssignment;
+	| expression ('+' | '-' | '*' | '/' | '%') '=' expression		# CompoundAssignment
+	| KwHalloc type '(' expression? ')'								# Malloc;
 
 expressionList: expression (',' expression)*;
 

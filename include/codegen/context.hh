@@ -14,6 +14,7 @@ struct CodegenContext {
   shared_ptr<llvm::LLVMContext> context;
   shared_ptr<llvm::Module> module;
   shared_ptr<llvm::IRBuilder<>> builder;
+  shared_ptr<llvm::DataLayout> dataLayout;
 
   shared_ptr<llvm::TargetMachine> targetMachine;
 };

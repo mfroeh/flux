@@ -288,3 +288,14 @@ struct VoidExpr : public Expr {
   llvm::Value *codegen(IRVisitor &visitor) override;
   shared_ptr<Expr> deepcopy() const override;
 };
+
+struct Halloc : public Expr {
+  shared_ptr<Expr> init;
+  shared_ptr<Type> pointeeType;
+
+  Halloc(Tokens tokens, shared_ptr<Type> type, shared_ptr<Expr> init);
+
+  virtual any accept(class AbstractAstVisitor &visitor) override;
+  llvm::Value *codegen(IRVisitor &visitor) override;
+  shared_ptr<Expr> deepcopy() const override;
+};

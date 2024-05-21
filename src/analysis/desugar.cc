@@ -276,6 +276,16 @@ any Desugarer::visit(Dereference &dereference) {
   return {};
 }
 
+any Desugarer::visit(Halloc &halloc) {
+  if (!halloc.init)
+    return {};
+
+  any res = halloc.init->accept(*this);
+  if (res.has_value())
+    halloc.init = any_cast<shared_ptr<Expr>>(res);
+  return {};
+}
+
 // sugar
 any Desugarer::visit(sugar::ElifStatement &elifStmt) {
   any res = elifStmt.condition->accept(*this);

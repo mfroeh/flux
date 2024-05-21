@@ -590,3 +590,22 @@ any TypeChecker::visit(Dereference &dereference) {
 
   return {};
 }
+
+any TypeChecker::visit(Halloc &halloc) {
+  AstVisitor::visit(halloc);
+
+  if (!halloc.init) {
+    if (!halloc.pointeeType->canDefaultInitialize())
+      throw runtime_error("Heap variable must be initialized");
+    else
+      return {};
+  }
+
+  if (!halloc.init->type->canImplicitlyConvertTo(halloc.pointeeType)) {
+    throw runtime_error("Cannot initialize heap variable with different type");
+  } else if (halloc.init->type != halloc.pointeeType) {
+    halloc.init = make_shared<Cast>(halloc.init, halloc.pointeeType);
+  }
+
+  return {};
+}

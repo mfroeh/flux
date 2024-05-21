@@ -265,6 +265,8 @@ shared_ptr<Expr> AstCreator::visitExpression(FP::ExpressionContext *ctx) {
     return visitArrayLiteral(arrayInit);
   else if (auto structLit = dynamic_cast<FP::StructLiteralContext *>(ctx))
     return visitStructLiteral(structLit);
+  else if (auto malloc = dynamic_cast<FP::MallocContext *>(ctx))
+    return visitMalloc(malloc);
   else
     throw runtime_error("Unknown expression type");
 }
@@ -468,6 +470,12 @@ shared_ptr<Expr> AstCreator::visitStructLiteral(FP::StructLiteralContext *ctx) {
                back_inserter(values));
 
   return make_shared<StructLiteral>(Tokens(ctx), type, names, values);
+}
+
+shared_ptr<Expr> AstCreator::visitMalloc(FP::MallocContext *ctx) {
+  auto type = visitType(ctx->type());
+  auto init = ctx->expression() ? visitExpression(ctx->expression()) : nullptr;
+  return make_shared<Halloc>(Tokens(ctx), type, init);
 }
 
 // misc

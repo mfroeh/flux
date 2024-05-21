@@ -55,5 +55,6 @@ CodegenContext::CodegenContext() {
       targetTriple, cpu, features, opt, Reloc::PIC_));
 
   module->setDataLayout(targetMachine->createDataLayout());
+  dataLayout = make_shared<DataLayout>(targetMachine->createDataLayout());
   module->setTargetTriple(targetTriple);
 }

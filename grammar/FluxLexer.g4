@@ -22,6 +22,7 @@ KwClass: 'class';
 KwReturn: 'ret';
 KwUsing: 'using';
 KwLet: 'let';
+KwHalloc: 'halloc';
 
 // comparison
 Eq: '==';

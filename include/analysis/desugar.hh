@@ -56,6 +56,7 @@ public:
   any visit(struct Assignment &assignment) override;
   any visit(struct Pointer &pointer) override;
   any visit(struct Dereference &dereference) override;
+  any visit(struct Halloc &halloc) override;
 
   // sugar
   any visit(struct sugar::ElifStatement &elifStmt) override;

@@ -47,4 +47,5 @@ public:
   any visit(struct TernaryExpr &ternaryOp) override;
   any visit(struct Pointer &pointer) override;
   any visit(struct Dereference &dereference) override;
+  any visit(struct Halloc &halloc) override;
 };

@@ -77,6 +77,7 @@ public:
   shared_ptr<Expr> visitLiteralExpr(FP::LiteralExprContext *ctx);
   shared_ptr<Expr> visitArrayLiteral(FP::ArrayLiteralContext *ctx);
   shared_ptr<Expr> visitStructLiteral(FP::StructLiteralContext *ctx);
+  shared_ptr<Expr> visitMalloc(FP::MallocContext *ctx);
 
   // misc
   vector<shared_ptr<Expr>> visitExpressionList(FP::ExpressionListContext *ctx);

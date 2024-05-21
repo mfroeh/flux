@@ -432,3 +432,19 @@ shared_ptr<Expr> VoidExpr::deepcopy() const {
   copy->type = type;
   return copy;
 }
+
+Halloc::Halloc(Tokens tokens, shared_ptr<Type> type, shared_ptr<Expr> init)
+    : Expr(std::move(tokens), PointerType::get(type)), init(std::move(init)),
+      pointeeType(std::move(type)) {}
+
+any Halloc::accept(AbstractAstVisitor &visitor) { return visitor.visit(*this); }
+
+llvm::Value *Halloc::codegen(IRVisitor &visitor) {
+  return visitor.visit(*this);
+}
+
+shared_ptr<Expr> Halloc::deepcopy() const {
+  auto copy = make_shared<Halloc>(tokens, type, init->deepcopy());
+  copy->type = type;
+  return copy;
+}

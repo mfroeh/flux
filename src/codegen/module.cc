@@ -11,7 +11,8 @@ IRVisitor::IRVisitor(ModuleContext &context, SymbolTable &symTab,
                      CodegenContext &codegenContext)
     : context(context), symTab(symTab), codegenContext(codegenContext),
       llvmContext(codegenContext.context), builder(codegenContext.builder),
-      llvmModule(codegenContext.module) {}
+      llvmModule(codegenContext.module), dataLayout(codegenContext.dataLayout) {
+}
 
 shared_ptr<llvm::Module> IRVisitor::visit(::Module &module) {
   for (auto &classDef : module.classes) {

@@ -9,6 +9,7 @@
 #include <llvm/IR/Value.h>
 #include <ostream>
 #include <ranges>
+#include <type_traits>
 
 using namespace std;
 
@@ -261,24 +262,23 @@ shared_ptr<StringType> StringType::get() {
 }
 
 bool StringType::canImplicitlyConvertTo(shared_ptr<Type> other) {
-  throw std::runtime_error("String type not implemented");
+  return other == StringType::get();
 }
 
 llvm::Type *StringType::codegen(IRVisitor &visitor) {
-  // return llvm::Type::getInt8PtrTy(visitor.context);
-  throw std::runtime_error("String type not implemented");
+  return llvm::Type::getInt8PtrTy(*visitor.llvmContext);
 }
 
 llvm::Value *StringType::castTo(llvm::Value *value, shared_ptr<Type> to,
                                 IRVisitor &visitor) {
-  throw std::runtime_error("String type not implemented");
+  assert(false);
 }
 
-bool StringType::canDefaultInitialize() const {
-  throw std::runtime_error("String type not implemented");
-}
+bool StringType::canDefaultInitialize() const { return true; }
 
 llvm::Value *StringType::defaultInitialize(llvm::Value *alloca,
                                            IRVisitor &visitor) {
-  throw std::runtime_error("String type not implemented");
+  auto emptyStrPtr = visitor.builder->CreateGlobalStringPtr("");
+  visitor.builder->CreateStore(emptyStrPtr, alloca);
+  return alloca;
 }

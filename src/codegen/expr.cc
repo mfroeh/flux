@@ -3,6 +3,9 @@
 #include "codegen/ir_visitor.hh"
 #include "symbol.hh"
 #include <llvm/ADT/APFloat.h>
+#include <llvm/ADT/APInt.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/Support/MemAlloc.h>
 #include <memory>
 #include <ranges>
 
@@ -29,8 +32,7 @@ Value *IRVisitor::visit(BoolLiteral &literal) {
 }
 
 Value *IRVisitor::visit(::StringLiteral &literal) {
-  throw runtime_error("Not implemented");
-  // return builder->CreateGlobalStringPtr(literal.value);
+  return builder->CreateGlobalStringPtr(literal.value);
 }
 
 Value *IRVisitor::visit(ArrayLiteral &literal) {
@@ -236,4 +238,24 @@ Value *IRVisitor::visit(Assignment &assignment) {
 
   builder->CreateStore(value, target, "storeAssign");
   return builder->CreateLoad(value->getType(), target, "loadAssigned");
+}
+
+Value *IRVisitor::visit(Halloc &halloc) {
+  auto mallocFunc = llvmModule->getOrInsertFunction(
+      "malloc", llvm::Type::getInt8PtrTy(*llvmContext),
+      llvm::Type::getInt64Ty(*llvmContext));
+
+  auto type = halloc.pointeeType->codegen(*this);
+  auto size = dataLayout->getTypeAllocSize(type);
+
+  auto call = builder->CreateCall(
+      mallocFunc, ConstantInt::get(*llvmContext, APInt(64, size)));
+  auto retPtr = builder->CreateBitCast(call, type->getPointerTo());
+
+  if (!halloc.init)
+    halloc.pointeeType->defaultInitialize(retPtr, *this);
+  else
+    builder->CreateStore(halloc.init->codegen(*this), retPtr);
+
+  return retPtr;
 }

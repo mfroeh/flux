@@ -58,6 +58,7 @@ public:
   virtual any visit(struct Assignment &assignment) = 0;
   virtual any visit(struct Pointer &pointer) = 0;
   virtual any visit(struct Dereference &dereference) = 0;
+  virtual any visit(struct Halloc &halloc) = 0;
 
   // sugar
   virtual any visit(struct sugar::ElifStatement &elifStmt) = 0;
@@ -117,6 +118,7 @@ public:
   any visit(struct Assignment &assignment) override;
   any visit(struct Pointer &pointer) override;
   any visit(struct Dereference &dereference) override;
+  any visit(struct Halloc &halloc) override;
 
   // sugar
   any visit(struct sugar::ElifStatement &elifStmt) override;

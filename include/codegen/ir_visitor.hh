@@ -5,6 +5,7 @@
 #include "codegen/context.hh"
 #include "module_context.hh"
 #include "symbol_table.hh"
+#include <llvm/IR/DataLayout.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Value.h>
@@ -57,6 +58,7 @@ public:
   llvm::Value *visit(struct Assignment &assignment);
   llvm::Value *visit(struct Pointer &pointer);
   llvm::Value *visit(struct Dereference &dereference);
+  llvm::Value *visit(struct Halloc &halloc);
 
 public:
   ModuleContext &context;
@@ -67,4 +69,5 @@ public:
   shared_ptr<llvm::LLVMContext> &llvmContext;
   shared_ptr<llvm::Module> &llvmModule;
   shared_ptr<llvm::IRBuilder<>> &builder;
+  shared_ptr<llvm::DataLayout> &dataLayout;
 };
