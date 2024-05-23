@@ -64,7 +64,6 @@ elseBlock: KwElse (block | '->' statement);
 
 expression:
 	'(' expression ')'												# ParenExpr
-	| ('-' | '!' | '&' | '*') expression							# PrefixUnary
 	| literal														# LiteralExpr
 	| Identifier													# VarRef
 	| expression ('.' | '->') Identifier							# FieldRef
@@ -75,6 +74,7 @@ expression:
 	| Identifier '{' (Identifier ':' expression) (
 		',' Identifier ':' expression
 	)* '}'															# StructLiteral
+	| ('-' | '!' | '&' | '*') expression							# PrefixUnary
 	| expression ('*' | '/' | '%') expression						# BinaryArithmetic
 	| expression ('+' | '-') expression								# BinaryArithmetic
 	| expression ('<' | '<=' | '==' | '!=' | '>' | '>=') expression	# BinaryComp

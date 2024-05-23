@@ -276,17 +276,11 @@ any TypeChecker::visit(ArrayRef &arr) {
     throw runtime_error("Array index must be an integer");
   }
 
-  if (!(arr.arrayExpr->type->isArray() || arr.arrayExpr->type->isPointer())) {
-    cout << arr.tokens.getStart().line << endl;
-    cout << *arr.arrayExpr->type << endl;
-    throw runtime_error("Array reference must be a array or pointer");
+  if (!arr.arrayExpr->type->isArray()) {
+    throw runtime_error("Array reference must be an array");
   }
 
-  if (arr.arrayExpr->type->isPointer())
-    arr.type = static_pointer_cast<PointerType>(arr.arrayExpr->type)->pointee;
-  else
-    arr.type = static_pointer_cast<ArrayType>(arr.arrayExpr->type)->elementType;
-
+  arr.type = static_pointer_cast<ArrayType>(arr.arrayExpr->type)->elementType;
   return {};
 }
 

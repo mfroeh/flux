@@ -60,14 +60,14 @@ llvm::Value *ClassType::getFieldPtr(llvm::Value *alloca, string name,
   auto llvmIndex =
       llvm::ConstantInt::get(*visitor.llvmContext, llvm::APInt(32, index));
   return visitor.builder->CreateInBoundsGEP(codegen(visitor), alloca,
-                                            {zero, llvmIndex}, "fieldPtr");
+                                            {zero, llvmIndex}, name + "Ptr");
 }
 
 llvm::Value *ClassType::getFieldValue(llvm::Value *alloca, string name,
                                       IRVisitor &visitor) {
   auto fieldPtr = getFieldPtr(alloca, name, visitor);
   auto fieldType = fields.at(name)->type->codegen(visitor);
-  return visitor.builder->CreateLoad(fieldType, fieldPtr, "fieldValue");
+  return visitor.builder->CreateLoad(fieldType, fieldPtr, name);
 }
 
 void ClassType::addField(shared_ptr<VariableSymbol> field) {
