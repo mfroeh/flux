@@ -4,7 +4,10 @@ options {
 	tokenVocab = FluxLexer;
 }
 
-module: (classDefinition | functionDefinition)*;
+// todo: allow class -> function dependencies
+module: includes* classDefinition* functionDefinition*;
+
+includes: KwInclude Path ';';
 
 classDefinition:
 	KwClass Identifier '{' fieldDeclaration* functionDefinition* '}';

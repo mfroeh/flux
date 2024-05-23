@@ -6,6 +6,8 @@ compile_commands.json
 .antlr
 std
 *.out
+.direnv
 
 include-old
 src-old
+

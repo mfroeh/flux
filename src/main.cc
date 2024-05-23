@@ -6,6 +6,7 @@
 #include "analysis/typecheck.hh"
 #include "analysis/variable_resolver.hh"
 #include "ast/ast_creator.hh"
+#include "ast/type.hh"
 #include "codegen/ir_visitor.hh"
 #include "module_context.hh"
 #include "symbol_table.hh"
@@ -13,6 +14,7 @@
 #include <argparse/argparse.hpp>
 #include <cassert>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
@@ -30,10 +32,58 @@
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/TargetParser/Host.h>
+#include <queue>
+#include <ranges>
+#include <stdexcept>
 #include <system_error>
+#include <unordered_map>
 
 using namespace std;
 using std::filesystem::path;
+
+void exitWithError(const path &file, const string &message) {
+  throw runtime_error(std::format("[{}]: {}", file.c_str(), message));
+}
+
+// https://en.wikipedia.org/wiki/Topological_sorting
+vector<shared_ptr<Module>> topologicalSort(
+    const unordered_map<filesystem::path, shared_ptr<Module>> &modules) {
+  vector<shared_ptr<Module>> L;
+  stack<filesystem::path> S;
+
+  for (auto &[path, module] : modules) {
+    if (module->includes.empty())
+      S.push(path);
+  }
+
+  while (!S.empty()) {
+    auto n = S.top();
+    S.pop();
+    L.push_back(modules.at(n));
+
+    // for each node m with an edge e from n to m do
+    auto M = modules | ranges::views::filter([&n](auto &p) {
+               return ranges::find_if(p.second->includes, [&](auto &pair) {
+                        return filesystem::equivalent(pair, n);
+                      }) != p.second->includes.end();
+             });
+    for (auto &m : M) {
+      // remove the edge
+      m.second->includes.erase(
+          ranges::find_if(m.second->includes, [&n](auto &include) {
+            return filesystem::equivalent(include, n);
+          }));
+
+      if (m.second->includes.empty())
+        S.push(m.first);
+    }
+  }
+
+  if (L.empty())
+    throw runtime_error("graph has at least one cycle");
+
+  return L;
+}
 
 int main(int argc, char *argv[]) {
   argparse::ArgumentParser program("flux");
@@ -49,114 +99,125 @@ int main(int argc, char *argv[]) {
   }
 
   auto files = program.get<std::vector<std::string>>("files");
-  assert(files.size() == 1);
+  if (files.size() > 1) {
+    throw runtime_error(
+        "Only single file compilation is supported, use `incl` instead.");
+  }
 
   for (auto &file : files) {
     auto path = filesystem::path(file);
-    if (!filesystem::exists(path) || !filesystem::is_regular_file(path)) {
-      cerr << "error: file not found: " << file << endl;
-      return 1;
-    }
+    if (!filesystem::exists(path) || !filesystem::is_regular_file(path))
+      exitWithError(file, "no such file");
+  }
 
-    auto stream = ifstream(path);
-    if (!stream) {
-      cerr << "error: failed to open file: " << file << endl;
-      return 1;
-    }
+  // resolve all includes
+  unordered_map<filesystem::path, shared_ptr<Module>> modules;
+  queue<filesystem::path> unvisited;
+  unvisited.push(files.front());
 
-    auto moduleContext = ModuleContext(path);
+  do {
+    auto current = unvisited.front();
+    if (!filesystem::exists(current) || !filesystem::is_regular_file(current))
+      exitWithError(current, "no such file");
 
-    cout << "Lexing " << file << endl;
+    auto stream = ifstream(current);
+    if (!stream)
+      exitWithError(current, "failed to open file");
+
+    ModuleContext moduleContext = ModuleContext(current);
     antlr4::ANTLRInputStream input(stream);
     FluxLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     tokens.fill();
 
-    for (auto &token : tokens.getTokens()) {
-      cout << token->toString() << endl;
-    }
+    if (lexer.getNumberOfSyntaxErrors())
+      exitWithError(current, "syntax error");
 
-    cout << "Parsing " << file << endl;
     FluxParser parser(&tokens);
     parser.setBuildParseTree(true);
     auto parseTreeRoot = parser.module();
 
-    cout << "Creating AST " << file << endl;
-    auto astCreator = make_shared<AstCreator>();
+    if (parser.getNumberOfSyntaxErrors())
+      exitWithError(current, "syntax error");
+
+    auto astCreator = make_shared<AstCreator>(moduleContext);
     Module module = astCreator->visitModule(parseTreeRoot);
 
-    SymbolTable symTab;
+    modules[current] = make_shared<Module>(module);
+    for (auto &include : module.includes) {
+      auto it = ranges::find_if(modules, [&include](auto &p) {
+        return filesystem::equivalent(p.first, include);
+      });
 
-    cout << "Desugaring non-typed AST" << file << endl;
-    shared_ptr<Desugarer> desugarer =
-        make_shared<NonTypedDesugarer>(moduleContext);
-    desugarer->visit(module);
-
-    cout << "Resolving variable references " << file << endl;
-    auto resolver = make_shared<VariableResolver>(moduleContext, symTab);
-    static_pointer_cast<AstVisitor>(resolver)->visit(module);
-
-    cout << "Type checking and resolving function calls" << file << endl;
-    auto typeChecker = make_shared<TypeChecker>(moduleContext, symTab);
-    static_pointer_cast<AstVisitor>(typeChecker)->visit(module);
-
-    cout << "Desugaring typed AST" << file << endl;
-    shared_ptr<Desugarer> typedDesugarer =
-        make_shared<TypedDesugarer>(moduleContext, symTab);
-    typedDesugarer->visit(module);
-
-    cout << "Generating IR code" << file << endl;
-    auto codegenContext = make_shared<CodegenContext>();
-    auto irVisitor =
-        make_shared<IRVisitor>(moduleContext, symTab, *codegenContext);
-    auto llvmModule = irVisitor->visit(module);
-
-    llvm::outs() << *llvmModule;
-
-    cout << "Optimizing IR code" << file << endl;
-
-    cout << "Creating object file" << file << endl;
-    llvm::legacy::PassManager pass;
-    auto fileType = llvm::CodeGenFileType::CGFT_ObjectFile;
-
-    auto mainFunctions = symTab.getFunctions("main");
-    if (mainFunctions.size() != 1) {
-      cerr << "Expected exactly one main function" << endl;
-      return 1;
+      if (it == modules.end()) {
+        unvisited.push(include);
+        cout << "added" << include << endl;
+      }
     }
-    auto mainFunction = mainFunctions.front();
-    // rename main function to "main" (this should be done whilst compiling if
-    // main is called recursively)
-    mainFunction->llvmFunction->setName("main");
+    unvisited.pop();
+  } while (!unvisited.empty());
 
-    error_code ec;
-    auto outStream = llvm::raw_fd_ostream("a.out", ec, llvm::sys::fs::OF_None);
-    if (codegenContext->targetMachine->addPassesToEmitFile(pass, outStream,
-                                                           nullptr, fileType)) {
-      cerr << "TargetMachine can't emit a file of this type" << endl;
-      return 1;
-    }
-    pass.run(*llvmModule);
-    outStream.flush();
-
-    // string err;
-    // auto ee =
-    //     llvm::EngineBuilder(std::move(llvmModule)).setErrorStr(&err).create();
-
-    // if (!ee) {
-    //   cerr << "Failed to create ExecutionEngine: " << err << endl;
-    //   return 1;
-    // }
-
-    // auto main = symTab.getFunctions("main").front();
-    // if (!main) {
-    //   cerr << "No main function found" << endl;
-    //   return 1;
-    // }
-
-    // cout << "Executing main" << endl;
-    // auto result = ee->runFunction(main->llvmFunction, {});
-    // cout << "Result: " << result.IntVal.getSExtValue() << endl;
+  vector<shared_ptr<Module>> sortedModules = topologicalSort(modules);
+  Module module = *sortedModules.front();
+  ModuleContext moduleContext = ModuleContext(module.path);
+  for (int i = 1; i < sortedModules.size(); i++) {
+    ranges::copy(sortedModules[i]->classes, back_inserter(module.classes));
+    ranges::copy(sortedModules[i]->functions, back_inserter(module.functions));
+    cout << " " << sortedModules[i]->path << "\n" << endl;
   }
+
+  SymbolTable symTab;
+
+  shared_ptr<Desugarer> desugarer =
+      make_shared<NonTypedDesugarer>(moduleContext);
+  desugarer->visit(module);
+
+  auto resolver = make_shared<VariableResolver>(moduleContext, symTab);
+  static_pointer_cast<AstVisitor>(resolver)->visit(module);
+
+  auto typeChecker = make_shared<TypeChecker>(moduleContext, symTab);
+  static_pointer_cast<AstVisitor>(typeChecker)->visit(module);
+
+  shared_ptr<Desugarer> typedDesugarer =
+      make_shared<TypedDesugarer>(moduleContext, symTab);
+  typedDesugarer->visit(module);
+
+  auto codegenContext = make_shared<CodegenContext>();
+  auto irVisitor =
+      make_shared<IRVisitor>(moduleContext, symTab, *codegenContext);
+  auto llvmModule = irVisitor->visit(module);
+
+  llvm::outs() << *llvmModule;
+
+  llvm::legacy::PassManager pass;
+  auto fileType = llvm::CodeGenFileType::CGFT_ObjectFile;
+
+  auto mainFunctions = symTab.getFunctions("main");
+  if (mainFunctions.size() != 1)
+    exitWithError(module.path, "expected exactly one main function");
+
+  auto mainFunction = mainFunctions.front();
+  if (mainFunction->parameters.size() != 0)
+    exitWithError(module.path, "main function should not have any parameters");
+
+  if (mainFunction->returnType != IntType::get())
+    exitWithError(module.path, "main function should return an int");
+
+  // rename main function to "main" (this should be done whilst compiling if
+  // main is called recursively)
+  mainFunction->llvmFunction->setName("main");
+
+  error_code ec;
+  auto outStream = llvm::raw_fd_ostream("a.out", ec, llvm::sys::fs::OF_None);
+  auto failed = codegenContext->targetMachine->addPassesToEmitFile(
+      pass, outStream, nullptr, fileType);
+
+  if (failed)
+    exitWithError(module.path,
+                  "target machine can not emit a file of this type");
+
+  pass.run(*llvmModule);
+  outStream.flush();
+
   return 0;
 }

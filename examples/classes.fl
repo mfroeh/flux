@@ -1,3 +1,5 @@
+incl ./include.fl;
+
 class Point { x: i64; y: i64;
     distance(p: Point): i64 {
         let dx = p.x - *this.x;
@@ -41,6 +43,7 @@ main(): i64 {
     let ptrs = [&(rect.topleft), &(rect.bottomright)];
     /* ret *(ptrs[1]).x; */
     let ptrs: Rectangle*[1] = [&rect];
-    ret *(ptrs[0]).height();
+    /* ret *(ptrs[0]).height(); */
     /* ret height * width == area ? 37 : 73; */
+    ret add(1, 2);
 }

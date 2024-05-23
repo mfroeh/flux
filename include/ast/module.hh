@@ -9,11 +9,14 @@ using std::shared_ptr;
 using std::vector;
 
 struct Module : public Node {
+  std::filesystem::path path;
+  vector<std::filesystem::path> includes;
   vector<FunctionDefinition> functions;
   vector<ClassDefinition> classes;
 
-  Module(Tokens tokens, vector<ClassDefinition> classes,
-         vector<FunctionDefinition> functions);
+  Module(Tokens tokens, std::filesystem::path file,
+         vector<std::filesystem::path> includes,
+         vector<ClassDefinition> classes, vector<FunctionDefinition> functions);
 
   any accept(AbstractAstVisitor &visitor) override;
 };

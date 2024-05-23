@@ -32,7 +32,7 @@ any VariableResolver::visit(ClassDefinition &classDefinition) {
     symbol->mangledName = mangledName;
     field.mangledName = mangledName;
 
-    cout << "Added field" << field.name << endl;
+    cout << "Added field " << field.name << endl;
     classDefinition.type->addField(symbol);
   }
 
@@ -72,6 +72,7 @@ any VariableResolver::visit(FunctionDefinition &functionDefinition) {
   auto function = currentScope->getFunction(functionDefinition.name);
   symTab.insert(function);
   functionDefinition.mangledName = function->mangledName;
+  cout << "added function " << functionDefinition.name << endl;
 
   auto previousScope = currentScope;
   currentScope = make_shared<Scope>(previousScope);

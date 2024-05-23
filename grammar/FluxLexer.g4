@@ -22,7 +22,9 @@ KwClass: 'class';
 KwReturn: 'ret';
 KwUsing: 'using';
 KwLet: 'let';
+KwInclude: 'incl';
 KwHalloc: 'halloc';
+KwModule: 'mod';
 
 // comparison
 Eq: '==';
@@ -39,14 +41,9 @@ Mul: '*';
 Div: '/';
 Modolu: '%';
 
-// increment/decrement
-// PlusPlus: '++';
-// MinusMinus: '--';
+// increment/decrement PlusPlus: '++'; MinusMinus: '--';
 
-// bitwise logic
-// BitwiseAnd: '&';
-// BitwiseXor: '^';
-// BitwiseOr: '|';
+// bitwise logic BitwiseAnd: '&'; BitwiseXor: '^'; BitwiseOr: '|';
 
 // logic
 Not: '!';
@@ -78,7 +75,8 @@ IntLiteral: '0' | [1-9][0-9]*;
 FloatLiteral: IntLiteral '.' [0-9]* | '.' [0-9]+;
 StringLiteral: '"' ~["\r\n]* '"';
 
-Identifier: [a-zA-Z][a-zA-Z0-9]*[_]?;
+Path: './' .+? '.fl';
+Identifier: [a-zA-Z][a-zA-Z0-9]* [_]?;
 
 // hidden
 Comment: '//' ~[\r\n]* -> channel(HIDDEN);

@@ -14,8 +14,22 @@
 using namespace std;
 using namespace ranges;
 
+AstCreator::AstCreator(ModuleContext &moduleContext)
+    : moduleContext(moduleContext) {}
+
 // module
 Module AstCreator::visitModule(FP::ModuleContext *ctx) {
+  vector<filesystem::path> includes;
+  ranges::copy(ctx->includes() | views::transform([this](auto &include) {
+                 string text = include->Path()->getText();
+                 if (text.starts_with("./")) {
+                   return moduleContext.path.parent_path() / text.substr(2);
+                 } else {
+                   return filesystem::path(text);
+                 }
+               }),
+               back_inserter(includes));
+
   vector<ClassDefinition> classes;
   ranges::copy(ctx->classDefinition() |
                    views::transform([this](auto &classDef) {
@@ -29,7 +43,7 @@ Module AstCreator::visitModule(FP::ModuleContext *ctx) {
                }),
                back_inserter(functions));
 
-  return Module(Tokens(ctx), classes, functions);
+  return Module(Tokens(ctx), moduleContext.path, includes, classes, functions);
 }
 
 // classes

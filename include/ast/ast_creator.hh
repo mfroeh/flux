@@ -9,6 +9,7 @@
 #include "ast/stmt.hh"
 #include "ast/sugar.hh"
 #include "ast/type.hh"
+#include "module_context.hh"
 #include <vector>
 
 using std::any;
@@ -24,6 +25,8 @@ class AstCreator {
   using FP = FluxParser;
 
 public:
+  AstCreator(ModuleContext &moduleContext);
+
   // module
   Module visitModule(FP::ModuleContext *ctx);
 
@@ -91,4 +94,7 @@ public:
   shared_ptr<Type> visitBuiltinType(FP::BuiltinTypeContext *ctx);
 
   Interval visitInterval(FP::IntervalContext *ctx);
+
+protected:
+  ModuleContext &moduleContext;
 };
