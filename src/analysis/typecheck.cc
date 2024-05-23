@@ -166,6 +166,26 @@ any TypeChecker::visit(VariableDeclaration &varDecl) {
   return {};
 }
 
+any TypeChecker::visit(Print &print) {
+  AstVisitor::visit(print);
+
+  for (auto &arg : print.args) {
+    if (arg->type->isInfer()) {
+      throw runtime_error("Print argument type could not be inferred");
+    }
+  }
+
+  // make sure that there are as many args as format specifiers
+  // todo: check if the format specifiers match the types of the arguments
+  long formatCount = ranges::count(print.format, '%');
+  if (formatCount != print.args.size()) {
+    throw runtime_error("Print format specifier count does not match argument "
+                        "count");
+  }
+
+  return {};
+}
+
 // expressions
 any TypeChecker::visit(Cast &cast) {
   AstVisitor::visit(cast);

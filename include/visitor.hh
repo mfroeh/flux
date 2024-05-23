@@ -35,6 +35,7 @@ public:
   virtual any visit(struct ExpressionStatement &exprStmt) = 0;
   virtual any visit(struct VariableDeclaration &varDecl) = 0;
   virtual any visit(struct StandaloneBlock &standaloneBlock) = 0;
+  virtual any visit(struct Print &print) = 0;
 
   // expressions
   virtual any visit(struct Cast &cast) = 0;
@@ -95,6 +96,7 @@ public:
   any visit(struct ExpressionStatement &exprStmt) override;
   any visit(struct VariableDeclaration &varDecl) override;
   any visit(struct StandaloneBlock &standaloneBlock) override;
+  any visit(struct Print &print) override;
 
   // expressions
   any visit(struct Cast &cast) override;

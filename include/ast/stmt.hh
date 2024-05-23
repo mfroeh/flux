@@ -92,3 +92,13 @@ struct StandaloneBlock : public Statement {
   any accept(AbstractAstVisitor &visitor) override;
   void codegen(struct IRVisitor &visitor) override;
 };
+
+struct Print : public Statement {
+  string format;
+  vector<shared_ptr<Expr>> args;
+
+  Print(Tokens tokens, string format, vector<shared_ptr<Expr>> expr);
+
+  any accept(AbstractAstVisitor &visitor) override;
+  void codegen(struct IRVisitor &visitor) override;
+};

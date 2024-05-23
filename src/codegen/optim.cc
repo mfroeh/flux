@@ -22,26 +22,32 @@ IROptimizer::IROptimizer(ModuleContext &moduleContext,
       ctx(codegenContext) {}
 
 void IROptimizer::optimize() {
-  auto fpm = make_unique<FunctionPassManager>();
-  auto lam = make_unique<LoopAnalysisManager>();
-  auto fam = make_unique<FunctionAnalysisManager>();
-  auto cgsc = make_unique<CGSCCAnalysisManager>();
-  auto mam = make_unique<ModuleAnalysisManager>();
-  auto pic = make_unique<PassInstrumentationCallbacks>();
-  auto si = make_unique<StandardInstrumentations>(*ctx.context, true);
+  // auto fpm = make_unique<FunctionPassManager>();
+  // auto lam = make_unique<LoopAnalysisManager>();
+  // auto fam = make_unique<FunctionAnalysisManager>();
+  // auto cgsc = make_unique<CGSCCAnalysisManager>();
+  // auto mam = make_unique<ModuleAnalysisManager>();
+  // auto pic = make_unique<PassInstrumentationCallbacks>();
+  // auto si = make_unique<StandardInstrumentations>(*ctx.context, true);
 
-  fpm->addPass(InstCombinePass());
-  fpm->addPass(ReassociatePass());
-  fpm->addPass(GVNPass());
-  fpm->addPass(SimplifyCFGPass());
-  fpm->addPass(DSEPass());
+  // fpm->addPass(InstCombinePass());
+  // fpm->addPass(ReassociatePass());
+  // fpm->addPass(GVNPass());
+  // fpm->addPass(SimplifyCFGPass());
+  // fpm->addPass(DSEPass());
 
+  // PassBuilder pb;
+  // pb.registerModuleAnalyses(*mam);
+  // pb.registerCGSCCAnalyses(*cgsc);
+  // pb.registerFunctionAnalyses(*fam);
+  // pb.registerLoopAnalyses(*lam);
+  // pb.crossRegisterProxies(*lam, *fam, *cgsc, *mam);
+
+  auto fam = FunctionAnalysisManager();
   PassBuilder pb;
-  pb.registerModuleAnalyses(*mam);
-  pb.registerCGSCCAnalyses(*cgsc);
-  pb.registerFunctionAnalyses(*fam);
-  pb.registerLoopAnalyses(*lam);
-  pb.crossRegisterProxies(*lam, *fam, *cgsc, *mam);
+  pb.registerFunctionAnalyses(fam);
+  auto fpm = pb.buildFunctionSimplificationPipeline(OptimizationLevel::O0,
+                                                    ThinOrFullLTOPhase::None);
 
   for (auto &function : module->functions()) {
     bool errors = verifyFunction(function);
@@ -50,6 +56,6 @@ void IROptimizer::optimize() {
       exit(1);
     }
     // todo: segfaults
-    fpm->run(function, *fam);
+    // fpm.run(function, fam);
   }
 }

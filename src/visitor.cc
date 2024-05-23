@@ -88,6 +88,13 @@ any AstVisitor::visit(StandaloneBlock &standaloneBlock) {
   return {};
 }
 
+any AstVisitor::visit(Print &print) {
+  for (auto &arg : print.args) {
+    arg->accept(*this);
+  }
+  return {};
+}
+
 // expressions
 any AstVisitor::visit(Cast &cast) {
   cast.expr->accept(*this);

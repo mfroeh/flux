@@ -155,6 +155,8 @@ shared_ptr<Statement> AstCreator::visitStatement(FP::StatementContext *ctx) {
     return visitStandaloneBlock(standaloneBlock);
   else if (auto functioDef = ctx->functionDefinition())
     return make_shared<FunctionDefinition>(visitFunctionDefinition(functioDef));
+  else if (auto print = ctx->printStatement())
+    return visitPrintStatement(print);
   else
     throw runtime_error("Unknown statement type");
 }
@@ -236,6 +238,14 @@ AstCreator::visitElseIfStatement(FP::ElseIfStatementContext *ctx) {
 
 Block AstCreator::visitElseBlock(FP::ElseBlockContext *ctx) {
   return visitBlock(ctx->block());
+}
+
+shared_ptr<Statement>
+AstCreator::visitPrintStatement(FP::PrintStatementContext *ctx) {
+  auto expressions = visitExpressionList(ctx->expressionList());
+  string formatStr = ctx->StringLiteral()->getText();
+  formatStr = formatStr.substr(1, formatStr.size() - 2);
+  return make_shared<Print>(Tokens(ctx), formatStr, expressions);
 }
 
 // expressions
@@ -466,10 +476,12 @@ shared_ptr<Expr> AstCreator::visitLiteral(FP::LiteralContext *ctx) {
   else if (auto floatLit = ctx->FloatLiteral())
     return static_pointer_cast<Expr>(
         make_shared<FloatLiteral>(Tokens(ctx), stod(floatLit->getText())));
-  else if (auto stringLit = ctx->StringLiteral())
+  else if (auto stringLit = ctx->StringLiteral()) {
+    string text = stringLit->getText();
+    text = text.substr(1, text.size() - 2);
     return static_pointer_cast<Expr>(
-        make_shared<StringLiteral>(Tokens(ctx), stringLit->getText()));
-  else if (auto boolLit = ctx->BoolLiteral())
+        make_shared<StringLiteral>(Tokens(ctx), text));
+  } else if (auto boolLit = ctx->BoolLiteral())
     return static_pointer_cast<Expr>(
         make_shared<BoolLiteral>(Tokens(ctx), boolLit->getText() == "true"));
   else

@@ -25,6 +25,7 @@ KwLet: 'let';
 KwInclude: 'incl';
 KwHalloc: 'halloc';
 KwModule: 'mod';
+KwPrint: 'print';
 
 // comparison
 Eq: '==';

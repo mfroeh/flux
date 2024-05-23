@@ -32,11 +32,14 @@ statement:
 	| whileLoop
 	| forLoop
 	| standaloneBlock
-	| functionDefinition;
+	| functionDefinition
+	| printStatement;
 
 standaloneBlock: block;
 
 expressionStatement: expression ';';
+
+printStatement: KwPrint StringLiteral expressionList? ';';
 
 variableDeclaration:
 	KwLet Identifier (':' type)? '=' expression ';'
@@ -66,6 +69,7 @@ expression:
 	'(' expression ')'												# ParenExpr
 	| literal														# LiteralExpr
 	| Identifier													# VarRef
+	| ('*') expression												# PrefixUnary
 	| expression ('.' | '->') Identifier							# FieldRef
 	| expression '[' expressionList ']'								# ArrayRef
 	| Identifier '(' expressionList? ')'							# FunctionCall
@@ -74,7 +78,7 @@ expression:
 	| Identifier '{' (Identifier ':' expression) (
 		',' Identifier ':' expression
 	)* '}'															# StructLiteral
-	| ('-' | '!' | '&' | '*') expression							# PrefixUnary
+	| ('-' | '!' | '&') expression									# PrefixUnary
 	| expression ('*' | '/' | '%') expression						# BinaryArithmetic
 	| expression ('+' | '-') expression								# BinaryArithmetic
 	| expression ('<' | '<=' | '==' | '!=' | '>' | '>=') expression	# BinaryComp

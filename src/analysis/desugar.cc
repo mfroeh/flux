@@ -126,6 +126,15 @@ any Desugarer::visit(StandaloneBlock &standaloneBlock) {
   return {};
 }
 
+any Desugarer::visit(Print &print) {
+  for (auto &arg : print.args) {
+    any res = arg->accept(*this);
+    if (res.has_value())
+      arg = any_cast<shared_ptr<Expr>>(res);
+  }
+  return {};
+}
+
 // expressions
 
 any Desugarer::visit(Cast &cast) {

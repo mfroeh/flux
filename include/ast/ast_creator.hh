@@ -58,6 +58,7 @@ public:
   shared_ptr<sugar::ElifStatement>
   visitElseIfStatement(FP::ElseIfStatementContext *ctx);
   Block visitElseBlock(FP::ElseBlockContext *ctx);
+  shared_ptr<Statement> visitPrintStatement(FP::PrintStatementContext *ctx);
 
   // expressions
   shared_ptr<Expr> visitExpression(FP::ExpressionContext *ctx);

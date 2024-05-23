@@ -36,6 +36,7 @@ public:
   void visit(struct While &whileStmt);
   void visit(struct ExpressionStatement &exprStmt);
   void visit(struct VariableDeclaration &varDecl);
+  void visit(struct Print &print);
 
   // expressions
   llvm::Value *visit(struct Cast &cast);

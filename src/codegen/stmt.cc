@@ -4,6 +4,7 @@
 #include <iostream>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Type.h>
+#include <ranges>
 
 using namespace llvm;
 using namespace std;
@@ -42,6 +43,23 @@ void IRVisitor::visit(Return &stmt) {
   } else {
     builder->CreateRetVoid();
   }
+}
+
+void IRVisitor::visit(Print &print) {
+  auto printfType =
+      FunctionType::get(IntegerType::getInt32Ty(*llvmContext),
+                        IntegerType::getInt8PtrTy(*llvmContext), true);
+  auto printf = llvmModule->getOrInsertFunction("printf", printfType);
+  auto formatStr = builder->CreateGlobalString(print.format);
+  auto strPtr = builder->CreateBitCast(formatStr,
+                                       IntegerType::getInt8PtrTy(*llvmContext));
+  vector<Value *> args{strPtr};
+  ranges::copy(print.args | ranges::views::transform([&](auto &expr) {
+                 return expr->codegen(*this);
+               }),
+               back_inserter(args));
+
+  builder->CreateCall(printf, args);
 }
 
 void IRVisitor::visit(IfElse &stmt) {

@@ -67,3 +67,11 @@ any StandaloneBlock::accept(AbstractAstVisitor &visitor) {
 }
 
 void StandaloneBlock::codegen(IRVisitor &visitor) { visitor.visit(*this); }
+
+Print::Print(Tokens tokens, string format, vector<shared_ptr<Expr>> expr)
+    : Statement(std::move(tokens)), format(std::move(format)),
+      args(std::move(expr)) {}
+
+any Print::accept(AbstractAstVisitor &visitor) { return visitor.visit(*this); }
+
+void Print::codegen(IRVisitor &visitor) { visitor.visit(*this); }
