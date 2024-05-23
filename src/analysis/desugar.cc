@@ -277,12 +277,10 @@ any Desugarer::visit(Dereference &dereference) {
 }
 
 any Desugarer::visit(Halloc &halloc) {
-  if (!halloc.init)
-    return {};
-
-  any res = halloc.init->accept(*this);
+  any res = halloc.count->accept(*this);
   if (res.has_value())
-    halloc.init = any_cast<shared_ptr<Expr>>(res);
+    halloc.count = any_cast<shared_ptr<Expr>>(res);
+
   return {};
 }
 

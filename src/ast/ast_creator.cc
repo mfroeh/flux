@@ -316,6 +316,10 @@ shared_ptr<VarRef> AstCreator::visitVarRef(FP::VarRefContext *ctx) {
 
 shared_ptr<FieldRef> AstCreator::visitFieldRef(FP::FieldRefContext *ctx) {
   auto obj = visitExpression(ctx->expression());
+  // if expr -> name
+  if (ctx->RightArrow())
+    obj = make_shared<Dereference>(Tokens(ctx), obj);
+
   return make_shared<FieldRef>(Tokens(ctx), obj, ctx->Identifier()->getText());
 }
 
@@ -413,6 +417,10 @@ AstCreator::visitFunctionCall(FP::FunctionCallContext *ctx) {
 
 shared_ptr<MethodCall> AstCreator::visitMethodCall(FP::MethodCallContext *ctx) {
   auto object = visitExpression(ctx->expression());
+  // if expr -> name
+  if (ctx->RightArrow())
+    object = make_shared<Dereference>(Tokens(ctx), object);
+
   auto args = visitExpressionList(ctx->expressionList());
   return make_shared<MethodCall>(Tokens(ctx), object,
                                  ctx->Identifier()->getText(), args);
@@ -488,8 +496,8 @@ shared_ptr<Expr> AstCreator::visitStructLiteral(FP::StructLiteralContext *ctx) {
 
 shared_ptr<Expr> AstCreator::visitMalloc(FP::MallocContext *ctx) {
   auto type = visitType(ctx->type());
-  auto init = ctx->expression() ? visitExpression(ctx->expression()) : nullptr;
-  return make_shared<Halloc>(Tokens(ctx), type, init);
+  auto count = visitExpression(ctx->expression());
+  return make_shared<Halloc>(Tokens(ctx), type, count);
 }
 
 // misc

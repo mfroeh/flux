@@ -59,7 +59,6 @@ struct InIntervalExpr : public Expr {
 };
 
 struct CompoundAssignment : public Expr {
-  // variable reference or array reference
   shared_ptr<Expr> target;
   BinaryArithmetic::Operator op;
   shared_ptr<Expr> value;

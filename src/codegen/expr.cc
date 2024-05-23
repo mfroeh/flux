@@ -246,16 +246,13 @@ Value *IRVisitor::visit(Halloc &halloc) {
       llvm::Type::getInt64Ty(*llvmContext));
 
   auto type = halloc.pointeeType->codegen(*this);
-  auto size = dataLayout->getTypeAllocSize(type);
+  auto count = halloc.count->codegen(*this);
+  auto elemSize = dataLayout->getTypeAllocSize(type);
+  auto size = builder->CreateMul(
+      count, ConstantInt::get(*llvmContext, APInt(64, elemSize)));
 
-  auto call = builder->CreateCall(
-      mallocFunc, ConstantInt::get(*llvmContext, APInt(64, size)));
+  auto call = builder->CreateCall(mallocFunc, size);
   auto retPtr = builder->CreateBitCast(call, type->getPointerTo());
-
-  if (!halloc.init)
-    halloc.pointeeType->defaultInitialize(retPtr, *this);
-  else
-    builder->CreateStore(halloc.init->codegen(*this), retPtr);
 
   return retPtr;
 }

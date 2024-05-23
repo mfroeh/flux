@@ -276,11 +276,17 @@ any TypeChecker::visit(ArrayRef &arr) {
     throw runtime_error("Array index must be an integer");
   }
 
-  if (!arr.arrayExpr->type->isArray()) {
-    throw runtime_error("Array reference must be an array");
+  if (!(arr.arrayExpr->type->isArray() || arr.arrayExpr->type->isPointer())) {
+    cout << arr.tokens.getStart().line << endl;
+    cout << *arr.arrayExpr->type << endl;
+    throw runtime_error("Array reference must be a array or pointer");
   }
 
-  arr.type = static_pointer_cast<ArrayType>(arr.arrayExpr->type)->elementType;
+  if (arr.arrayExpr->type->isPointer())
+    arr.type = static_pointer_cast<PointerType>(arr.arrayExpr->type)->pointee;
+  else
+    arr.type = static_pointer_cast<ArrayType>(arr.arrayExpr->type)->elementType;
+
   return {};
 }
 
@@ -594,17 +600,8 @@ any TypeChecker::visit(Dereference &dereference) {
 any TypeChecker::visit(Halloc &halloc) {
   AstVisitor::visit(halloc);
 
-  if (!halloc.init) {
-    if (!halloc.pointeeType->canDefaultInitialize())
-      throw runtime_error("Heap variable must be initialized");
-    else
-      return {};
-  }
-
-  if (!halloc.init->type->canImplicitlyConvertTo(halloc.pointeeType)) {
-    throw runtime_error("Cannot initialize heap variable with different type");
-  } else if (halloc.init->type != halloc.pointeeType) {
-    halloc.init = make_shared<Cast>(halloc.init, halloc.pointeeType);
+  if (!halloc.count->type->isInt()) {
+    throw runtime_error("Heap allocation count must be an integer");
   }
 
   return {};

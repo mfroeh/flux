@@ -65,7 +65,7 @@ set(analysis src/analysis/desugar.cc src/analysis/scope.cc
              src/analysis/variable_resolver.cc src/analysis/typecheck.cc)
 
 set(codegen src/codegen/context.cc src/codegen/class.cc src/codegen/expr.cc
-            src/codegen/function.cc src/codegen/module.cc src/codegen/stmt.cc)
+            src/codegen/function.cc src/codegen/module.cc src/codegen/stmt.cc src/codegen/optim.cc)
 
 set(toplevel "")
 

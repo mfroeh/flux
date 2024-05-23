@@ -18,7 +18,7 @@ class Rectangle {
 
     width() : i64 => *this.bottomright.x - *this.topleft.x;
 
-    area() => *this.height() * *this.width();
+    area() => this->height() * this->width();
 
     contains(p: Point*): bool {
         ret *p.x >= *this.topleft.x && *p.x <= *this.bottomright.x &&

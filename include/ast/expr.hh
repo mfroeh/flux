@@ -257,7 +257,6 @@ struct BinaryLogical : public Expr {
 };
 
 struct Assignment : public Expr {
-  // variable reference or array reference
   shared_ptr<Expr> target;
   shared_ptr<Expr> value;
 
@@ -290,10 +289,10 @@ struct VoidExpr : public Expr {
 };
 
 struct Halloc : public Expr {
-  shared_ptr<Expr> init;
+  shared_ptr<Expr> count;
   shared_ptr<Type> pointeeType;
 
-  Halloc(Tokens tokens, shared_ptr<Type> type, shared_ptr<Expr> init);
+  Halloc(Tokens tokens, shared_ptr<Type> type, shared_ptr<Expr> count);
 
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;

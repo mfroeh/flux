@@ -8,6 +8,7 @@
 #include "ast/ast_creator.hh"
 #include "ast/type.hh"
 #include "codegen/ir_visitor.hh"
+#include "codegen/optim.hh"
 #include "module_context.hh"
 #include "symbol_table.hh"
 #include "visitor.hh"
@@ -187,6 +188,9 @@ int main(int argc, char *argv[]) {
       make_shared<IRVisitor>(moduleContext, symTab, *codegenContext);
   auto llvmModule = irVisitor->visit(module);
 
+  auto optimizer = make_shared<IROptimizer>(moduleContext, *codegenContext);
+  optimizer->optimize();
+
   llvm::outs() << *llvmModule;
 
   llvm::legacy::PassManager pass;
@@ -208,6 +212,12 @@ int main(int argc, char *argv[]) {
   mainFunction->llvmFunction->setName("main");
 
   error_code ec;
+  auto outLLVM = llvm::raw_fd_ostream("out.ll", ec, llvm::sys::fs::OF_None);
+  if (ec)
+    exitWithError(module.path, "failed to write llvm module to file");
+  outLLVM << *llvmModule;
+  outLLVM.flush();
+
   auto outStream = llvm::raw_fd_ostream("a.out", ec, llvm::sys::fs::OF_None);
   auto failed = codegenContext->targetMachine->addPassesToEmitFile(
       pass, outStream, nullptr, fileType);

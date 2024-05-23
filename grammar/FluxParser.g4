@@ -63,15 +63,15 @@ elseIfStatement:
 elseBlock: KwElse (block | '->' statement);
 
 expression:
-	'(' expression ')'									# ParenExpr
-	| ('-' | '!' | '&' | '*') expression				# PrefixUnary
-	| literal											# LiteralExpr
-	| Identifier										# VarRef
-	| expression '.' Identifier							# FieldRef
-	| expression '[' expression ']'						# ArrayRef
-	| Identifier '(' expressionList? ')'				# FunctionCall
-	| expression '.' Identifier '(' expressionList? ')'	# MethodCall
-	| '[' expressionList ']'							# ArrayLiteral
+	'(' expression ')'												# ParenExpr
+	| ('-' | '!' | '&' | '*') expression							# PrefixUnary
+	| literal														# LiteralExpr
+	| Identifier													# VarRef
+	| expression ('.' | '->') Identifier							# FieldRef
+	| expression '[' expression ']'									# ArrayRef
+	| Identifier '(' expressionList? ')'							# FunctionCall
+	| expression ('.' | '->') Identifier '(' expressionList? ')'	# MethodCall
+	| '[' expressionList ']'										# ArrayLiteral
 	| Identifier '{' (Identifier ':' expression) (
 		',' Identifier ':' expression
 	)* '}'															# StructLiteral
@@ -84,7 +84,7 @@ expression:
 	| expression KwIn interval										# InInterval
 	| expression '=' expression										# Assignment
 	| expression ('+' | '-' | '*' | '/' | '%') '=' expression		# CompoundAssignment
-	| KwHalloc type '(' expression? ')'								# Malloc;
+	| KwHalloc type '(' expression ')'								# Malloc;
 
 expressionList: expression (',' expression)*;
 
