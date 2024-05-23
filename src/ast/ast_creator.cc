@@ -305,9 +305,15 @@ shared_ptr<Expr> AstCreator::visitPrefixUnary(FP::PrefixUnaryContext *ctx) {
 }
 
 shared_ptr<ArrayRef> AstCreator::visitArrayRef(FP::ArrayRefContext *ctx) {
-  auto target = visitExpression(ctx->expression(0));
-  auto index = visitExpression(ctx->expression(1));
-  return make_shared<ArrayRef>(Tokens(ctx), target, index);
+  // the indexable expr
+  auto target = visitExpression(ctx->expression());
+
+  auto indices = visitExpressionList(ctx->expressionList());
+  for (unsigned i = 0; i < indices.size(); i++) {
+    target = make_shared<ArrayRef>(Tokens(ctx), target, indices[i]);
+  }
+
+  return static_pointer_cast<ArrayRef>(target);
 }
 
 shared_ptr<VarRef> AstCreator::visitVarRef(FP::VarRefContext *ctx) {
@@ -551,8 +557,11 @@ shared_ptr<ArrayType> AstCreator::visitArrayType(FP::ArrayTypeContext *ctx) {
     type = PointerType::get(type);
   }
 
-  long size = stol(ctx->IntLiteral()->getText());
-  return ArrayType::get(type, size);
+  for (auto &sizeDecl : ctx->IntLiteral()) {
+    long size = stol(sizeDecl->getText());
+    type = ArrayType::get(type, size);
+  }
+  return static_pointer_cast<ArrayType>(type);
 }
 
 shared_ptr<Type> AstCreator::visitBuiltinType(FP::BuiltinTypeContext *ctx) {

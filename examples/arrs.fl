@@ -1,15 +1,5 @@
-func(arr: i64[3]) => arr[2];
-
-makeArray(arr: i64*[4]*): void {
-   let a = 122;
-   *arr[0] = &a;
-   ret;
-}
-
 main(): i64 {
-    let sum = 0;
-    for (let i = 0; i < 9; i += 1;) {
-        sum += i;
-    }
-    ret sum;
+    let arr: i64[1, 2, 3, 4, 5];
+    arr[0, 1, 2, 3, 4] = 100;
+    ret arr[0, 1, 2, 3, 4];
 }

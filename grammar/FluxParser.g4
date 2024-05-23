@@ -67,7 +67,7 @@ expression:
 	| literal														# LiteralExpr
 	| Identifier													# VarRef
 	| expression ('.' | '->') Identifier							# FieldRef
-	| expression '[' expression ']'									# ArrayRef
+	| expression '[' expressionList ']'								# ArrayRef
 	| Identifier '(' expressionList? ')'							# FunctionCall
 	| expression ('.' | '->') Identifier '(' expressionList? ')'	# MethodCall
 	| '[' expressionList ']'										# ArrayLiteral
@@ -92,7 +92,7 @@ type: scalarType | pointerType | arrayType;
 
 pointerType: (scalarType | arrayType) '*'+;
 
-arrayType: scalarType '*'* '[' IntLiteral ']';
+arrayType: scalarType '*'* '[' IntLiteral (',' IntLiteral)* ']';
 
 scalarType: builtinType | Identifier;
 

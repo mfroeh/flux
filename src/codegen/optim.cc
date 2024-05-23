@@ -11,6 +11,7 @@
 #include "llvm/Transforms/Scalar/Reassociate.h"
 #include "llvm/Transforms/Scalar/SimplifyCFG.h"
 #include <llvm/IR/Verifier.h>
+#include <llvm/Transforms/Scalar/DeadStoreElimination.h>
 
 using namespace llvm;
 using namespace std;
@@ -33,10 +34,13 @@ void IROptimizer::optimize() {
   fpm->addPass(ReassociatePass());
   fpm->addPass(GVNPass());
   fpm->addPass(SimplifyCFGPass());
+  fpm->addPass(DSEPass());
 
   PassBuilder pb;
   pb.registerModuleAnalyses(*mam);
+  pb.registerCGSCCAnalyses(*cgsc);
   pb.registerFunctionAnalyses(*fam);
+  pb.registerLoopAnalyses(*lam);
   pb.crossRegisterProxies(*lam, *fam, *cgsc, *mam);
 
   for (auto &function : module->functions()) {
@@ -46,6 +50,6 @@ void IROptimizer::optimize() {
       exit(1);
     }
     // todo: segfaults
-    // fpm->run(function, *fam);
+    fpm->run(function, *fam);
   }
 }

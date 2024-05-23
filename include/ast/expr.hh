@@ -170,6 +170,7 @@ struct ArrayRef : public LValueExpr {
   virtual any accept(class AbstractAstVisitor &visitor) override;
   llvm::Value *codegen(IRVisitor &visitor) override;
   shared_ptr<Expr> deepcopy() const override;
+  ostream &print(ostream &out) const override;
   void setLhs(bool isLhs) override;
 };
 

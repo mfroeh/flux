@@ -240,6 +240,11 @@ llvm::Value *ArrayRef::codegen(IRVisitor &visitor) {
   return visitor.visit(*this);
 }
 
+ostream &ArrayRef::print(ostream &out) const {
+  out << *arrayExpr << "[" << *index << "]";
+  return out;
+}
+
 shared_ptr<Expr> ArrayRef::deepcopy() const {
   auto copy =
       make_shared<ArrayRef>(tokens, arrayExpr->deepcopy(), index->deepcopy());
