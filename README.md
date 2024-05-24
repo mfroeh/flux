@@ -1,4 +1,26 @@
+<p align="center">
+<img src="logo.png" alt="Flux logo" height="200">
+</p>
+
 # Flux
+
+An imperative, statically typed toy programming language with classes, type inference and some other fun features.
+
+## How to use
+Try it out with nix: `git clone git@github.com:mfroeh/flux && cd flux && nix run . -- examples/classes.fl && clang a.out -o out && ./out`
+* Builds the compiler and runs it to compile `examples/classes.fl`
+* Links the produced object file `a.out` using clang
+* Runs the binary `out`
+
+Whenever developing
+* Enter devshell: `nix develop`
+
+One time dev setup
+1. Build compiler: `mkdir build && cd build && cmake .. && ninja -j 8`
+2. Make work with clangd: `cd .. && ln -s build/compile_commands.json .`
+
+Make package and run
+* Build and run package: `nix build && result/bin/flux` or `nix run`
 
 ## Features
 * [Classes](examples/classes.fl)
@@ -68,7 +90,7 @@ sum(arr: i64[4]*): i64 {
     ret sum;
 }
 
-squares(arr: i64*[4]*): i64*[4]* {
+buildsquares(arr: i64*[4]*): i64*[4]* {
     for (let i = 0; i < 4; i += 1;) {
         let ptr = *arr[i];
         *ptr *= *ptr;
@@ -143,14 +165,3 @@ main(): i64 {
 }
 ```
 
-
-## Developing
-1. Enter devshell: `nix develop`
-2. Build compiler: `mkdir build && cd build && cmake .. && ninja -j 8 && ./flux`
-3. Make work with clangd: `cd .. && ln -s build/compile_commands.json .`
-
-## Packaging
-1. Build package: `nix build`
-
-## Running:
-1. Build and run: `nix run` or `nix build && ./result/bin/flux`
