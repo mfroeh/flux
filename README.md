@@ -2,15 +2,16 @@
 <img src="logo.png" alt="Flux logo" height="200">
 </p>
 
-# Flux
+# flux
 
 An imperative, statically typed toy programming language with classes, type inference and some other fun features.
 
 ## How to use
-Try it out with nix: `git clone git@github.com:mfroeh/flux && cd flux && nix run . -- examples/classes.fl && clang a.out -o out && ./out`
-* Builds the compiler and runs it to compile `examples/classes.fl`
-* Links the produced object file `a.out` using clang
-* Runs the binary `out`
+Try it out with nix:
+1. Clone and enter dev shell: `git clone git@github.com:mfroeh/flux && cd flux && nix develop`
+2. Build flux compiler and compile object file `nix run . -- examples/classes.fl`
+3. Link object file using clang and produce binary `clang a.out -o out`
+4. Run `./out`
 
 Whenever developing
 * Enter devshell: `nix develop`
@@ -90,7 +91,7 @@ sum(arr: i64[4]*): i64 {
     ret sum;
 }
 
-buildsquares(arr: i64*[4]*): i64*[4]* {
+squares(arr: i64*[4]*): i64*[4]* {
     for (let i = 0; i < 4; i += 1;) {
         let ptr = *arr[i];
         *ptr *= *ptr;

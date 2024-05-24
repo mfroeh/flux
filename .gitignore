@@ -8,6 +8,10 @@ std
 *.out
 .direnv
 
+out
+out.ll
+
 include-old
 src-old
 examples-old
+
