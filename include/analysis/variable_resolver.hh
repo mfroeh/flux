@@ -24,7 +24,6 @@ public:
 
   // resolves variable references
   any visit(struct VarRef &var) override;
-  any visit(struct ArrayRef &arr) override;
 
   // finds function call candidates
   any visit(struct FunctionCall &funcCall) override;

@@ -69,26 +69,26 @@ expression:
 	'(' expression ')'												# ParenExpr
 	| literal														# LiteralExpr
 	| Identifier													# VarRef
-	| ('*') expression												# PrefixUnary
-	| expression ('.' | '->') Identifier							# FieldRef
+	| ('*' | '-' | '!' | '&') expression							# PrefixUnary
 	| expression '[' expressionList ']'								# ArrayRef
+	| expression ('.' | '->') Identifier							# FieldRef
 	| Identifier '(' expressionList? ')'							# FunctionCall
 	| expression ('.' | '->') Identifier '(' expressionList? ')'	# MethodCall
 	| '[' expressionList ']'										# ArrayLiteral
 	| Identifier '{' (Identifier ':' expression) (
 		',' Identifier ':' expression
-	)* '}'															# StructLiteral
-	| ('-' | '!' | '&') expression									# PrefixUnary
-	| expression ('*' | '/' | '%') expression						# BinaryArithmetic
-	| expression ('+' | '-') expression								# BinaryArithmetic
-	| expression ('<' | '<=' | '==' | '!=' | '>' | '>=') expression	# BinaryComp
-	| expression '&&' expression									# BinaryLogical
-	| expression '||' expression									# BinaryLogical
-	| expression '?' expression ':' expression						# Ternary
-	| expression KwIn interval										# InInterval
-	| expression '=' expression										# Assignment
-	| expression ('+' | '-' | '*' | '/' | '%') '=' expression		# CompoundAssignment
-	| KwHalloc type '(' expression ')'								# Malloc;
+	)* '}'														# StructLiteral
+	| expression ('*' | '/' | '%') expression					# BinaryArithmetic
+	| expression ('+' | '-') expression							# BinaryArithmetic
+	| expression ('<' | '<=' | '>' | '>=') expression			# BinaryComp
+	| expression ('==' | '!=') expression						# BinaryComp
+	| expression '&&' expression								# BinaryLogical
+	| expression '||' expression								# BinaryLogical
+	| expression '?' expression ':' expression					# Ternary
+	| expression KwIn interval									# InInterval
+	| expression '=' expression									# Assignment
+	| expression ('+' | '-' | '*' | '/' | '%') '=' expression	# CompoundAssignment
+	| KwHalloc type '(' expression ')'							# Malloc;
 
 expressionList: expression (',' expression)*;
 

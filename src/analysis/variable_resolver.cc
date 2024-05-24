@@ -72,7 +72,6 @@ any VariableResolver::visit(FunctionDefinition &functionDefinition) {
   auto function = currentScope->getFunction(functionDefinition.name);
   symTab.insert(function);
   functionDefinition.mangledName = function->mangledName;
-  cout << "added function " << functionDefinition.name << endl;
 
   auto previousScope = currentScope;
   currentScope = make_shared<Scope>(previousScope);
@@ -155,23 +154,6 @@ any VariableResolver::visit(VarRef &var) {
     throw runtime_error("Variable " + var.name + " not found");
 
   var.mangledName = variable->mangledName;
-  return {};
-}
-
-any VariableResolver::visit(ArrayRef &arr) {
-  AstVisitor::visit(arr);
-  // TODO: but we shouldn't need this
-  // arr.index->accept(*this);
-  // auto variableRef = dynamic_pointer_cast<VariableReference>(arr.arrayExpr);
-  // if (variableRef == nullptr)
-  //   return {};
-
-  // string name = variableRef->name;
-  // auto variable = currentScope->getVariable(name);
-  // if (!variable)
-  //   throw runtime_error("Variable " + name + " not found");
-
-  // variableRef->mangledName = variable->mangledName;
   return {};
 }
 

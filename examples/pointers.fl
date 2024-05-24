@@ -1,0 +1,22 @@
+sum(arr: i64[4]*): i64 {
+    let sum = 0;
+    for (let i = 0; i in [0, 4); i += 1;) -> sum += *arr[i];
+    ret sum;
+}
+
+squares(arr: i64*[4]*): i64*[4]* {
+    for (let i = 0; i < 4; i += 1;) {
+        let ptr = *arr[i];
+        *ptr *= *ptr;
+    }
+    ret arr;
+}
+
+main(): i64 {
+    let arr = [1, 2, 3, 4];
+    let arrPtrs: i64*[4] = [&(arr[0]), &(arr[1]), &(arr[2]), &(arr[3])];
+    let ptrptr = &(arrPtrs[2]);
+    print "%d " sum(&arr);
+    print "%d==%d==%d " *squares(&arrPtrs)[2], arr[2], **ptrptr;
+    ret 0;
+}

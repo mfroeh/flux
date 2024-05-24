@@ -1,41 +1,10 @@
-isSafe(board: i64[8, 8]*, row: i64, col: i64): bool {
-    for (let i = 0; i < col; i += 1;) -> if (*board[row, i] == 1) -> ret false;
-
-    let i = row;
-    let j = col;
-    for (let i = i; i >= 0 && j >= 0; { i -= 1; j -= 1; }) -> if (*board[i, j] == 1) -> ret false;
-
-    let i = row;
-    let j = col;
-    for (let i = i; j >= 0 && i < 8; { i += 1; j -= 1; }) -> if (*board[i, j] == 1) -> ret false;
-
-    ret true;
-}
-
-solveNQueens(board: i64[8, 8]*, col: i64): bool {
-    if (col == 8) {
-        for (let i = 0; i < 8; i += 1;) {
-            for (let j = 0; j < 8; j += 1;) {
-                print "%d " *board[i,j];
-            }
-            print "%c" 10;
-        }
-        ret true;
-    }
-
-    for (let i = 0; i < 8; i += 1;) {
-        if (isSafe(board, i, col)) {
-            *board[i, col] = 1;
-            if (solveNQueens(board, col + 1)) -> ret true;
-            *board[i, col] = 0;
-        }
-    }
-    ret false;
-}
-
-
 main(): i64 {
-    let board: i64[8, 8];
-    let solutionFound = solveNQueens(&board, 0);
-    ret solutionFound ? 1 : 11;
+    let board: i64[8, 8, 8];
+    board[1, 2, 3] = 44;
+    print "%d " board[1, 2, 3];
+
+    // remaining elements are default initialized
+    let arr: f64[8] = [2.5, 2.6];
+    print "%.2f " arr[3];
+    ret 0;
 }

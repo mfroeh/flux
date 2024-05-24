@@ -1,0 +1,15 @@
+add(a: i64, b: i64) => a + b;
+
+main(): i64 {
+    let a = 3.1415;
+    print "a: %f " a;
+    let a = true;
+    print "a: %d " a;
+    let a = "hello";
+    print "a: %s " a;
+
+    print "add(1, 2): %d " add(1, 2);
+    add(a: i64, b: i64): f64 => a * b;
+    print "add(1, 2): %f " add(1, 2);
+    ret 0;
+}

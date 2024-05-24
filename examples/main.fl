@@ -1,14 +1,7 @@
-class MyClass { a: i64; }
-
-add(lhs: i64, rhs: i64): i64 {
-    ret lhs + rhs;
-}
+incl ./math.fl;
 
 main(): i64 {
-    let classA: MyClass = MyClass { a : 1};
-    let classB = MyClass { a: 2 };
-    let resA: i64 = add(classA.a, classB.a);
-    let resB = add(classA.a, add(resA, classB.a));
-
-    ret resB;
+    let p = Point { x: 1, y: 2 };
+    print "add(p.x, p.y): %d " add(p.x, p.y);
+    ret 0;
 }

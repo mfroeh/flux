@@ -1,6 +1,0 @@
-main(): i64 {
-    let myStr = "Hello, World!";
-    let myStr2: str = "Hello, World!";
-    let okay = myStr;
-    ret 1;
-}

@@ -1,0 +1,7 @@
+add(a: i64, b: i64) => a + b;
+
+main(): i64 {
+    let res = add(1, 2);
+    print "%d " res;
+    ret 0;
+}

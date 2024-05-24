@@ -1,0 +1,6 @@
+class Point {
+    x: i64;
+    y: i64;
+}
+
+add(a: i64, b: i64) => a + b;

@@ -1,49 +1,41 @@
-incl ./include.fl;
-
-class Point { x: i64; y: i64;
-    distance(p: Point): i64 {
-        let dx = p.x - *this.x;
-        let dy = p.y - *this.y;
-        ret dx * dx + dy * dy;
-    }
+class Point { 
+    x: i64; 
+    y: i64; 
 }
 
-class Rectangle {
+class Rectangle { 
     topleft: Point;
-    bottomright: Point;
+    bottomright: Point; 
 
-    height() : i64 {
-        ret *this.bottomright.y - *this.topleft.y;
-    }
+    height(): i64 => this->bottomright.y - this->topleft.y;
 
-    width() : i64 => *this.bottomright.x - *this.topleft.x;
+    width() => this->bottomright.x - this->topleft.x;
 
     area() => this->height() * this->width();
 
     contains(p: Point*): bool {
-        ret *p.x >= *this.topleft.x && *p.x <= *this.bottomright.x &&
-            *p.y >= *this.topleft.y && *p.y <= *this.bottomright.y;
+        ret p->x >= this->topleft.x && p->x <= this->bottomright.x &&
+            p->y >= this->topleft.y && p->y <= this->bottomright.y;
     }
 }
 
 main(): i64 {
-    let rect: Rectangle = Rectangle {
-        topleft: Point { x: -10, y: -10},
-        bottomright: Point { x: 10, y: 10 }
-    };
-    let height = rect.height();
-    let width = rect.width();
-    let area = rect.area();
-    let p: Point = Point { x: 0, y: 0 };
-    let contains = rect.contains(&p);
+    let p1 = Point { x: 0, y: 0 };
+    let p2: Point;
+    print "p2: %d %d " p1.x, p2.x;
 
-    let pointDist = rect.topleft.distance(rect.bottomright);
+    p2.x = 10;
+    p2.y = 10;
 
-    let arr: i64[5] = [55, 55];
-    let ptrs = [&(rect.topleft), &(rect.bottomright)];
-    /* ret *(ptrs[1]).x; */
-    let ptrs: Rectangle*[1] = [&rect];
-    /* ret *(ptrs[0]).height(); */
-    /* ret height * width == area ? 37 : 73; */
-    ret add(1, 2);
+    let r = Rectangle { topleft: p1, bottomright: p2 };
+
+    let height = r.height();
+    let width = r.width();
+    let area = r.area();
+
+    let p = Point { x: 5, y: 5 };
+    let contains = r.contains(&p);
+
+    print "height: %d, width: %d, area: %d, contains: %d" height, width, area, contains;
+    ret 0;
 }
