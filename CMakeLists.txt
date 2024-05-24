@@ -29,10 +29,6 @@ find_package(argparse REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(magic_enum REQUIRED)
 
-# interpreter
-find_package(FFI REQUIRED) # required for interpreter
-set(INTERPRETER_LIBS executionengine interpreter mcjit)
-
 # https://github.com/antlr/antlr4/blob/master/runtime/Cpp/cmake/Antlr4Package.md
 antlr4_generate(FluxLexer ${PROJECT_SOURCE_DIR}/grammar/FluxLexer.g4 LEXER
                 FALSE FALSE)
@@ -64,8 +60,14 @@ set(ast
 set(analysis src/analysis/desugar.cc src/analysis/scope.cc
              src/analysis/variable_resolver.cc src/analysis/typecheck.cc)
 
-set(codegen src/codegen/context.cc src/codegen/class.cc src/codegen/expr.cc
-            src/codegen/function.cc src/codegen/module.cc src/codegen/stmt.cc src/codegen/optim.cc)
+set(codegen
+    src/codegen/context.cc
+    src/codegen/class.cc
+    src/codegen/expr.cc
+    src/codegen/function.cc
+    src/codegen/module.cc
+    src/codegen/stmt.cc
+    src/codegen/optim.cc)
 
 set(toplevel "")
 
@@ -100,11 +102,10 @@ llvm_map_components_to_libnames(
   irreader
   passes
   instrumentation
-  ${INTERPRETER_LIBS}
   ${LLVM_TARGETS_TO_BUILD})
 
 target_link_libraries(
-  flux PRIVATE argparse::argparse Boost::system magic_enum::magic_enum FFI::ffi
+  flux PRIVATE argparse::argparse Boost::system magic_enum::magic_enum
                antlr4-runtime ${llvm_libs})
 
 install(TARGETS flux DESTINATION bin)

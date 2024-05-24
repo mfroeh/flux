@@ -1,7 +1,6 @@
 #include "codegen/context.hh"
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
-#include <llvm/ExecutionEngine/MCJIT.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/LegacyPassManager.h>
@@ -26,9 +25,6 @@ void initializeTargets() {
   InitializeAllTargetMCs();
   InitializeAllAsmParsers();
   InitializeAllAsmPrinters();
-
-  // interpreter
-  // LLVMLinkInMCJIT();
 }
 
 CodegenContext::CodegenContext() {
