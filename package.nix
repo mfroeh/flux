@@ -8,7 +8,7 @@
 , boost
 , antlr
 , jre_minimal
-, libllvm
+, llvmPackages_17
 , argparse
 }:
 stdenv.mkDerivation {
@@ -22,7 +22,7 @@ stdenv.mkDerivation {
   ];
 
   nativeBuildInputs = [ cmake clang-tools pkg-config antlr jre_minimal ninja ];
-  buildInputs = [ boost libllvm antlr.runtime.cpp magic-enum argparse ];
+  buildInputs = [ boost llvmPackages_17.libllvm antlr.runtime.cpp magic-enum argparse ];
 
   cmakeFlags = [ ];
 
