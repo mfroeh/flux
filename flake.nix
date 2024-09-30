@@ -8,7 +8,7 @@
   outputs = { flake-parts, ... }@inputs: flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [ "x86_64-linux" "i686-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
     perSystem = { config, self', inputs', pkgs, system, ... }: {
-      packages.default = pkgs.callPackage ./package.nix { stdenv = pkgs.llvmPackages_18.libcxxStdenv; };
+      packages.default = pkgs.callPackage ./package.nix { stdenv = pkgs.clangStdenv; };
 
       devShells.default = config.packages.default;
     };

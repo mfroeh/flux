@@ -9,8 +9,6 @@
 , jre_minimal
 # for llvm lib
 , llvmPackages_17
-# for compiling the compiler :p
-, llvmPackages_18
 , argparse
 }:
 stdenv.mkDerivation {
@@ -23,7 +21,7 @@ stdenv.mkDerivation {
     "CMakeLists.txt"
   ];
 
-  nativeBuildInputs = [ cmake llvmPackages_18.clang-tools pkg-config antlr jre_minimal ninja ];
+  nativeBuildInputs = [ cmake llvmPackages_17.clang-tools pkg-config antlr jre_minimal ninja ];
   buildInputs = [ boost llvmPackages_17.libllvm antlr.runtime.cpp magic-enum argparse ];
 
   cmakeFlags = [ ];
